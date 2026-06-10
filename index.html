@@ -227,8 +227,9 @@ public class Person
 </details>
 
 
-<hr/>
-<h1>Entity Framework Core: Loading Strategies</h1>
+<details>
+  <summary>Entity Framework Core: Loading Strategies</summary>
+  
 
 <h2>1. Eager Loading</h2>
 <p>
@@ -277,11 +278,12 @@ context.Entry(order)
 <p>
 “Eager loading uses <code>Include()</code> to fetch related data upfront, lazy loading fetches it only when accessed, and explicit loading gives manual control via <code>Entry().Load()</code>. I choose eager loading when related data is always required, lazy loading for occasional access, and explicit loading when I need precise control over queries.”
 </p>
+</details>
 
 
-
-<hr/>
-<h1>Difference between Task, ValueTask, and Thread in C#</h1>
+<details>
+  <summary>Difference between Task, ValueTask, and Thread in C#</summary>
+  
 
 <h2>1. Task</h2>
 <p>
@@ -374,11 +376,11 @@ thread.Start();
 <p>
 “<code>Task</code> is the standard abstraction for async operations, <code>ValueTask</code> is an optimization to reduce allocations when results are often synchronous, and <code>Thread</code> is a low-level construct representing an OS thread. In modern C#, I use <code>Task</code> for most async workflows, <code>ValueTask</code> for performance-critical scenarios, and <code>Thread</code> only when I need full control over execution.”
 </p>
+</details>
 
-
-<hr/>
-
-<h1>Enforcing SOLID Principles in a Large Codebase</h1>
+<details>
+  <summary>Enforcing SOLID Principles in a Large Codebase</summary>
+  
 
 <h2>1. Single Responsibility Principle (SRP)</h2>
 <ul>
@@ -427,10 +429,10 @@ thread.Start();
 <p>
 “In a large codebase, enforcing SOLID principles requires a mix of technical tools and cultural practices. We use static analysis and CI/CD pipelines to detect violations, design patterns and abstractions to enable extensibility, and code reviews plus mentorship to ensure developers consistently apply SRP, OCP, LSP, ISP, and DIP. This combination keeps the system maintainable, testable, and scalable.”
 </p>
-
-<hr/>
-
-<h1>Designing Multi-Region Deployments</h1>
+</details>
+<details>
+  <summary>Designing Multi-Region Deployments</summary>
+  
 
 <h2>1. Goals of Multi-Region Architecture</h2>
 <ul>
@@ -482,11 +484,11 @@ thread.Start();
 <p>
 “In multi-region deployments, I design for high availability and disaster recovery using active-active or active-passive patterns. I rely on global load balancing, geo-replication for databases, and stateless microservices to ensure resilience. Observability and Zero-Trust security are enforced across all regions. The trade-off is cost versus availability, so I align the architecture with business RTO/RPO requirements.”
 </p>
+</details>
 
-
-<hr/>
-
-<h1>Rollback Strategy for Failed Production Deployments</h1>
+<details>
+  <summary>Rollback Strategy for Failed Production Deployments</summary>
+  
 
 <h2>1. Guiding Principles</h2>
 <ul>
@@ -528,10 +530,10 @@ thread.Start();
 <p>
 “My rollback strategy combines deployment patterns like blue-green and canary releases with automated CI/CD pipelines. If a deployment fails, I can instantly redirect traffic to the last stable version, redeploy previous container images, or restore database snapshots. Rollback is always tested in staging, integrated with monitoring, and designed to minimize downtime while preserving data integrity.”
 </p>
-
-<hr/>
-
-<h1>Repository vs Unit of Work Patterns</h1>
+</details>
+<details>
+  <summary>Repository vs Unit of Work Patterns</summary>
+  
 
 <h2>Repository Pattern</h2>
 <p>
@@ -632,11 +634,11 @@ public class UnitOfWork : IUnitOfWork
 <p>
 👉 Think of <b>Repository</b> as the <i>data access abstraction</i> and <b>Unit of Work</b> as the <i>transaction manager</i>. Together, they form a powerful combination: repositories handle entity-specific operations, while the unit of work ensures everything is committed consistently.
 </p>
+</details>
 
-
-<hr/>
-
-<h1>Difference between IEnumerable, IQueryable, and List in C#</h1>
+<details>
+  <summary>Difference between IEnumerable, IQueryable, and List in C#</summary>
+  
 
 <h2>1. IEnumerable&lt;T&gt;</h2>
 <p>
@@ -726,10 +728,10 @@ List&lt;Product&gt; products = new List&lt;Product&gt;
 <p>
 👉 <b>IEnumerable</b> is for in-memory iteration, <b>IQueryable</b> builds queries that run on the database, and <b>List</b> is a concrete collection type. 
 </p>
-
-<hr/>
-
-<h1>Dependency Injection in ASP.NET Core</h1>
+</details>
+<details>
+  <summary>Dependency Injection in ASP.NET Core</summary>
+  
 
 <h2>1. What is Dependency Injection?</h2>
 <p>
@@ -792,10 +794,10 @@ public class OrdersController : Controller
 👉 In ASP.NET Core, DI is <b>first-class and built-in</b>. You don’t need external frameworks like Autofac or Ninject unless you want advanced features. 
 Always mention lifetimes (Singleton, Scoped, Transient) and constructor injection when explaining DI in interviews.
 </p>
-
-<hr/>
-
-<h1>Middleware Pipeline in ASP.NET Core</h1>
+</details>
+<details>
+  <summary>Middleware Pipeline in ASP.NET Core</summary>
+  
 
 <h2>1. What is Middleware?</h2>
 <p>
@@ -872,10 +874,10 @@ app.UseMiddleware&lt;LoggingMiddleware&gt;();
 👉 The middleware pipeline is <b>ordered</b> and <b>sequential</b>. The order of registration matters — for example, <code>UseRouting</code> must come before <code>UseEndpoints</code>, and <code>UseAuthentication</code> must come before <code>UseAuthorization</code>. 
 Always emphasize that middleware can both handle requests and modify responses.
 </p>
-
-<hr/>
-
-<h1>Global Exception Handling in ASP.NET Core</h1>
+</details>
+<details>
+  <summary>Global Exception Handling in ASP.NET Core</summary>
+  
 
 <h2>1. Why Global Exception Handling?</h2>
 <p>
@@ -982,10 +984,10 @@ services.AddControllers(options =>
 👉 In ASP.NET Core, global exception handling is typically implemented using <b>UseExceptionHandler</b> or custom middleware. 
 For APIs, exception filters provide fine-grained control. Always emphasize logging, consistent error responses, and security (no sensitive info in error messages).
 </p>
-
-<hr/>
-
-<h1>Difference between AddScoped, AddTransient, and AddSingleton</h1>
+</details>
+<details>
+  <summary>Difference between AddScoped, AddTransient, and AddSingleton</summary>
+  
 
 <h2>1. AddTransient</h2>
 <p>
@@ -1086,10 +1088,10 @@ public class ProductsController : Controller
 👉 In ASP.NET Core, <b>AddTransient</b> is for short-lived, stateless services, <b>AddScoped</b> is for request-specific services, and <b>AddSingleton</b> is for global services shared across the application. 
 Always emphasize that choosing the right lifetime is critical to avoid memory leaks, concurrency issues, or unintended shared state.
 </p>
-
-<hr/>
-
-<h1>Securing APIs with JWT in ASP.NET Core</h1>
+</details>
+<details>
+  <summary>Securing APIs with JWT in ASP.NET Core</summary>
+  
 
 <h2>1. What is JWT?</h2>
 <p>
@@ -1204,10 +1206,10 @@ public class JwtService
 👉 In ASP.NET Core, JWT secures APIs by issuing a signed token after authentication, validating it on each request, and enforcing claims-based authorization. 
 Always emphasize <b>statelessness, lifetimes, and best practices</b like secure key storage and token expiration when explaining JWT in interviews.
 </p>
-
-<hr/>
-
-<h1>Entity Framework Core Migrations</h1>
+</details>
+<details>
+  <summary>Entity Framework Core Migrations</summary>
+  
 
 <h2>1. What Are EF Core Migrations?</h2>
 <p>
@@ -1287,9 +1289,10 @@ public partial class InitialCreate : Migration
 They allow developers to manage database changes in a controlled, versioned way. 
 In interviews, emphasize the workflow (<i>add → update → rollback</i>), lifecycles, and best practices like reviewing migration scripts and handling backward compatibility.
 </p>
-
-<hr/>
-<h1>Optimizing EF Core Queries</h1>
+</details>
+<details>
+  <summary>Optimizing EF Core Queries</summary>
+  
 
 <h2>1. Use Indexes Properly</h2>
 <p>
@@ -1368,10 +1371,10 @@ Always profile queries using SQL Server Profiler or <code>ToQueryString()</code>
 <p>
 “EF Core query optimization involves using indexes correctly, projecting only needed fields, limiting result sets, and choosing the right loading strategy. For high-throughput scenarios, I use compiled queries and DbContext pooling. I always profile queries with <code>ToQueryString()</code> and database execution plans to ensure efficiency.”
 </p>
-
-<hr/>
-
-<h1>LINQ Deferred Execution in C#</h1>
+</details>
+<details>
+  <summary>LINQ Deferred Execution in C#</summary>
+  
 
 <h2>1. What is Deferred Execution?</h2>
 <p>
@@ -1433,10 +1436,10 @@ var result = numbers.Where(n =&gt; n &gt; 2).ToList(); // executes immediately
 👉 In interviews, emphasize that LINQ queries are <b>deferred by default</b>, meaning they execute only when enumerated. 
 Mention that <code>ToList()</code> or <code>ToArray()</code> forces immediate execution, and highlight the trade-off between flexibility and performance.
 </p>
-
-<hr/>
-
-<h1>Designing an Idempotent REST API</h1>
+</details>
+<details>
+  <summary>Designing an Idempotent REST API</summary>
+  
 
 <h2>1. What Does Idempotent Mean?</h2>
 <p>
@@ -1491,10 +1494,10 @@ Headers: Idempotency-Key: abc123
 Highlight that GET, PUT, DELETE are naturally idempotent, while POST requires special handling (unique IDs or idempotency keys). 
 Emphasize that idempotent APIs are critical in distributed systems where network failures and retries are common.
 </p>
-
-<hr/>
-
-<h1>Strategies to Ensure Backward Compatibility in APIs</h1>
+</details>
+<details>
+  <summary>Strategies to Ensure Backward Compatibility in APIs</summary>
+  
 
 <h2>1. Why Backward Compatibility Matters</h2>
 <p>
@@ -1554,10 +1557,10 @@ GET /api/v2/orders/ORD001
 👉 In API design, backward compatibility is achieved through <b>versioning, additive changes, and careful deprecation</b>. 
 Always emphasize that breaking changes should be avoided, and new features should be introduced in a way that does not disrupt existing clients.
 </p>
-
-<hr/>
-
-<h1>Handling API Versioning in ASP.NET Core</h1>
+</details>
+<details>
+  <summary>Handling API Versioning in ASP.NET Core</summary>
+  
 
 <h2>1. Why API Versioning?</h2>
 <p>
@@ -1622,10 +1625,10 @@ public class OrdersV2Controller : ControllerBase
 The recommended approach is to use the <b>ApiVersioning package</b with attributes, as it provides flexibility and clear separation of versions. 
 Always emphasize backward compatibility and clear communication with API consumers.
 </p>
-
-<hr/>
-
-<h1>Implementing Real-Time Communication with SignalR in ASP.NET Core</h1>
+</details>
+<details>
+  <summary>Implementing Real-Time Communication with SignalR in ASP.NET Core</summary>
+  
 
 <h2>1. What is SignalR?</h2>
 <p>
@@ -1710,10 +1713,10 @@ connection.start().then(() => {
 In interviews, emphasize the <b>Hub model</b>, <b>WebSocket fallback mechanism</b>, and <b>scalability with Azure SignalR Service</b>. 
 Demonstrating a simple chat application example is a great way to showcase your understanding.
 </p>
-
-<hr/>
-
-<h1>Monolith vs Microservices: Trade-offs</h1>
+</details>
+<details>
+  <summary>Monolith vs Microservices: Trade-offs</summary>
+  
 
 <h2>1. Monolithic Architecture</h2>
 <p>
@@ -1803,10 +1806,10 @@ A <b>monolith</b> is a single, unified codebase where all modules (UI, business 
 Microservices offer <b>scalability, resilience, and team autonomy</b but introduce distributed system complexity. 
 In interviews, emphasize trade-offs: monoliths are ideal for small teams/startups, while microservices suit large, evolving systems with complex scaling needs.
 </p>
-
-<hr/>
-
-<h1>Implementing Service Discovery in Microservices</h1>
+</details>
+<details>
+  <summary>Implementing Service Discovery in Microservices</summary>
+  
 
 <h2>1. What is Service Discovery?</h2>
 <p>
@@ -1879,10 +1882,10 @@ spec:
 Emphasize the difference between client-side and server-side discovery, mention tools like <b>Consul, Eureka, Kubernetes DNS</b>, and highlight best practices such as health checks and secure registries. 
 This shows both architectural understanding and practical implementation knowledge.
 </p>
-
-<hr/>
-
-<h1>Circuit Breaker Pattern in Microservices</h1>
+</details>
+<details>
+  <summary>Circuit Breaker Pattern in Microservices</summary>
+  
 
 <h2>1. What is the Circuit Breaker Pattern?</h2>
 <p>
@@ -1951,10 +1954,10 @@ After a cooldown period, it allows test calls to check if the API is healthy aga
 👉 The Circuit Breaker pattern prevents cascading failures by <b>failing fast</b> when a dependency is down. 
 In interviews, emphasize the three states (Closed, Open, Half-Open), mention libraries like <b>Polly in .NET</b>, and highlight how it improves resilience in microservices.
 </p>
-
-<hr/>
-
-<h1>Handling Distributed Logging in Microservices</h1>
+</details>
+<details>
+  <summary>Handling Distributed Logging in Microservices</summary>
+  
 
 <h2>1. Why Distributed Logging?</h2>
 <p>
@@ -2015,10 +2018,10 @@ builder.Host.UseSerilog();
 In interviews, emphasize the use of <b>correlation IDs</b>, structured logging, and log aggregation tools like ELK, Splunk, or cloud-native solutions. 
 Highlight how logging integrates with distributed tracing for complete observability in microservices.
 </p>
-
-<hr/>
-
-<h1>AKS, Clusters, Nodes, Pods, and Containers</h1>
+</details>
+<details>
+  <summary>AKS, Clusters, Nodes, Pods, and Containers</summary>
+  
 
 <h2>1. AKS (Azure Kubernetes Service)</h2>
 <p>
@@ -2093,10 +2096,10 @@ AKS (Azure-managed Kubernetes)
 Highlight that AKS abstracts cluster management, nodes run pods, pods encapsulate containers, and services/ingress provide connectivity. 
 This shows both architectural understanding and practical implementation knowledge.
 </p>
-
-<hr/>
-
-<h1>Securing Inter-Service Communication in Microservices</h1>
+</details>
+<details>
+  <summary>Securing Inter-Service Communication in Microservices</summary>
+  
 
 <h2>1. Why Secure Inter-Service Communication?</h2>
 <p>
@@ -2149,10 +2152,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 <b>JWT/OAuth2 for identity propagation</b>, and <b>network policies for isolation</b>. 
 In interviews, emphasize <b>Zero-Trust principles</b> — every request must be verified, even between internal services.
 </p>
-
-<hr/>
-
-<h1>Role of an API Gateway in Microservices</h1>
+</details>
+<details>
+  <summary>Role of an API Gateway in Microservices</summary>
+  
 
 <h2>1. What is an API Gateway?</h2>
 <p>
@@ -2200,10 +2203,10 @@ Client → API Gateway → Authentication → Routing → Microservice → Respo
 In interviews, emphasize that it reduces complexity for clients, enforces policies centrally, and integrates with service discovery and load balancing. 
 It’s the backbone of secure and manageable inter-service communication.
 </p>
-
-<hr/>
-
-<h1>Designing Pagination in APIs</h1>
+</details>
+<details>
+  <summary>Designing Pagination in APIs</summary>
+  
 
 <h2>1. Why Pagination?</h2>
 <p>
@@ -2283,10 +2286,10 @@ GET /api/orders?after=ORD010&limit=5
 👉 In interviews, emphasize that pagination prevents performance bottlenecks and improves scalability. 
 Mention different strategies (offset, page, cursor, keyset), their trade-offs, and highlight that <b>cursor-based pagination is preferred for large, dynamic datasets</b>.
 </p>
-
-<hr/>
-
-<h1>Handling Rate Limiting in APIs</h1>
+</details>
+<details>
+  <summary>Handling Rate Limiting in APIs</summary>
+  
 
 <h2>1. What is Rate Limiting?</h2>
 <p>
@@ -2337,10 +2340,10 @@ else
 In interviews, emphasize strategies like <b>fixed window, sliding window, token bucket</b>, and mention practical enforcement via <b>API gateways or distributed caches</b>. 
 Highlight the importance of returning proper HTTP status codes and headers for client guidance.
 </p>
-
-<hr/>
-
-<h1>CORS (Cross-Origin Resource Sharing) and Its Configuration</h1>
+</details>
+<details>
+  <summary>CORS (Cross-Origin Resource Sharing) and Its Configuration</summary>
+  
 
 <h2>1. What is CORS?</h2>
 <p>
@@ -2408,10 +2411,10 @@ app.use(cors({
 In interviews, emphasize the role of <b>preflight requests</b>, the importance of <b>Access-Control-Allow-Origin</b>, and how to configure CORS securely in frameworks like ASP.NET Core or Express.js. 
 Highlight that misconfigured CORS can lead to security vulnerabilities.
 </p>
-
-<hr/>
-
-<h1>Implementing Caching in APIs</h1>
+</details>
+<details>
+  <summary>Implementing Caching in APIs</summary>
+  
 
 <h2>1. Why Caching?</h2>
 <p>
@@ -2492,10 +2495,10 @@ else
 Mention strategies like <b>HTTP caching headers</b>, <b>server-side caching with Redis</b>, and <b>reverse proxy/CDN caching</b>. 
 Highlight the importance of cache invalidation and balancing freshness with performance.
 </p>
-
-<hr/>
-
-<h1>React vs Next.js for Enterprise Applications</h1>
+</details>
+<details>
+  <summary>React vs Next.js for Enterprise Applications</summary>
+  
 
 <h2>1. Overview</h2>
 <ul>
@@ -2559,10 +2562,10 @@ Highlight the importance of cache invalidation and balancing freshness with perf
 👉 In interviews, emphasize that <b>React is the core library</b for building UIs, while <b>Next.js is a framework built on React</b that adds enterprise-ready features like SSR, SSG, and API routes. 
 Highlight that React offers flexibility but requires more setup, whereas Next.js provides a structured, optimized environment for large-scale, public-facing enterprise applications.
 </p>
-
-<hr/>
-
-<h1>Azure Functions vs Azure App Service</h1>
+</details>
+<details>
+  <summary>Azure Functions vs Azure App Service</summary>
+  
 
 <h2>1. Overview</h2>
 <ul>
@@ -2634,10 +2637,10 @@ Enterprises often combine both:
 👉 In interviews, emphasize that <b>Azure Functions</b> are serverless and cost-efficient for event-driven tasks, while <b>Azure App Service</b> is a managed hosting platform for always-on web apps and APIs. 
 Highlight that they complement each other in enterprise architectures.
 </p>
-
-<hr/>
-
-<h1>Designing for Scalability in AKS (Azure Kubernetes Service)</h1>
+</details>
+<details>
+  <summary>Designing for Scalability in AKS (Azure Kubernetes Service)</summary>
+  
 
 <h2>1. Why Scalability Matters</h2>
 <p>
@@ -2697,10 +2700,10 @@ spec:
 <b>load balancing</b>, and <b>stateless service design</b>. 
 Highlight the use of <b>HPA, VPA, and Cluster Autoscaler</b> together, and mention observability as the backbone for intelligent scaling decisions.
 </p>
-
-<hr/>
-
-<h1>Partitioning Strategy in Azure Cosmos DB</h1>
+</details>
+<details>
+  <summary>Partitioning Strategy in Azure Cosmos DB</summary>
+  
 
 <h2>1. Why Partitioning?</h2>
 <p>
@@ -2749,10 +2752,10 @@ Partition U002 → contains all items with UserId = U002
 The <b>partition key choice is critical</b — it determines performance, scalability, and cost. 
 Highlight the use of <b>hierarchical partition keys</b to overcome the 20 GB logical partition limit and ensure balanced distribution.
 </p>
-
-<hr/>
-
-<h1>Implementing CI/CD in Azure DevOps</h1>
+</details>
+<details>
+  <summary>Implementing CI/CD in Azure DevOps</summary>
+  
 
 <h2>1. Why CI/CD?</h2>
 <p>
@@ -2830,10 +2833,10 @@ stages:
 with <b>quality enforcement</b (SonarQube, StyleCop), <b>secure secret management</b (Key Vault), and <b>deployment strategies</b (blue-green, canary). 
 Highlight that pipelines are defined as <b>YAML-as-code</b>, ensuring version control and repeatability.
 </p>
-
-<hr/>
-
-<h1>Securing Secrets in Azure</h1>
+</details>
+<details>
+  <summary>Securing Secrets in Azure</summary>
+  
 
 <h2>1. Why Secure Secrets?</h2>
 <p>
@@ -2888,10 +2891,10 @@ KeyVaultSecret secret = client.GetSecret("DbConnectionString");
 Highlight that this approach removes hardcoded credentials, enforces least privilege access, and supports automated rotation and auditing. 
 This demonstrates strong adherence to <b>Zero-Trust principles</b>.
 </p>
-
-<hr/>
-
-<h1>Azure Service Bus vs Azure Event Grid</h1>
+</details>
+<details>
+  <summary>Azure Service Bus vs Azure Event Grid</summary>
+  
 
 <h2>1. Overview</h2>
 <ul>
@@ -2951,11 +2954,10 @@ This demonstrates strong adherence to <b>Zero-Trust principles</b>.
 👉 In interviews, emphasize that <b>Service Bus</b> is for <b>reliable messaging and workflows</b>, while <b>Event Grid</b> is for <b>event-driven, serverless notifications</b>. 
 Highlight that they complement each other: Event Grid detects changes, Service Bus ensures reliable processing of those changes.
 </p>
-
-<hr/>
-
-
-<h1>Retries in Azure Functions with Polly (HTTP Triggers)</h1>
+</details>
+<details>
+  <summary>Retries in Azure Functions with Polly (HTTP Triggers)</summary>
+  
 
 <h2>1. Why Use Polly?</h2>
 <p>
@@ -3151,10 +3153,10 @@ public static async Task RunOrchestrator([OrchestrationTrigger] TaskOrchestratio
         </tbody>
     </table>
 
-
-<hr/>
-
-<h1>Monitoring AKS (Azure Kubernetes Service) Workloads</h1>
+</details>
+<details>
+  <summary>Monitoring AKS (Azure Kubernetes Service) Workloads</summary>
+  
 
 <h2>1. Why Monitoring Matters</h2>
 <p>
@@ -3219,10 +3221,10 @@ and <b>open-source observability stacks (Prometheus, Grafana)</b>.
 Highlight the importance of tracking <b>cluster health, resource utilization, application telemetry, and security logs</b> 
 to ensure enterprise-grade reliability and compliance.
 </p>
-
-<hr/>
-
-<h1>Azure Storage Redundancy Options</h1>
+</details>
+<details>
+  <summary>Azure Storage Redundancy Options</summary>
+  
 
 <h2>1. Why Redundancy?</h2>
 <p>
@@ -3284,10 +3286,10 @@ It replicates data across multiple locations depending on the chosen redundancy 
 to <b>RA-GZRS (enterprise-grade geo + zone redundancy with read access)</b>. 
 Highlight that the choice depends on <b>cost, availability requirements, and disaster recovery needs</b>.
 </p>
-
-<hr/>
-
-<h1>Designing Disaster Recovery in Azure</h1>
+</details>
+<details>
+  <summary>Designing Disaster Recovery in Azure</summary>
+  
 
 <h2>1. Why Disaster Recovery?</h2>
 <p>
@@ -3352,10 +3354,10 @@ Traffic Manager:
 Highlight the use of <b>Azure Site Recovery</b> for orchestrated failover, <b>Traffic Manager</b> for routing, and <b>geo-redundant storage/databases</b> for durability. 
 Stress the importance of defining <b>RTO/RPO</b> and regularly testing DR plans.
 </p>
-
-<hr/>
-
-<h1>Managed Identity vs Service Principal in Azure</h1>
+</details>
+<details>
+  <summary>Managed Identity vs Service Principal in Azure</summary>
+  
 
 <h2>1. Overview</h2>
 <ul>
@@ -3427,10 +3429,10 @@ var client = new SecretClient(new Uri("https://myvault.vault.azure.net/"), crede
 while <b>Service Principals</b> are more flexible but require manual credential handling. 
 Highlight that Managed Identities are the recommended approach for Azure-hosted workloads due to stronger security and reduced operational overhead.
 </p>
-
-<hr/>
-
-<h1>Implementing Role-Based Access Control (RBAC) in Azure</h1>
+</details>
+<details>
+  <summary>Implementing Role-Based Access Control (RBAC) in Azure</summary>
+  
 
 <h2>1. Why RBAC?</h2>
 <p>
@@ -3482,10 +3484,10 @@ az role assignment create \
 Highlight that it enforces <b>least privilege access</b>, supports both <b>built-in and custom roles</b>, and integrates with <b>Azure AD identities</b>. 
 Stress the importance of auditing and governance to maintain secure enterprise environments.
 </p>
-
-<hr/>
-
-<h1>Scaling Strategies in Azure App Service</h1>
+</details>
+<details>
+  <summary>Scaling Strategies in Azure App Service</summary>
+  
 
 <h2>1. Why Scaling?</h2>
 <p>
@@ -3546,10 +3548,10 @@ It provides flexibility to increase or decrease resources based on demand, ensur
 Highlight the use of <b>auto-scaling rules</b> based on metrics, <b>scheduled scaling</b> for predictable traffic, and <b>geo-scaling</b> for global workloads. 
 Stress the importance of designing apps to be <b>stateless</b> to fully leverage horizontal scaling.
 </p>
-
-<hr/>
-
-<h1>Integrating GitHub Actions with Azure</h1>
+</details>
+<details>
+  <summary>Integrating GitHub Actions with Azure</summary>
+  
 
 <h2>1. Why Integrate?</h2>
 <p>
@@ -3635,10 +3637,10 @@ jobs:
 Highlight the shift from <b>Service Principals with secrets</b> to <b>OIDC federated credentials</b> for secure, secretless authentication. 
 Stress the importance of combining CI/CD with <b>quality enforcement and monitoring</b>.
 </p>
-
-<hr/>
-
-<h1>Designing Multi-Region Deployments in Azure</h1>
+</details>
+<details>
+  <summary>Designing Multi-Region Deployments in Azure</summary>
+  
 
 <h2>1. Why Multi-Region?</h2>
 <p>
@@ -3701,10 +3703,10 @@ Azure Front Door / Traffic Manager:
 <b>geo-redundant data services</b>, and <b>active-active or active-passive failover strategies</b>. 
 Highlight the importance of defining <b>RTO/RPO</b>, automating deployments, and regularly testing failover scenarios.
 </p>
-
-<hr/>
-
-<h1>Enforcing Coding Standards in CI/CD</h1>
+</details>
+<details>
+  <summary>Enforcing Coding Standards in CI/CD</summary>
+  
 
 <h2>1. Why Enforce Standards?</h2>
 <p>
@@ -3786,10 +3788,10 @@ jobs:
 Highlight that pipelines should <b>fail fast</b> when violations occur, ensuring only compliant code reaches production. 
 Mention tools like <b>StyleCop, Roslyn, SonarQube, ESLint, Prettier</b> as practical examples.
 </p>
-
-<hr/>
-
-<h1>Static Code Analysis vs Dynamic Testing</h1>
+</details>
+<details>
+  <summary>Static Code Analysis vs Dynamic Testing</summary>
+  
 
 <h2>1. Static Code Analysis</h2>
 <ul>
@@ -3857,10 +3859,10 @@ Mention tools like <b>StyleCop, Roslyn, SonarQube, ESLint, Prettier</b> as pract
 while <b>dynamic testing</b validates actual behavior under execution. 
 Highlight that both are complementary — static analysis ensures code quality, dynamic testing ensures runtime correctness.
 </p>
-
-<hr/>
-
-<h1>Monitoring Microservices with Grafana & Kibana</h1>
+</details>
+<details>
+  <summary>Monitoring Microservices with Grafana & Kibana</summary>
+  
 
 <h2>1. Why Monitor Microservices?</h2>
 <p>
@@ -3926,10 +3928,10 @@ Microservices → Metrics → Prometheus → Grafana (metrics dashboards)
 👉 In interviews, emphasize that <b>Grafana</b> is used for metrics visualization and alerting, while <b>Kibana</b> is used for log analysis and search. 
 Highlight that together they provide <b>end-to-end observability</b> in microservices: Grafana tracks performance metrics, Kibana traces logs, and both integrate with Prometheus/Elasticsearch pipelines.
 </p>
-
-<hr/>
-
-<h1>Blue-Green vs Canary Deployments</h1>
+</details>
+<details>
+  <summary>Blue-Green vs Canary Deployments</summary>
+  
 
 <h2>1. Blue-Green Deployment</h2>
 <ul>
@@ -4014,10 +4016,10 @@ Highlight that together they provide <b>end-to-end observability</b> in microser
 while <b>Canary</b> is about gradual rollout to subsets of users. 
 Highlight that Blue-Green offers <b>fast rollback</b>, whereas Canary provides <b>early detection of issues</b> in production with minimal impact.
 </p>
-
-<hr/>
-
-<h1>Integrating Automated Tests in CI/CD Pipelines</h1>
+</details>
+<details>
+  <summary>Integrating Automated Tests in CI/CD Pipelines</summary>
+  
 
 <h2>1. Why Automated Tests?</h2>
 <p>
@@ -4098,10 +4100,10 @@ jobs:
 <b>unit tests</b> for fast feedback, <b>integration tests</b> for service validation, and <b>end-to-end tests</b> for user workflows. 
 Highlight that pipelines should <b>fail fast</b> when tests fail, and results should be published for transparency and governance.
 </p>
-
-<hr/>
-
-<h1>Implementing Rollback in CI/CD Pipelines</h1>
+</details>
+<details>
+  <summary>Implementing Rollback in CI/CD Pipelines</summary>
+  
 
 <h2>1. Why Rollback?</h2>
 <p>
@@ -4167,10 +4169,10 @@ jobs:
 Highlight that database rollback is complex and often handled via <b>backward-compatible migrations or snapshots</b>. 
 Stress that rollback must be <b>tested, automated, and observable</b>.
 </p>
-
-<hr/>
-
-<h1>Infrastructure as Code (IaC)</h1>
+</details>
+<details>
+  <summary>Infrastructure as Code (IaC)</summary>
+  
 
 <h2>1. Definition</h2>
 <p>
@@ -4246,10 +4248,10 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
 Highlight the difference between declarative (Terraform, Bicep) and imperative (scripts) approaches, 
 and stress that IaC improves <b>consistency, scalability, and governance</b> in cloud environments.
 </p>
-
-<hr/>
-
-<h1>Securing CI/CD Pipelines</h1>
+</details>
+<details>
+  <summary>Securing CI/CD Pipelines</summary>
+  
 
 <h2>1. Why Secure Pipelines?</h2>
 <p>
@@ -4339,10 +4341,10 @@ jobs:
 👉 In interviews, emphasize that securing pipelines involves <b>identity management, secret protection, artifact integrity, pipeline hardening, and monitoring</b>. 
 Highlight the shift from <b>service principals with secrets</b> to <b>OIDC-based authentication</b>, and stress that pipelines must enforce <b>quality gates and security scans</b> to prevent vulnerabilities from reaching production.
 </p>
-
-<hr/>
-
-<h1>Implementing Approvals in CI/CD Pipelines</h1>
+</details>
+<details>
+  <summary>Implementing Approvals in CI/CD Pipelines</summary>
+  
 
 <h2>1. Why Approvals?</h2>
 <p>
@@ -4414,10 +4416,10 @@ jobs:
 👉 In interviews, emphasize that approvals in CI/CD pipelines are implemented via <b>environment-based gates</b> (Azure DevOps) or <b>required reviewers</b> (GitHub Actions). 
 Highlight that they enforce <b>governance and compliance</b>, and should be combined with <b>automated quality checks</b> to balance speed and safety.
 </p>
-
-<hr/>
-
-<h1>SonarQube Metrics Explained</h1>
+</details>
+<details>
+  <summary>SonarQube Metrics Explained</summary>
+  
 
 <h2>1. Overview</h2>
 <p>
@@ -4490,10 +4492,10 @@ Conditions:
 <p>
 If any condition fails, the pipeline blocks the merge/deployment until issues are resolved.
 </p>
-
-<hr/>
-
-<h1>Enforcing StyleCop Rules</h1>
+</details>
+<details>
+  <summary>Enforcing StyleCop Rules</summary>
+  
 
 <h2>1. Why Enforce StyleCop?</h2>
 <p>
@@ -4552,10 +4554,10 @@ steps:
 👉 In interviews, emphasize that StyleCop rules are enforced via <b>analyzers, build validation, and CI/CD quality gates</b>. 
 Highlight automation (e.g., <code>dotnet format</code>) and strict pipeline enforcement to ensure only compliant code reaches production.
 </p>
-
-<hr/>
-
-<h1>Integrating Roslyn Analyzers</h1>
+</details>
+<details>
+  <summary>Integrating Roslyn Analyzers</summary>
+  
 
 <h2>1. What Are Roslyn Analyzers?</h2>
 <p>
@@ -4613,10 +4615,10 @@ providing <b>real-time feedback</b> and <b>pipeline enforcement</b>.
 Highlight automation, strict build validation, and synergy with other tools (StyleCop, SonarQube) 
 to ensure <b>consistent, secure, and maintainable codebases</b>.
 </p>
-
-<hr/>
-
-<h1>Measuring Code Coverage</h1>
+</details>
+<details>
+  <summary>Measuring Code Coverage</summary>
+  
 
 <h2>1. What Is Code Coverage?</h2>
 <p>
@@ -4666,10 +4668,10 @@ reportgenerator -reports:TestResults/coverage.cobertura.xml \
 integrated into <b>CI/CD pipelines</b>, and enforced via <b>quality gates</b>. 
 Highlight that coverage ensures <b>confidence in testing</b> but does not guarantee bug-free code.
 </p>
-
-<hr/>
-
-<h1>Log Aggregation Strategies</h1>
+</details>
+<details>
+  <summary>Log Aggregation Strategies</summary>
+  
 
 <h2>1. Why Log Aggregation?</h2>
 <p>
@@ -4733,10 +4735,10 @@ This improves <b>observability, debugging, and incident response</b>.
 Highlight tools like <b>ELK, Fluentd, Loki, and cloud-native solutions</b>, and explain how correlation IDs and structured logging 
 enable <b>end-to-end tracing</b> in microservices.
 </p>
-
-<hr/>
-
-<h1>Implementing Alerting in Grafana</h1>
+</details>
+<details>
+  <summary>Implementing Alerting in Grafana</summary>
+  
 
 <h2>1. What Is Grafana Alerting?</h2>
 <p>
@@ -4790,10 +4792,10 @@ Alert Rule:
 and monitoring alert states</b>. Highlight integration with <b>Prometheus, Loki, and cloud-native sources</b>, 
 and explain how notification policies prevent alert overload while ensuring the right team gets the right alert.
 </p>
-
-<hr/>
-
-<h1>Optimizing Slow SQL Queries</h1>
+</details>
+<details>
+  <summary>Optimizing Slow SQL Queries</summary>
+  
 
 <h2>1. Why Queries Become Slow?</h2>
 <p>
@@ -4863,10 +4865,10 @@ WHERE OrderDate >= '2026-01-01' AND OrderDate < '2027-01-01';
 execution plan analysis, and database tuning</b>. Highlight practical tools like <b>EXPLAIN plans, 
 SQL Profiler, and Query Store</b> to show hands-on experience.
 </p>
-
-<hr/>
-
-<h1>Indexing Strategies in SQL Server</h1>
+</details>
+<details>
+  <summary>Indexing Strategies in SQL Server</summary>
+  
 
 <h2>1. Why Indexing Matters?</h2>
 <p>
@@ -4941,10 +4943,10 @@ WHERE Status = 'Active';
 Highlight the importance of <b>covering indexes, execution plan analysis, and maintenance</b> 
 to balance performance with storage and write overhead.
 </p>
-
-<hr/>
-
-<h1>Schema Design for Multi-Tenant Applications</h1>
+</details>
+<details>
+  <summary>Schema Design for Multi-Tenant Applications</summary>
+  
 
 <h2>1. What Is Multi-Tenancy?</h2>
 <p>
@@ -5017,10 +5019,10 @@ ON Orders (TenantId, CustomerId);
 Highlight techniques like <b>row-level security, composite indexing, and partitioning</b> 
 to show practical experience in designing multi-tenant schemas.
 </p>
-
-<hr/>
-
-<h1>Relational vs NoSQL Databases: Trade-offs</h1>
+</details>
+<details>
+  <summary>Relational vs NoSQL Databases: Trade-offs</summary>
+  
 
 <h2>1. Relational Databases (RDBMS)</h2>
 <ul>
@@ -5085,10 +5087,10 @@ to show practical experience in designing multi-tenant schemas.
 while <b>NoSQL databases</b excel in scalability, flexibility, and handling unstructured or semi-structured data. 
 Highlight trade-offs between <b>ACID vs BASE</b, <b>vertical vs horizontal scaling</b>, and <b>schema rigidity vs flexibility</b>.
 </p>
-
-<hr/>
-
-<h1>Handling Deadlocks in SQL Server</h1>
+</details>
+<details>
+  <summary>Handling Deadlocks in SQL Server</summary>
+  
 
 <h2>1. What Is a Deadlock?</h2>
 <p>
@@ -5160,10 +5162,10 @@ for (int i = 0; i < retryCount; i++)
 index optimization, and isolation level tuning</b>. Highlight practical tools like 
 <b>Extended Events</b> and <b>deadlock graphs</b> to show hands-on experience in diagnosing and resolving deadlocks.
 </p>
-
-<hr/>
-
-<h1>Normalization vs Denormalization in Databases</h1>
+</details>
+<details>
+  <summary>Normalization vs Denormalization in Databases</summary>
+  
 
 <h2>1. Normalization</h2>
 <p>
@@ -5245,10 +5247,10 @@ query performance, especially for read-heavy systems.
 data integrity is critical, while <b>denormalization</b> is better for analytical systems where 
 query speed matters more than redundancy. Highlight trade-offs between <b>consistency vs performance</b>.
 </p>
-
-<hr/>
-
-<h1>Implementing Partitioning in SQL Server</h1>
+</details>
+<details>
+  <summary>Implementing Partitioning in SQL Server</summary>
+  
 
 <h2>1. What Is Partitioning?</h2>
 <p>
@@ -5331,90 +5333,10 @@ CREATE TABLE Orders (
 Highlight benefits like <b>query optimization, manageability, and scalability</b>, and explain how <b>partition elimination</b> 
 reduces workload by scanning only relevant data.
 </p>
-
-<hr/>
-
-<h1>Designing Stored Procedures for Performance</h1>
-
-<h2>1. Why Stored Procedures?</h2>
-<p>
-Stored procedures encapsulate SQL logic inside the database, improving <b>performance, security, and maintainability</b>. 
-Well-designed procedures reduce <b>network round-trips</b>, leverage <b>execution plan caching</b>, and enforce <b>consistent business rules</b>.
-</p>
-
-<h2>2. Performance-Oriented Design Strategies</h2>
-
-<h3>📑 Efficient Query Design</h3>
-<ul>
-  <li>Use <b>SELECT only required columns</b> (avoid <code>SELECT *</code>).</li>
-  <li>Apply <b>filters early</b> to reduce scanned rows.</li>
-  <li>Prefer <b>JOINs</b> over correlated subqueries.</li>
-</ul>
-
-<h3>🔄 Parameterization</h3>
-<ul>
-  <li>Use <b>parameters</b> instead of dynamic SQL to enable plan reuse.</li>
-  <li>Beware of <b>parameter sniffing</b>; use <code>OPTION (RECOMPILE)</code> or local variables if needed.</li>
-</ul>
-
-<h3>📊 Index & Execution Plan Awareness</h3>
-<ul>
-  <li>Design queries to leverage <b>clustered/non-clustered indexes</b>.</li>
-  <li>Analyze execution plans to detect <b>table scans</b> or <b>missing indexes</b>.</li>
-  <li>Use <b>covering indexes</b> for frequently accessed queries.</li>
-</ul>
-
-<h3>⚙️ Transaction Management</h3>
-<ul>
-  <li>Keep transactions <b>short</b> to reduce lock contention.</li>
-  <li>Access resources in a <b>consistent order</b> to avoid deadlocks.</li>
-  <li>Use appropriate <b>isolation levels</b> (e.g., READ COMMITTED SNAPSHOT).</li>
-</ul>
-
-<h3>📉 Reduce Overhead</h3>
-<ul>
-  <li>Avoid unnecessary <b>cursors</b>; use set-based operations.</li>
-  <li>Minimize <b>temp table usage</b> unless required for performance.</li>
-  <li>Return only necessary result sets.</li>
-</ul>
-
-<h2>3. Example Stored Procedure</h2>
-<pre><code>
-CREATE PROCEDURE usp_GetActiveOrders
-    @TenantId INT,
-    @StartDate DATE,
-    @EndDate DATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    SELECT OrderId, CustomerId, OrderDate, Amount
-    FROM Orders WITH (NOLOCK)
-    WHERE TenantId = @TenantId
-      AND OrderDate BETWEEN @StartDate AND @EndDate
-      AND Status = 'Active'
-    ORDER BY OrderDate;
-END;
-</code></pre>
-
-<h2>4. Best Practices</h2>
-<ul>
-  <li>Use <b>SET NOCOUNT ON</b> to reduce network traffic.</li>
-  <li>Implement <b>error handling</b> with <code>TRY...CATCH</code>.</li>
-  <li>Document parameters and expected behavior.</li>
-  <li>Regularly review <b>Query Store</b> and <b>DMVs</b> for performance insights.</li>
-</ul>
-
-<h2>5. Interview Insight</h2>
-<p>
-👉 In interviews, emphasize that performance-focused stored procedures rely on <b>efficient queries, parameterization, 
-index awareness, and transaction management</b>. Highlight techniques like <b>execution plan analysis, parameter sniffing mitigation, 
-and NOCOUNT usage</b> to demonstrate practical expertise.
-</p>
-
-<hr/>
-
-<h1>Designing Stored Procedures for Performance</h1>
+</details>
+<details>
+  <summary>Designing Stored Procedures for Performance</summary>
+  
 
 <h2>1. Why Stored Procedures?</h2>
 <p>
@@ -5491,10 +5413,90 @@ END;
 index awareness, and transaction management</b>. Highlight techniques like <b>execution plan analysis, parameter sniffing mitigation, 
 and NOCOUNT usage</b> to demonstrate practical expertise.
 </p>
+</details>
+<details>
+  <summary>Designing Stored Procedures for Performance</summary>
+  
 
-<hr/>
+<h2>1. Why Stored Procedures?</h2>
+<p>
+Stored procedures encapsulate SQL logic inside the database, improving <b>performance, security, and maintainability</b>. 
+Well-designed procedures reduce <b>network round-trips</b>, leverage <b>execution plan caching</b>, and enforce <b>consistent business rules</b>.
+</p>
 
-<h1>Transaction Isolation Levels</h1>
+<h2>2. Performance-Oriented Design Strategies</h2>
+
+<h3>📑 Efficient Query Design</h3>
+<ul>
+  <li>Use <b>SELECT only required columns</b> (avoid <code>SELECT *</code>).</li>
+  <li>Apply <b>filters early</b> to reduce scanned rows.</li>
+  <li>Prefer <b>JOINs</b> over correlated subqueries.</li>
+</ul>
+
+<h3>🔄 Parameterization</h3>
+<ul>
+  <li>Use <b>parameters</b> instead of dynamic SQL to enable plan reuse.</li>
+  <li>Beware of <b>parameter sniffing</b>; use <code>OPTION (RECOMPILE)</code> or local variables if needed.</li>
+</ul>
+
+<h3>📊 Index & Execution Plan Awareness</h3>
+<ul>
+  <li>Design queries to leverage <b>clustered/non-clustered indexes</b>.</li>
+  <li>Analyze execution plans to detect <b>table scans</b> or <b>missing indexes</b>.</li>
+  <li>Use <b>covering indexes</b> for frequently accessed queries.</li>
+</ul>
+
+<h3>⚙️ Transaction Management</h3>
+<ul>
+  <li>Keep transactions <b>short</b> to reduce lock contention.</li>
+  <li>Access resources in a <b>consistent order</b> to avoid deadlocks.</li>
+  <li>Use appropriate <b>isolation levels</b> (e.g., READ COMMITTED SNAPSHOT).</li>
+</ul>
+
+<h3>📉 Reduce Overhead</h3>
+<ul>
+  <li>Avoid unnecessary <b>cursors</b>; use set-based operations.</li>
+  <li>Minimize <b>temp table usage</b> unless required for performance.</li>
+  <li>Return only necessary result sets.</li>
+</ul>
+
+<h2>3. Example Stored Procedure</h2>
+<pre><code>
+CREATE PROCEDURE usp_GetActiveOrders
+    @TenantId INT,
+    @StartDate DATE,
+    @EndDate DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT OrderId, CustomerId, OrderDate, Amount
+    FROM Orders WITH (NOLOCK)
+    WHERE TenantId = @TenantId
+      AND OrderDate BETWEEN @StartDate AND @EndDate
+      AND Status = 'Active'
+    ORDER BY OrderDate;
+END;
+</code></pre>
+
+<h2>4. Best Practices</h2>
+<ul>
+  <li>Use <b>SET NOCOUNT ON</b> to reduce network traffic.</li>
+  <li>Implement <b>error handling</b> with <code>TRY...CATCH</code>.</li>
+  <li>Document parameters and expected behavior.</li>
+  <li>Regularly review <b>Query Store</b> and <b>DMVs</b> for performance insights.</li>
+</ul>
+
+<h2>5. Interview Insight</h2>
+<p>
+👉 In interviews, emphasize that performance-focused stored procedures rely on <b>efficient queries, parameterization, 
+index awareness, and transaction management</b>. Highlight techniques like <b>execution plan analysis, parameter sniffing mitigation, 
+and NOCOUNT usage</b> to demonstrate practical expertise.
+</p>
+</details>
+<details>
+  <summary>Transaction Isolation Levels</summary>
+  
 
 <h2>1. What Are Isolation Levels?</h2>
 <p>
@@ -5560,10 +5562,10 @@ They balance <b>data consistency</b> with <b>system performance</b> by controlli
   <li>Use <b>SERIALIZABLE</b> only when strict correctness is mandatory.</li>
   <li>Avoid <b>READ UNCOMMITTED</b> unless stale/dirty data is acceptable.</li>
 </ul>
-
-<hr/>
-
-<h1>Implementing Optimistic Concurrency in EF Core</h1>
+</details>
+<details>
+  <summary>Implementing Optimistic Concurrency in EF Core</summary>
+  
 
 <h2>1. What Is Optimistic Concurrency?</h2>
 <p>
@@ -5643,10 +5645,10 @@ catch (DbUpdateConcurrencyException ex)
   <li>Use optimistic concurrency for most scenarios; 
       fall back to pessimistic locking only for critical workflows.</li>
 </ul>
-
-<hr/>
-
-<h1>Designing Audit Logging</h1>
+</details>
+<details>
+  <summary>Designing Audit Logging</summary>
+  
 
 <h2>1. What Is Audit Logging?</h2>
 <p>
@@ -5733,10 +5735,10 @@ mention <b>structured logs with correlation IDs</b>, and show awareness of <b>re
 Demonstrating knowledge of <b>SIEM integration</b> and <b>tamper-proof storage</b> 
 will showcase practical, real-world expertise.
 </p>
-
-<hr/>
-
-<h1>Designing Database Sharding</h1>
+</details>
+<details>
+  <summary>Designing Database Sharding</summary>
+  
 
 <h2>1. What Is Sharding?</h2>
 <p>
@@ -5815,10 +5817,10 @@ mention <b>cross-shard query handling</b>, and show awareness of <b>resharding c
 Demonstrating knowledge of <b>tools like Vitess, Citus, or Azure Elastic Database</b> 
 will showcase practical expertise in real-world sharding implementations.
 </p>
-
-<hr/>
-
-<h1>Implementing Caching with SQL Server</h1>
+</details>
+<details>
+  <summary>Implementing Caching with SQL Server</summary>
+  
 
 <h2>1. Why Cache with SQL Server?</h2>
 <p>
@@ -5910,10 +5912,10 @@ and show awareness of <b>SQL Server features like In-Memory OLTP and materialize
 Demonstrating knowledge of <b>Redis integration with .NET</b> will showcase practical expertise 
 in real-world caching implementations.
 </p>
-
-<hr/>
-
-<h1>Mocking Dependencies in Unit Tests</h1>
+</details>
+<details>
+  <summary>Mocking Dependencies in Unit Tests</summary>
+  
 
 <h2>1. Why Mock Dependencies?</h2>
 <p>
@@ -5988,10 +5990,10 @@ including <b>Setup()</b> for return values and <b>Verify()</b> for interaction c
 Demonstrating awareness of <b>trade-offs</b> (e.g., over-mocking leading to brittle tests) 
 will showcase maturity in designing effective unit tests.
 </p>
-
-<hr/>
-
-<h1>Difference Between Unit Tests and Integration Tests</h1>
+</details>
+<details>
+  <summary>Difference Between Unit Tests and Integration Tests</summary>
+  
 
 <h2>1. Unit Tests</h2>
 <p>
@@ -6072,10 +6074,10 @@ for integration tests and <b>Moq</b> for unit tests. Demonstrating awareness of
 the <b>testing pyramid</b> (unit tests at the base, integration tests above) 
 shows maturity in designing a balanced test strategy.
 </p>
-
-<hr/>
-
-<h1>Ensuring Test Coverage in CI/CD</h1>
+</details>
+<details>
+  <summary>Ensuring Test Coverage in CI/CD</summary>
+  
 
 <h2>1. What Is Test Coverage?</h2>
 <p>
@@ -6130,10 +6132,10 @@ Mention strategies like <b>quality gates, thresholds, and build failure policies
 Demonstrating awareness of <b>reporting dashboards</b> and <b>mutation testing</b> will showcase maturity in designing 
 robust CI/CD pipelines.
 </p>
-
-<hr/>
-
-<h1>Role of TDD in Agile</h1>
+</details>
+<details>
+  <summary>Role of TDD in Agile</summary>
+  
 
 <h2>1. What Is TDD?</h2>
 <p>
@@ -6182,10 +6184,10 @@ Mention practical experience with <b>xUnit, NUnit, or Moq</b> in TDD workflows, 
 deliver <b>high-quality, adaptable software</b> in short Agile sprints. 
 Demonstrating awareness of both <b>benefits and challenges</b> shows maturity in applying TDD in real-world Agile environments.
 </p>
-
-<hr/>
-
-<h1>Testing Async Methods in .NET</h1>
+</details>
+<details>
+  <summary>Testing Async Methods in .NET</summary>
+  
 
 <h2>1. Why Async Testing Matters?</h2>
 <p>
@@ -6261,10 +6263,10 @@ for mocking dependencies. Demonstrating awareness of pitfalls like <b>async void
 and the importance of <b>timeouts</b> will showcase practical expertise in testing 
 asynchronous code effectively.
 </p>
-
-<hr/>
-
-<h1>Designing Test Data Builders</h1>
+</details>
+<details>
+  <summary>Designing Test Data Builders</summary>
+  
 
 <h2>1. What Are Test Data Builders?</h2>
 <p>
@@ -6356,10 +6358,10 @@ fit into a broader <b>test strategy</b> alongside mocks and fakes.
 Demonstrating awareness of <b>best practices</b> (default values, fluent APIs, separation from production code) 
 will showcase maturity in designing effective test infrastructure.
 </p>
-
-<hr/>
-
-<h1>Implementing BDD (Behavior-Driven Development)</h1>
+</details>
+<details>
+  <summary>Implementing BDD (Behavior-Driven Development)</summary>
+  
 
 <h2>1. What Is BDD?</h2>
 <p>
@@ -6442,10 +6444,10 @@ and ensures features are built according to <b>user expectations</b>.
 Demonstrating awareness of both <b>benefits and challenges</b> (e.g., scenario maintenance, 
 avoiding overly technical steps) shows maturity in applying BDD in Agile teams.
 </p>
-
-<hr/>
-
-<h1>Mocking vs Stubbing</h1>
+</details>
+<details>
+  <summary>Mocking vs Stubbing</summary>
+  
 
 <h2>1. What Are Test Doubles?</h2>
 <p>
@@ -6519,10 +6521,10 @@ and <code>Verify()</code> for mocking.
 Demonstrating awareness of <b>trade-offs</b> (e.g., over-mocking leading to fragile tests) 
 shows maturity in designing effective test strategies.
 </p>
-
-<hr/>
-
-<h1>Testing Microservices Interactions</h1>
+</details>
+<details>
+  <summary>Testing Microservices Interactions</summary>
+  
 
 <h2>1. Why Test Microservices Interactions?</h2>
 <p>
@@ -6613,10 +6615,10 @@ Demonstrating awareness of <b>trade-offs</b> (e.g., cost of full end-to-end test
 lightweight contract tests) shows maturity in designing a robust microservices 
 testing strategy.
 </p>
-
-<hr/>
-
-<h1>Designing Load Tests</h1>
+</details>
+<details>
+  <summary>Designing Load Tests</summary>
+  
 
 <h2>1. What Is Load Testing?</h2>
 <p>
@@ -6677,10 +6679,10 @@ and explain how you integrate load tests into <b>CI/CD pipelines</b>.
 Demonstrating awareness of <b>bottleneck analysis</b> and <b>scalability strategies</b> 
 will showcase maturity in designing robust performance testing frameworks.
 </p>
-
-<hr/>
-
-<h1>Designing a High-Availability System</h1>
+</details>
+<details>
+  <summary>Designing a High-Availability System</summary>
+  
 
 <h2>1. What Is High Availability?</h2>
 <p>
@@ -6732,10 +6734,10 @@ and automation ensure uptime. Demonstrating awareness of <b>SLA targets, RTO/RPO
 and cloud-native HA services</b> (like Azure Front Door, AWS Route 53, or GCP Load Balancer) 
 will showcase practical expertise in designing robust high-availability systems.
 </p>
-
-<hr/>
-
-<h1>CAP Theorem and Its Relevance</h1>
+</details>
+<details>
+  <summary>CAP Theorem and Its Relevance</summary>
+  
 
 <h2>1. What Is CAP Theorem?</h2>
 <p>
@@ -6780,10 +6782,10 @@ Mention practical examples like <b>Cassandra (AP)</b> vs <b>MongoDB (CP)</b>, an
 drive the choice. Demonstrating awareness of <b>real-world implications</b> (e.g., financial transactions vs social media feeds) 
 shows maturity in system design thinking.
 </p>
-
-<hr/>
-
-<h1>Handling Distributed Transactions</h1>
+</details>
+<details>
+  <summary>Handling Distributed Transactions</summary>
+  
 
 <h2>1. What Are Distributed Transactions?</h2>
 <p>
@@ -6858,10 +6860,10 @@ Highlight knowledge of <b>2PC vs Saga</b>, explain why Saga is preferred in micr
 <b>idempotency, compensating transactions, and eventual consistency</b>. Demonstrating awareness of <b>tools and frameworks</b> 
 (e.g., Dapr workflows, Orkes, Kafka) shows practical expertise in designing resilient distributed systems.
 </p>
-
-<hr/>
-
-<h1>Designing for Resiliency in Cloud Applications</h1>
+</details>
+<details>
+  <summary>Designing for Resiliency in Cloud Applications</summary>
+  
 
 <h2>1. What Is Resiliency?</h2>
 <p>
@@ -6926,10 +6928,10 @@ cloud-native strategies such as <b>multi-region deployments, auto-scaling, and c
 Demonstrating awareness of <b>trade-offs</b> (e.g., cost vs resiliency) shows maturity in designing 
 robust cloud applications.
 </p>
-
-<hr/>
-
-<h1>CQRS and Event Sourcing</h1>
+</details>
+<details>
+  <summary>CQRS and Event Sourcing</summary>
+  
 
 <h2>1. CQRS (Command Query Responsibility Segregation)</h2>
 <p>
@@ -7025,10 +7027,10 @@ events are stored, and queries build projections. Mention practical experience w
 projections, and eventual consistency</b>. Demonstrating awareness of <b>trade-offs</b> (added complexity vs scalability and auditability) 
 shows maturity in architectural decision-making.
 </p>
-
-<hr/>
-
-<h1>Designing a Caching Strategy</h1>
+</details>
+<details>
+  <summary>Designing a Caching Strategy</summary>
+  
 
 <h2>1. Why Caching?</h2>
 <p>
@@ -7084,10 +7086,10 @@ Highlight trade-offs between <b>in-memory vs distributed caching</b>, explain <b
 and mention practical tools like <b>Redis, CDN, and HTTP caching headers</b>. 
 Demonstrating awareness of <b>performance vs freshness trade-offs</b> shows maturity in designing robust caching strategies.
 </p>
-
-<hr/>
-
-<h1>Implementing Message Queues</h1>
+</details>
+<details>
+  <summary>Implementing Message Queues</summary>
+  
 
 <h2>1. What Are Message Queues?</h2>
 <p>
@@ -7154,10 +7156,10 @@ Highlight practical experience with <b>Azure Service Bus, RabbitMQ, or Kafka</b>
 <b>retries, dead-letter queues, and idempotency</b>. Demonstrating awareness of <b>trade-offs</b> 
 (e.g., throughput vs ordering, durability vs latency) shows maturity in designing robust messaging solutions.
 </p>
-
-<hr/>
-
-<h1>Designing for Scalability</h1>
+</details>
+<details>
+  <summary>Designing for Scalability</summary>
+  
 
 <h2>1. What Is Scalability?</h2>
 <p>
@@ -7225,10 +7227,10 @@ and database sharding</b>. Mention trade-offs between <b>vertical vs horizontal 
 observability and caching play a critical role. Demonstrating awareness of <b>cost vs performance trade-offs</b> 
 shows maturity in designing scalable systems.
 </p>
-
-<hr/>
-
-<h1>Handling Eventual Consistency</h1>
+</details>
+<details>
+  <summary>Handling Eventual Consistency</summary>
+  
 
 <h2>1. What Is Eventual Consistency?</h2>
 <p>
@@ -7308,10 +7310,10 @@ Mention practical experience with <b>Kafka, RabbitMQ, or Azure Service Bus</b>, 
 help manage stale data. Demonstrating awareness of <b>business-driven trade-offs</b> (e.g., financial systems need strong consistency, 
 social feeds can tolerate eventual consistency) shows maturity in distributed system design.
 </p>
-
-<hr/>
-
-<h1>Designing a Logging Architecture</h1>
+</details>
+<details>
+  <summary>Designing a Logging Architecture</summary>
+  
 
 <h2>1. Purpose of Logging Architecture</h2>
 <p>
@@ -7375,6 +7377,6 @@ Highlight practical experience with <b>ELK stack, cloud-native logging (Azure Mo
 Mention <b>correlation IDs, log levels, and security practices</b> as critical design elements. 
 Demonstrating awareness of <b>trade-offs</b> (e.g., storage cost vs retention, verbosity vs performance) shows maturity in designing robust logging systems.
 </p>
-
+</details>
 </body>
 </html>
