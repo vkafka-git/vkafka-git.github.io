@@ -24,14 +24,39 @@
         th, td { border: 1px solid #dfe2e5; padding: 12px; text-align: left; }
         th { background-color: #f6f8fa; }
         tr:nth-child(even) { background-color: #f8f9fa; }
+		summary {
+		  font-size: 1.6em;       /* make it big like <h1> */
+		  font-weight: bold;
+		  color: #0078d4;         /* same blue you used for h1 */
+		  cursor: pointer;
+		  display: flex;          /* align icon + text horizontally */
+		  align-items: center;    /* vertical centering */
+		  margin-bottom: 10px;
+		}
+
+		summary::-webkit-details-marker {
+		  display: none; /* hide default arrow */
+		}
+
+		details summary::before {
+		  content: "➕";
+		  color: #0078d4;
+		  font-weight: bold;
+		  margin-right: 8px;
+		}
+
+		details[open] summary::before {
+		  content: "➖";
+		  color: #0078d4;
+		}
     </style>
 </head>
 <body>
 
-<hr/>
 
-<h1>Async/Await Internals in C#</h1>
-
+<details>
+<summary>Async/Await Internals in C#</summary>
+<p>
 <h2>1. What Async/Await Does</h2>
 <p>
 <code>async/await</code> is syntactic sugar that makes asynchronous code look synchronous. Internally, the C# compiler transforms an <code>async</code> method into a <b>state machine</b>. When you <code>await</code> a <code>Task</code>:
@@ -89,10 +114,14 @@ Here, both service calls start concurrently. <code>await Task.WhenAll</code> fre
 <p>
 “<code>async/await</code> in C# compiles into a state machine that frees threads while waiting for tasks. When you <code>await</code> a task, the method returns control to the caller until the task completes, then resumes execution. For example, in a Web API, I can call <code>GetDetailsAsync</code> and <code>GetPriceAsync</code> concurrently, then <code>await Task.WhenAll</code>. This lets the server handle thousands of requests without blocking threads, improving scalability and responsiveness.”
 </p>
+</p>
+</details>
 
-<hr/>
+<details>
+<summary>EF Core Concurrency Handling</summary>
+<p>
 
-<h1>EF Core Concurrency Handling</h1>
+
 
 <h2>1. Optimistic Concurrency (Default Approach)</h2>
 <p>
@@ -150,10 +179,12 @@ EF Core does not provide built-in support for pessimistic concurrency. If requir
 <p>
 “EF Core uses optimistic concurrency by default. We configure a <code>RowVersion</code> column as a concurrency token, so updates succeed only if the row hasn’t changed since it was read. If a conflict occurs, EF Core throws <code>DbUpdateConcurrencyException</code>, and we handle it by retrying, discarding, or merging changes depending on business rules. For critical workflows, we sometimes fall back to database-level locking via raw SQL.”
 </p>
+</p>
+</details>
 
-<hr/>
-
-<h1>RowVersion in EF Core</h1>
+<details>
+<summary>RowVersion in EF Core</summary>
+<p>
 
 <h2>1. Database-Generated Value</h2>
 <p>
@@ -192,6 +223,9 @@ public class Person
 <p>
 “We use a <code>RowVersion</code> column as a concurrency token. EF Core includes it in the <code>WHERE</code> clause during updates. If the value has changed, EF Core throws a <code>DbUpdateConcurrencyException</code>. The database generates and updates the <code>RowVersion</code> automatically, and EF Core refreshes the property after each save. This way, we don’t rely on the client to supply concurrency values.”
 </p>
+</p>
+</details>
+
 
 <hr/>
 <h1>Entity Framework Core: Loading Strategies</h1>
