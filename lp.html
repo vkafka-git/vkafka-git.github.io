@@ -1,0 +1,109 @@
+<hr/>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Architecture Cheat Sheet</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
+    h2 { color: #1f4e79; }
+    ul { margin: 10px 0; }
+    li { margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <h2>Architecture Cheat Sheet (Updated)</h2>
+  <ol>
+    <li><strong>High-Level Style</strong>
+      <ul>
+        <li>DDD microservices (Tax, Immigration, Social Security, Docs)</li>
+        <li>Database-per-service</li>
+        <li>Hexagonal/Clean Architecture</li>
+      </ul>
+    </li>
+    <li><strong>API Gateway</strong>
+      <ul>
+        <li>YARP API Gateway</li>
+        <li>Dynamic routing, geo-location, rate limiting</li>
+        <li>BFF with Next.js API routes</li>
+      </ul>
+    </li>
+    <li><strong>Frontend</strong>
+      <ul>
+        <li>Next.js + TypeScript + Tailwind + Zustand</li>
+        <li>Hybrid rendering (SSG/ISR + SSR/CSR)</li>
+        <li>Micro-frontends by domain</li>
+      </ul>
+    </li>
+    <li><strong>Data & Integration</strong>
+      <ul>
+        <li>Polyglot persistence (MongoDB, SQL/Postgres)</li>
+        <li>Redis caching</li>
+        <li>Event-driven messaging (MassTransit, RabbitMQ, Service Bus)</li>
+        <li><strong>Choreography (Event-Driven):</strong> services react to events and publish new ones, no central orchestrator</li>
+      </ul>
+    </li>
+    <li><strong>CQRS</strong>
+      <ul>
+        <li>Command side → SQL Server (writes)</li>
+        <li>Query side → Cosmos DB (reads)</li>
+        <li>Benefits: scalability, separation, optimized workloads</li>
+      </ul>
+    </li>
+    <li><strong>Mediator Pattern</strong>
+      <ul>
+        <li>Application layer dispatch (MediatR)</li>
+        <li>Controllers → _mediator.Send(command/query)</li>
+        <li>Pipeline behaviors: validation, logging, authorization</li>
+      </ul>
+    </li>
+    <li><strong>Azure Durable Functions</strong>
+      <ul>
+        <li>Orchestration of long workflows</li>
+        <li>Fan-out/fan-in compliance checks</li>
+        <li>Human approvals</li>
+        <li>Resilience via checkpointing</li>
+      </ul>
+    </li>
+    <li><strong>Cross-Cutting Concerns</strong>
+      <ul>
+        <li>Security: Azure AD, JWT, Key Vault, Zero-Trust AKS</li>
+        <li>Resilience: Polly (retry, circuit breaker, bulkhead isolation)</li>
+        <li>Observability: App Insights, Serilog, Elastic/Kibana, Grafana</li>
+        <li><strong>Scalability of Pods:</strong> Elastic scaling via AKS HPA, Cluster Autoscaler, stateless design for horizontal scaling</li>
+        <li><strong>Code Quality Enforcement:</strong> StyleCop (coding standards), Roslyn analyzers (custom/static rules), SonarQube (quality gates)</li>
+        <li><strong>Redis Caching:</strong> Distributed cache for performance optimization</li>
+        <li><strong>Content Delivery Network (CDN):</strong> Azure CDN/Front Door for global edge caching of static assets and API responses</li>
+        <li><strong>API Rate Limiting & Throttling:</strong> Protects backend services from overload at API Gateway</li>
+        <li><strong>Secrets Management:</strong> Azure Key Vault for credentials and certificates</li>
+        <li><strong>Logging & Tracing:</strong> Distributed tracing with OpenTelemetry, correlation IDs across microservices</li>
+      </ul>
+    </li>
+    <li><strong>DevOps & Cloud</strong>
+      <ul>
+        <li>IaC: Terraform/Bicep</li>
+        <li>GitOps: ArgoCD/Helm for declarative deployments</li>
+        <li>.NET 8 Docker images on AKS</li>
+        <li>CI/CD pipelines: automated builds, tests, scans, SonarQube quality gates</li>
+        <li>Blue-Green / Canary Deployments: zero-downtime release strategies</li>
+        <li>Monitoring & Alerting: Azure Monitor, Grafana dashboards, alerts on latency/errors</li>
+        <li>Autoscaling Policies: HPA for pods, Cluster Autoscaler for nodes, VPA for resource tuning</li>
+        <li>Global Traffic Management: Azure Traffic Manager / Front Door for multi-region routing</li>
+      </ul>
+    </li>
+    <li><strong>Globalization</strong>
+      <ul>
+        <li>Multi-region Azure deployment</li>
+        <li>Multi-language rendering</li>
+        <li>Country-specific tax formats</li>
+      </ul>
+    </li>
+    <li><strong>Retrospective</strong>
+      <ul>
+        <li>Regulatory complexity handled via microservice isolation</li>
+        <li>Data sovereignty enforced with database-per-service</li>
+        <li>Contract governance via consumer-driven contract testing</li>
+      </ul>
+    </li>
+  </ol>
+</body>
+</html>
