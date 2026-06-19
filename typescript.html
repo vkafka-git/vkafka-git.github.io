@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TypeScript 2-Day Crash Guide</title>
+<style>
+  :root{
+    --paper:#F6F7FA;
+    --panel:#FFFFFF;
+    --ink:#1B1F27;
+    --ink-soft:#5B6472;
+    --rule:#E2E5EB;
+    --blue:#2F6FED;
+    --blue-soft:#EAF1FF;
+    --amber:#E2A33D;
+    --amber-soft:#FBF1DD;
+    --green:#2E9E6D;
+    --green-soft:#E8F6EF;
+    --code-bg:#11151C;
+    --code-ink:#D6DEEB;
+    --code-key:#7DB0FF;
+    --code-str:#F2C572;
+    --mono:'JetBrains Mono','SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+
+  html{scroll-behavior:smooth;}
+
+  body{
+    margin:0;
+    font-family:var(--sans);
+    color:var(--ink);
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--rule) 1px, transparent 1px),
+      linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size:48px 48px;
+    background-attachment:fixed;
+  }
+
+  a{color:var(--blue); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  .layout{
+    display:grid;
+    grid-template-columns:260px minmax(0,1fr);
+    max-width:1180px;
+    margin:0 auto;
+    min-height:100vh;
+  }
+
+  /* ---------- Sidebar ---------- */
+  nav.toc{
+    position:sticky;
+    top:0;
+    align-self:start;
+    height:100vh;
+    overflow-y:auto;
+    padding:28px 18px 28px 28px;
+    border-right:1px solid var(--rule);
+    background:rgba(255,255,255,0.7);
+    backdrop-filter:blur(4px);
+  }
+  .toc-brand{
+    font-family:var(--mono);
+    font-size:0.72rem;
+    letter-spacing:0.12em;
+    color:var(--blue);
+    text-transform:uppercase;
+    margin-bottom:4px;
+  }
+  .toc-title{
+    font-size:1.05rem;
+    font-weight:700;
+    margin:0 0 22px;
+    line-height:1.3;
+  }
+  .toc-group{margin-bottom:22px;}
+  .toc-group-label{
+    font-family:var(--mono);
+    font-size:0.7rem;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .toc-group-label .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--blue);
+    flex:none;
+  }
+  .toc-group.day2 .dot{background:var(--green);}
+  .toc-group ul{
+    list-style:none;
+    margin:0;
+    padding:0;
+    border-left:1px solid var(--rule);
+  }
+  .toc-group li a{
+    display:block;
+    font-size:0.84rem;
+    color:var(--ink-soft);
+    padding:4px 0 4px 14px;
+    border-left:2px solid transparent;
+    margin-left:-1px;
+  }
+  .toc-group li a:hover{
+    color:var(--ink);
+    text-decoration:none;
+    border-left-color:var(--blue);
+    background:var(--blue-soft);
+  }
+  .toc-group.day2 li a:hover{
+    border-left-color:var(--green);
+    background:var(--green-soft);
+  }
+  .toc-footer{
+    margin-top:30px;
+    padding-top:16px;
+    border-top:1px solid var(--rule);
+    font-size:0.72rem;
+    color:var(--ink-soft);
+    font-family:var(--mono);
+    line-height:1.6;
+  }
+
+  /* ---------- Main column ---------- */
+  main{
+    padding:48px 56px 80px;
+    min-width:0;
+  }
+
+  header.hero{
+    margin-bottom:44px;
+  }
+  .hero-eyebrow{
+    font-family:var(--mono);
+    font-size:0.75rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--blue);
+    margin-bottom:10px;
+  }
+  h1{
+    font-size:2.3rem;
+    line-height:1.15;
+    margin:0 0 14px;
+    letter-spacing:-0.01em;
+  }
+  h1 .accent{color:var(--blue);}
+  .hero-sub{
+    color:var(--ink-soft);
+    font-size:1.02rem;
+    max-width:640px;
+    margin:0 0 20px;
+  }
+  .hero-meta{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .pill{
+    font-family:var(--mono);
+    font-size:0.74rem;
+    padding:5px 11px;
+    border-radius:999px;
+    background:var(--blue-soft);
+    color:var(--blue);
+    border:1px solid #cfe0ff;
+  }
+  .pill.green{background:var(--green-soft); color:var(--green); border-color:#c7e9da;}
+  .pill.amber{background:var(--amber-soft); color:#9c6a14; border-color:#f0ddb0;}
+
+  /* ---------- Day section banners ---------- */
+  section.day{
+    margin-bottom:54px;
+  }
+  .day-banner{
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    padding:16px 22px;
+    border-radius:10px;
+    margin-bottom:28px;
+    border:1px solid var(--rule);
+  }
+  .day-banner .num{
+    font-family:var(--mono);
+    font-size:1.6rem;
+    font-weight:700;
+  }
+  .day-banner .label{
+    font-size:1.15rem;
+    font-weight:700;
+  }
+  .day-banner .sub{
+    font-size:0.85rem;
+    color:var(--ink-soft);
+    margin-left:auto;
+    font-family:var(--mono);
+  }
+  section.day1 .day-banner{background:var(--blue-soft); border-color:#cfe0ff;}
+  section.day1 .day-banner .num{color:var(--blue);}
+  section.day2 .day-banner{background:var(--green-soft); border-color:#c7e9da;}
+  section.day2 .day-banner .num{color:var(--green);}
+
+  /* ---------- Topic cards ---------- */
+  .topic{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:12px;
+    padding:22px 26px 24px;
+    margin-bottom:18px;
+    box-shadow:0 1px 0 rgba(20,24,33,0.02);
+    scroll-margin-top:20px;
+  }
+  .topic-head{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:4px;
+  }
+  .topic-tag{
+    font-family:var(--mono);
+    font-size:0.72rem;
+    color:#fff;
+    background:var(--blue);
+    border-radius:6px;
+    padding:3px 8px;
+    flex:none;
+  }
+  section.day2 .topic-tag{background:var(--green);}
+  .topic h3{
+    margin:0;
+    font-size:1.08rem;
+    color:var(--ink);
+    font-weight:700;
+  }
+
+  pre{
+    background:var(--code-bg);
+    color:var(--code-ink);
+    padding:16px 18px;
+    border-radius:8px;
+    overflow:auto;
+    font-family:var(--mono);
+    font-size:0.86rem;
+    line-height:1.55;
+    margin:14px 0 0;
+    border:1px solid #232a36;
+  }
+  pre code{
+    background:none;
+    padding:0;
+    color:inherit;
+    font-family:var(--mono);
+  }
+  code{
+    background:#EFF1F5;
+    color:#9c4221;
+    padding:2px 6px;
+    border-radius:4px;
+    font-family:var(--mono);
+    font-size:0.88em;
+  }
+
+  /* ---------- End result ---------- */
+  section.outcome{
+    background:linear-gradient(135deg,#11151C,#1b2230);
+    color:#E8ECF4;
+    border-radius:14px;
+    padding:30px 32px;
+  }
+  section.outcome h2{
+    color:#fff;
+    border:none;
+    margin:0 0 16px;
+    font-size:1.2rem;
+  }
+  section.outcome ul{
+    margin:0;
+    padding:0;
+    list-style:none;
+    display:grid;
+    gap:12px;
+  }
+  section.outcome li{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    font-size:0.94rem;
+    color:#C8D0DE;
+  }
+  section.outcome li::before{
+    content:"✓";
+    flex:none;
+    width:22px;height:22px;
+    border-radius:50%;
+    background:rgba(47,111,237,0.25);
+    color:#7DB0FF;
+    font-size:0.75rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:2px;
+  }
+
+  h2.section-label{
+    font-family:var(--mono);
+    font-size:0.95rem;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    border:none;
+    margin:0 0 16px;
+  }
+
+  footer.page-footer{
+    margin-top:50px;
+    padding-top:18px;
+    border-top:1px solid var(--rule);
+    font-size:0.78rem;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+
+  @media (max-width: 860px){
+    .layout{grid-template-columns:1fr;}
+    nav.toc{
+      position:relative;
+      height:auto;
+      border-right:none;
+      border-bottom:1px solid var(--rule);
+    }
+    main{padding:32px 20px 60px;}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <nav class="toc">
+    <div class="toc-brand">Reference // TS</div>
+    <p class="toc-title">2-Day Crash Guide</p>
+
+    <div class="toc-group">
+      <div class="toc-group-label"><span class="dot"></span>Day 1 — Fundamentals</div>
+      <ul>
+        <li><a href="#d1-1">01. Basic Types</a></li>
+        <li><a href="#d1-2">02. Arrays &amp; Tuples</a></li>
+        <li><a href="#d1-3">03. Enums</a></li>
+        <li><a href="#d1-4">04. Functions</a></li>
+        <li><a href="#d1-5">05. Interfaces vs Types</a></li>
+        <li><a href="#d1-6">06. Optional &amp; Readonly</a></li>
+        <li><a href="#d1-7">07. Union &amp; Intersection</a></li>
+        <li><a href="#d1-8">08. Generics</a></li>
+        <li><a href="#d1-9">09. Utility Types</a></li>
+      </ul>
+    </div>
+
+    <div class="toc-group day2">
+      <div class="toc-group-label"><span class="dot"></span>Day 2 — Frameworks</div>
+      <ul>
+        <li><a href="#d2-1">01. React / Next.js</a></li>
+        <li><a href="#d2-2">02. Angular</a></li>
+        <li><a href="#d2-3">03. Next.js Pages</a></li>
+      </ul>
+    </div>
+
+    <div class="toc-group">
+      <ul style="border-left:none;">
+        <li><a href="#outcome">🎯 End Result</a></li>
+      </ul>
+    </div>
+
+    <div class="toc-footer">
+      Prepared for full-stack<br>readiness · React · Angular
+    </div>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <div class="hero-eyebrow">// crash-guide.ts</div>
+      <h1>TypeScript <span class="accent">2-Day</span> Crash Guide</h1>
+      <p class="hero-sub">A dense, scannable reference for going from core TypeScript syntax to confident usage inside React, Next.js, and Angular codebases.</p>
+      <div class="hero-meta">
+        <span class="pill">12 topics</span>
+        <span class="pill green">2 days</span>
+        <span class="pill amber">framework-ready</span>
+      </div>
+    </header>
+
+    <!-- DAY 1 -->
+    <section class="day day1">
+      <div class="day-banner">
+        <span class="num">01</span>
+        <span class="label">Day 1 — Core TypeScript Fundamentals</span>
+        <span class="sub">9 topics</span>
+      </div>
+
+      <article class="topic" id="d1-1">
+        <div class="topic-head"><span class="topic-tag">01</span><h3>Basic Types</h3></div>
+        <pre><code>let username: string = "Venudhar";
+let age: number = 35;
+let isAdmin: boolean = true;
+</code></pre>
+      </article>
+
+      <article class="topic" id="d1-2">
+        <div class="topic-head"><span class="topic-tag">02</span><h3>Arrays &amp; Tuples</h3></div>
+        <pre><code>let numbers: number[] = [1, 2, 3];
+let tuple: [string, number] = ["score", 100];
+</code></pre>
+      </article>
+
+      <article class="topic" id="d1-3">
+        <div class="topic-head"><span class="topic-tag">03</span><h3>Enums</h3></div>
+        <pre><code>enum Role { Admin, User, Guest }
+let myRole: Role = Role.Admin;
+</code></pre>
+      </article>
+
+      <article class="topic" id="d1-4">
+        <div class="topic-head"><span class="topic-tag">04</span><h3>Functions</h3></div>
+        <pre><code>function add(a: number, b: number): number {
+  return a + b;
+}
+</code></pre>
+      </article>
+
+      <article class="topic" id="d1-5">
+        <div class="topic-head"><span class="topic-tag">05</span><h3>Interfaces vs Types</h3></div>
+        <pre><code>interface User { id: number; name: string; }
+type Product = { id: string; price: number; };
+</code></pre>
+      </article>
+
+      <article class="topic" id="d1-6">
+        <div class="topic-head"><span class="topic-tag">06</span><h3>Optional &amp; Readonly</h3></div>
+        <pre><code>interface Employee {
+  readonly id: number;
+  name: string;
+  department?: string; // optional
+}
+</code></pre>
+      </article>
+
+      <article class="topic" id="d1-7">
+        <div class="topic-head"><span class="topic-tag">07</span><h3>Union &amp; Intersection Types</h3></div>
+        <pre><code>let value: string | number;
+type Admin = { admin: true };
+type User = { name: string };
+type SuperUser = Admin &amp; User;
+</code></pre>
+      </article>
+
+      <article class="topic" id="d1-8">
+        <div class="topic-head"><span class="topic-tag">08</span><h3>Generics</h3></div>
+        <pre><code>function identity&lt;T&gt;(arg: T): T {
+  return arg;
+}
+let output = identity&lt;string&gt;("Hello");
+</code></pre>
+      </article>
+
+      <article class="topic" id="d1-9">
+        <div class="topic-head"><span class="topic-tag">09</span><h3>Utility Types</h3></div>
+        <pre><code>interface Person { id: number; name: string; age: number; }
+type PartialPerson = Partial&lt;Person&gt;;
+</code></pre>
+      </article>
+    </section>
+
+    <!-- DAY 2 -->
+    <section class="day day2">
+      <div class="day-banner">
+        <span class="num">02</span>
+        <span class="label">Day 2 — TypeScript in Framework Contexts</span>
+        <span class="sub">3 topics</span>
+      </div>
+
+      <article class="topic" id="d2-1">
+        <div class="topic-head"><span class="topic-tag">01</span><h3>React / Next.js Essentials</h3></div>
+        <pre><code>// Props &amp; State
+type Props = { title: string; count?: number };
+const MyComponent: React.FC&lt;Props&gt; = ({ title, count }) =&gt; &lt;h1&gt;{title}&lt;/h1&gt;;
+
+// Hooks
+const [name, setName] = useState&lt;string&gt;("Venudhar");
+
+// Events
+const handleChange = (e: React.ChangeEvent&lt;HTMLInputElement&gt;) =&gt; {
+  console.log(e.target.value);
+};
+
+// API Responses
+interface Post { id: number; title: string; }
+async function fetchPosts(): Promise&lt;Post[]&gt; { ... }
+</code></pre>
+      </article>
+
+      <article class="topic" id="d2-2">
+        <div class="topic-head"><span class="topic-tag">02</span><h3>Angular Essentials</h3></div>
+        <pre><code>@Component({
+  selector: 'app-hello',
+  template: `&lt;h1&gt;Hello Angular!&lt;/h1&gt;`
+})
+export class HelloComponent {}
+
+@Injectable({ providedIn: 'root' })
+export class DataService {
+  getUsers(): Observable&lt;User[]&gt; { ... }
+}
+
+import { Observable } from 'rxjs';
+let users$: Observable&lt;User[]&gt;;
+
+form = new FormGroup({
+  name: new FormControl('', Validators.required)
+});
+</code></pre>
+      </article>
+
+      <article class="topic" id="d2-3">
+        <div class="topic-head"><span class="topic-tag">03</span><h3>Next.js Essentials</h3></div>
+        <pre><code>export async function getStaticProps() {
+  const posts: Post[] = await fetchPosts();
+  return { props: { posts } };
+}
+
+type Props = { posts: Post[] };
+const BlogPage: NextPage&lt;Props&gt; = ({ posts }) =&gt; { ... };
+</code></pre>
+      </article>
+    </section>
+
+    <!-- END RESULT -->
+    <section class="outcome" id="outcome">
+      <h2 class="section-label" style="color:#fff;">🎯 End Result</h2>
+      <ul>
+        <li>Understand TypeScript fundamentals — types, interfaces, generics, and utility types.</li>
+        <li>Apply TS in React/Next.js (props, hooks, API typing) and Angular (decorators, services, RxJS).</li>
+        <li>Be ready to start your 1-week deep dives into each framework with confidence.</li>
+      </ul>
+    </section>
+
+    <footer class="page-footer">TypeScript 2-Day Crash Guide</footer>
+  </main>
+
+</div>
+</body>
+</html>
