@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nifty Stock Index Finder</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f8f9fc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --muted: #94a3b8;
+    --accent: #d97706;
+    --accent2: #0891b2;
+
+    --n50: #b45309;
+    --n50-bg: rgba(217,119,6,0.08);
+    --nnext: #0e7490;
+    --nnext-bg: rgba(8,145,178,0.08);
+    --nmid: #7c3aed;
+    --nmid-bg: rgba(124,58,237,0.08);
+    --nsmall: #059669;
+    --nsmall-bg: rgba(5,150,105,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 40px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(20px);
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .logo {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #d97706;
+  }
+
+  .logo span { color: var(--text); }
+
+  .stock-count {
+    background: var(--border);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  /* Search */
+  .search-wrap {
+    position: relative;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 16px;
+    pointer-events: none;
+  }
+
+  #searchInput {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px 13px 44px;
+    font-size: 15px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  #searchInput::placeholder { color: var(--muted); }
+
+  #searchInput:focus {
+    border-color: #d97706;
+    box-shadow: 0 0 0 3px rgba(217,119,6,0.12);
+  }
+
+  .clear-btn {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--border);
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 12px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .clear-btn:hover { background: var(--accent); color: #000; }
+  .clear-btn.visible { display: flex; }
+
+  /* Filters */
+  .filters {
+    display: flex;
+    gap: 8px;
+    padding: 16px 40px 0;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    border: 1.5px solid var(--border);
+    background: transparent;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.3px;
+  }
+
+  .filter-btn:hover { border-color: var(--muted); color: var(--text); }
+
+  .filter-btn.active[data-index="all"] { border-color: var(--text); color: var(--text); background: rgba(255,255,255,0.05); }
+  .filter-btn.active[data-index="Nifty 50"] { border-color: var(--n50); color: var(--n50); background: var(--n50-bg); }
+  .filter-btn.active[data-index="Nifty Next 50"] { border-color: var(--nnext); color: var(--nnext); background: var(--nnext-bg); }
+  .filter-btn.active[data-index="Nifty Midcap 150"] { border-color: var(--nmid); color: var(--nmid); background: var(--nmid-bg); }
+  .filter-btn.active[data-index="Nifty Smallcap 250"] { border-color: var(--nsmall); color: var(--nsmall); background: var(--nsmall-bg); }
+
+  /* Results bar */
+  .results-bar {
+    padding: 12px 40px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .results-bar span { color: #d97706; font-weight: 600; }
+
+  /* Table */
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    background: #f8fafc;
+    padding: 12px 20px;
+    text-align: left;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+  }
+
+  thead th:hover { color: var(--text); }
+  thead th .sort-icon { margin-left: 5px; opacity: 0.4; }
+  thead th.sorted .sort-icon { opacity: 1; color: #d97706; }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(30,37,48,0.6);
+    transition: background 0.1s;
+  }
+
+  tbody tr:hover { background: #f1f5f9; }
+
+  td {
+    padding: 13px 20px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+
+  .col-symbol {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .col-company {
+    color: #475569;
+    font-size: 13px;
+    max-width: 320px;
+  }
+
+  .col-industry {
+    color: var(--muted);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .col-isin {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    letter-spacing: 0.2px;
+  }
+
+  .badge-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .badge-n50    { color: var(--n50);    background: var(--n50-bg);    border: 1px solid rgba(245,158,11,0.25); }
+  .badge-nnext  { color: var(--nnext);  background: var(--nnext-bg);  border: 1px solid rgba(6,182,212,0.25); }
+  .badge-nmid   { color: var(--nmid);   background: var(--nmid-bg);   border: 1px solid rgba(167,139,250,0.25); }
+  .badge-nsmall { color: var(--nsmall); background: var(--nsmall-bg); border: 1px solid rgba(52,211,153,0.25); }
+
+  .badge-n50    .badge-dot { background: var(--n50); }
+  .badge-nnext  .badge-dot { background: var(--nnext); }
+  .badge-nmid   .badge-dot { background: var(--nmid); }
+  .badge-nsmall .badge-dot { background: var(--nsmall); }
+
+  /* Highlight match */
+  mark {
+    background: rgba(217,119,6,0.18);
+    color: #92400e;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+  .empty-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+  .empty-sub { font-size: 14px; }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 14px 40px;
+    border-top: 1px solid var(--border);
+    background: #f8fafc;
+  }
+  .legend-label { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-right: 4px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+
+  @media (max-width: 700px) {
+    .header { padding: 20px 16px 16px; }
+    .filters { padding: 12px 16px 0; }
+    .results-bar { padding: 10px 16px; }
+    td, thead th { padding: 10px 12px; }
+    .col-company { max-width: 160px; }
+    .legend { padding: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo">NIFTY<span>INDEX</span></div>
+    <div class="stock-count" id="totalCount">504 stocks</div>
+  </div>
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="searchInput" placeholder="Search by symbol, company name or ISIN..." autocomplete="off" spellcheck="false">
+    <button class="clear-btn" id="clearBtn" title="Clear">✕</button>
+  </div>
+</div>
+
+<div class="filters" id="filters">
+  <button class="filter-btn active" data-index="all">All Indices</button>
+  <button class="filter-btn" data-index="Nifty 50">Nifty 50</button>
+  <button class="filter-btn" data-index="Nifty Next 50">Nifty Next 50</button>
+  <button class="filter-btn" data-index="Nifty Midcap 150">Nifty Midcap 150</button>
+  <button class="filter-btn" data-index="Nifty Smallcap 250">Nifty Smallcap 250</button>
+</div>
+
+<div class="results-bar" id="resultsBar">Showing <span id="shownCount">504</span> of 504 stocks</div>
+
+<div class="table-wrap">
+  <table id="stockTable">
+    <thead>
+      <tr>
+        <th data-col="symbol">Symbol <span class="sort-icon">↕</span></th>
+        <th data-col="company">Company Name <span class="sort-icon">↕</span></th>
+        <th data-col="index">Index <span class="sort-icon">↕</span></th>
+        <th data-col="industry">Industry <span class="sort-icon">↕</span></th>
+        <th data-col="isin">ISIN <span class="sort-icon">↕</span></th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  <div class="empty" id="emptyState" style="display:none">
+    <div class="empty-icon">🔍</div>
+    <div class="empty-title">No stocks found</div>
+    <div class="empty-sub">Try a different symbol or company name</div>
+  </div>
+</div>
+
+<div class="legend">
+  <span class="legend-label">Legend:</span>
+  <span class="legend-item"><span class="badge badge-n50"><span class="badge-dot"></span>Nifty 50</span></span>
+  <span class="legend-item"><span class="badge badge-nnext"><span class="badge-dot"></span>Nifty Next 50</span></span>
+  <span class="legend-item"><span class="badge badge-nmid"><span class="badge-dot"></span>Nifty Midcap 150</span></span>
+  <span class="legend-item"><span class="badge badge-nsmall"><span class="badge-dot"></span>Nifty Smallcap 250</span></span>
+</div>
+
+<script>
+const STOCKS = [{"symbol":"ADANIENT","company":"Adani Enterprises Ltd.","industry":"Metals & Mining","isin":"INE423A01024","index":"Nifty 50"},{"symbol":"ADANIPORTS","company":"Adani Ports and Special Economic Zone Ltd.","industry":"Services","isin":"INE742F01042","index":"Nifty 50"},{"symbol":"APOLLOHOSP","company":"Apollo Hospitals Enterprise Ltd.","industry":"Healthcare","isin":"INE437A01024","index":"Nifty 50"},{"symbol":"ASIANPAINT","company":"Asian Paints Ltd.","industry":"Consumer Durables","isin":"INE021A01026","index":"Nifty 50"},{"symbol":"AXISBANK","company":"Axis Bank Ltd.","industry":"Financial Services","isin":"INE238A01034","index":"Nifty 50"},{"symbol":"BAJAJ-AUTO","company":"Bajaj Auto Ltd.","industry":"Automobile and Auto Components","isin":"INE917I01010","index":"Nifty 50"},{"symbol":"BAJFINANCE","company":"Bajaj Finance Ltd.","industry":"Financial Services","isin":"INE296A01032","index":"Nifty 50"},{"symbol":"BAJAJFINSV","company":"Bajaj Finserv Ltd.","industry":"Financial Services","isin":"INE918I01026","index":"Nifty 50"},{"symbol":"BEL","company":"Bharat Electronics Ltd.","industry":"Capital Goods","isin":"INE263A01024","index":"Nifty 50"},{"symbol":"BHARTIARTL","company":"Bharti Airtel Ltd.","industry":"Telecommunication","isin":"INE397D01024","index":"Nifty 50"},{"symbol":"CIPLA","company":"Cipla Ltd.","industry":"Healthcare","isin":"INE059A01026","index":"Nifty 50"},{"symbol":"COALINDIA","company":"Coal India Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE522F01014","index":"Nifty 50"},{"symbol":"DRREDDY","company":"Dr. Reddy's Laboratories Ltd.","industry":"Healthcare","isin":"INE089A01031","index":"Nifty 50"},{"symbol":"EICHERMOT","company":"Eicher Motors Ltd.","industry":"Automobile and Auto Components","isin":"INE066A01021","index":"Nifty 50"},{"symbol":"ETERNAL","company":"Eternal Ltd.","industry":"Consumer Services","isin":"INE758T01015","index":"Nifty 50"},{"symbol":"GRASIM","company":"Grasim Industries Ltd.","industry":"Construction Materials","isin":"INE047A01021","index":"Nifty 50"},{"symbol":"HCLTECH","company":"HCL Technologies Ltd.","industry":"Information Technology","isin":"INE860A01027","index":"Nifty 50"},{"symbol":"HDFCBANK","company":"HDFC Bank Ltd.","industry":"Financial Services","isin":"INE040A01034","index":"Nifty 50"},{"symbol":"HDFCLIFE","company":"HDFC Life Insurance Company Ltd.","industry":"Financial Services","isin":"INE795G01014","index":"Nifty 50"},{"symbol":"HINDALCO","company":"Hindalco Industries Ltd.","industry":"Metals & Mining","isin":"INE038A01020","index":"Nifty 50"},{"symbol":"HINDUNILVR","company":"Hindustan Unilever Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE030A01027","index":"Nifty 50"},{"symbol":"ICICIBANK","company":"ICICI Bank Ltd.","industry":"Financial Services","isin":"INE090A01021","index":"Nifty 50"},{"symbol":"ITC","company":"ITC Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE154A01025","index":"Nifty 50"},{"symbol":"INFY","company":"Infosys Ltd.","industry":"Information Technology","isin":"INE009A01021","index":"Nifty 50"},{"symbol":"INDIGO","company":"InterGlobe Aviation Ltd.","industry":"Services","isin":"INE646L01027","index":"Nifty 50"},{"symbol":"JSWSTEEL","company":"JSW Steel Ltd.","industry":"Metals & Mining","isin":"INE019A01038","index":"Nifty 50"},{"symbol":"JIOFIN","company":"Jio Financial Services Ltd.","industry":"Financial Services","isin":"INE758E01017","index":"Nifty 50"},{"symbol":"KOTAKBANK","company":"Kotak Mahindra Bank Ltd.","industry":"Financial Services","isin":"INE237A01036","index":"Nifty 50"},{"symbol":"LT","company":"Larsen & Toubro Ltd.","industry":"Construction","isin":"INE018A01030","index":"Nifty 50"},{"symbol":"M&M","company":"Mahindra & Mahindra Ltd.","industry":"Automobile and Auto Components","isin":"INE101A01026","index":"Nifty 50"},{"symbol":"MARUTI","company":"Maruti Suzuki India Ltd.","industry":"Automobile and Auto Components","isin":"INE585B01010","index":"Nifty 50"},{"symbol":"MAXHEALTH","company":"Max Healthcare Institute Ltd.","industry":"Healthcare","isin":"INE027H01010","index":"Nifty 50"},{"symbol":"NTPC","company":"NTPC Ltd.","industry":"Power","isin":"INE733E01010","index":"Nifty 50"},{"symbol":"NESTLEIND","company":"Nestle India Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE239A01024","index":"Nifty 50"},{"symbol":"ONGC","company":"Oil & Natural Gas Corporation Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE213A01029","index":"Nifty 50"},{"symbol":"POWERGRID","company":"Power Grid Corporation of India Ltd.","industry":"Power","isin":"INE752E01010","index":"Nifty 50"},{"symbol":"RELIANCE","company":"Reliance Industries Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE002A01018","index":"Nifty 50"},{"symbol":"SBILIFE","company":"SBI Life Insurance Company Ltd.","industry":"Financial Services","isin":"INE123W01016","index":"Nifty 50"},{"symbol":"SHRIRAMFIN","company":"Shriram Finance Ltd.","industry":"Financial Services","isin":"INE721A01047","index":"Nifty 50"},{"symbol":"SBIN","company":"State Bank of India","industry":"Financial Services","isin":"INE062A01020","index":"Nifty 50"},{"symbol":"SUNPHARMA","company":"Sun Pharmaceutical Industries Ltd.","industry":"Healthcare","isin":"INE044A01036","index":"Nifty 50"},{"symbol":"TCS","company":"Tata Consultancy Services Ltd.","industry":"Information Technology","isin":"INE467B01029","index":"Nifty 50"},{"symbol":"TATACONSUM","company":"Tata Consumer Products Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE192A01025","index":"Nifty 50"},{"symbol":"TMPV","company":"Tata Motors Passenger Vehicles Ltd.","industry":"Automobile and Auto Components","isin":"INE155A01022","index":"Nifty 50"},{"symbol":"TATASTEEL","company":"Tata Steel Ltd.","industry":"Metals & Mining","isin":"INE081A01020","index":"Nifty 50"},{"symbol":"TECHM","company":"Tech Mahindra Ltd.","industry":"Information Technology","isin":"INE669C01036","index":"Nifty 50"},{"symbol":"TITAN","company":"Titan Company Ltd.","industry":"Consumer Durables","isin":"INE280A01028","index":"Nifty 50"},{"symbol":"TRENT","company":"Trent Ltd.","industry":"Consumer Services","isin":"INE849A01020","index":"Nifty 50"},{"symbol":"ULTRACEMCO","company":"UltraTech Cement Ltd.","industry":"Construction Materials","isin":"INE481G01011","index":"Nifty 50"},{"symbol":"WIPRO","company":"Wipro Ltd.","industry":"Information Technology","isin":"INE075A01022","index":"Nifty 50"},{"symbol":"ABB","company":"ABB India Ltd.","industry":"Capital Goods","isin":"INE117A01022","index":"Nifty Next 50"},{"symbol":"ADANIENSOL","company":"Adani Energy Solutions Ltd.","industry":"Power","isin":"INE931S01010","index":"Nifty Next 50"},{"symbol":"ADANIGREEN","company":"Adani Green Energy Ltd.","industry":"Power","isin":"INE364U01010","index":"Nifty Next 50"},{"symbol":"ADANIPOWER","company":"Adani Power Ltd.","industry":"Power","isin":"INE814H01029","index":"Nifty Next 50"},{"symbol":"AMBUJACEM","company":"Ambuja Cements Ltd.","industry":"Construction Materials","isin":"INE079A01024","index":"Nifty Next 50"},{"symbol":"DMART","company":"Avenue Supermarts Ltd.","industry":"Consumer Services","isin":"INE192R01011","index":"Nifty Next 50"},{"symbol":"BAJAJHLDNG","company":"Bajaj Holdings & Investment Ltd.","industry":"Financial Services","isin":"INE118A01012","index":"Nifty Next 50"},{"symbol":"BANKBARODA","company":"Bank of Baroda","industry":"Financial Services","isin":"INE028A01039","index":"Nifty Next 50"},{"symbol":"BPCL","company":"Bharat Petroleum Corporation Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE029A01011","index":"Nifty Next 50"},{"symbol":"BOSCHLTD","company":"Bosch Ltd.","industry":"Automobile and Auto Components","isin":"INE323A01026","index":"Nifty Next 50"},{"symbol":"BRITANNIA","company":"Britannia Industries Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE216A01030","index":"Nifty Next 50"},{"symbol":"CGPOWER","company":"CG Power and Industrial Solutions Ltd.","industry":"Capital Goods","isin":"INE067A01029","index":"Nifty Next 50"},{"symbol":"CANBK","company":"Canara Bank","industry":"Financial Services","isin":"INE476A01022","index":"Nifty Next 50"},{"symbol":"CHOLAFIN","company":"Cholamandalam Investment and Finance Company Ltd.","industry":"Financial Services","isin":"INE121A01024","index":"Nifty Next 50"},{"symbol":"CUMMINSIND","company":"Cummins India Ltd.","industry":"Capital Goods","isin":"INE298A01020","index":"Nifty Next 50"},{"symbol":"DLF","company":"DLF Ltd.","industry":"Realty","isin":"INE271C01023","index":"Nifty Next 50"},{"symbol":"DIVISLAB","company":"Divi's Laboratories Ltd.","industry":"Healthcare","isin":"INE361B01024","index":"Nifty Next 50"},{"symbol":"DUMMYVEDL1","company":"Dummy Vedanta Ltd. 1","industry":"Metals & Mining","isin":"DU1205A01025","index":"Nifty Next 50"},{"symbol":"DUMMYVEDL2","company":"Dummy Vedanta Ltd. 2","industry":"Power","isin":"DU2205A01025","index":"Nifty Next 50"},{"symbol":"DUMMYVEDL3","company":"Dummy Vedanta Ltd. 3","industry":"Oil Gas & Consumable Fuels","isin":"DU3205A01025","index":"Nifty Next 50"},{"symbol":"DUMMYVEDL4","company":"Dummy Vedanta Ltd. 4","industry":"Metals & Mining","isin":"DU4205A01025","index":"Nifty Next 50"},{"symbol":"GAIL","company":"GAIL (India) Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE129A01019","index":"Nifty Next 50"},{"symbol":"GODREJCP","company":"Godrej Consumer Products Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE102D01028","index":"Nifty Next 50"},{"symbol":"HDFCAMC","company":"HDFC Asset Management Company Ltd.","industry":"Financial Services","isin":"INE127D01025","index":"Nifty Next 50"},{"symbol":"HAL","company":"Hindustan Aeronautics Ltd.","industry":"Capital Goods","isin":"INE066F01020","index":"Nifty Next 50"},{"symbol":"HINDZINC","company":"Hindustan Zinc Ltd.","industry":"Metals & Mining","isin":"INE267A01025","index":"Nifty Next 50"},{"symbol":"HYUNDAI","company":"Hyundai Motor India Ltd.","industry":"Automobile and Auto Components","isin":"INE0V6F01027","index":"Nifty Next 50"},{"symbol":"INDHOTEL","company":"Indian Hotels Co. Ltd.","industry":"Consumer Services","isin":"INE053A01029","index":"Nifty Next 50"},{"symbol":"IOC","company":"Indian Oil Corporation Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE242A01010","index":"Nifty Next 50"},{"symbol":"IRFC","company":"Indian Railway Finance Corporation Ltd.","industry":"Financial Services","isin":"INE053F01010","index":"Nifty Next 50"},{"symbol":"JINDALSTEL","company":"Jindal Steel Ltd.","industry":"Metals & Mining","isin":"INE749A01030","index":"Nifty Next 50"},{"symbol":"LTM","company":"LTM Ltd.","industry":"Information Technology","isin":"INE214T01019","index":"Nifty Next 50"},{"symbol":"LODHA","company":"Lodha Developers Ltd.","industry":"Realty","isin":"INE670K01029","index":"Nifty Next 50"},{"symbol":"MAZDOCK","company":"Mazagoan Dock Shipbuilders Ltd.","industry":"Capital Goods","isin":"INE249Z01020","index":"Nifty Next 50"},{"symbol":"MUTHOOTFIN","company":"Muthoot Finance Ltd.","industry":"Financial Services","isin":"INE414G01012","index":"Nifty Next 50"},{"symbol":"PIDILITIND","company":"Pidilite Industries Ltd.","industry":"Chemicals","isin":"INE318A01026","index":"Nifty Next 50"},{"symbol":"PFC","company":"Power Finance Corporation Ltd.","industry":"Financial Services","isin":"INE134E01011","index":"Nifty Next 50"},{"symbol":"PNB","company":"Punjab National Bank","industry":"Financial Services","isin":"INE160A01022","index":"Nifty Next 50"},{"symbol":"RECLTD","company":"REC Ltd.","industry":"Financial Services","isin":"INE020B01018","index":"Nifty Next 50"},{"symbol":"MOTHERSON","company":"Samvardhana Motherson International Ltd.","industry":"Automobile and Auto Components","isin":"INE775A01035","index":"Nifty Next 50"},{"symbol":"SHREECEM","company":"Shree Cement Ltd.","industry":"Construction Materials","isin":"INE070A01015","index":"Nifty Next 50"},{"symbol":"ENRIN","company":"Siemens Energy India Ltd.","industry":"Capital Goods","isin":"INE1NPP01017","index":"Nifty Next 50"},{"symbol":"SIEMENS","company":"Siemens Ltd.","industry":"Capital Goods","isin":"INE003A01024","index":"Nifty Next 50"},{"symbol":"SOLARINDS","company":"Solar Industries India Ltd.","industry":"Chemicals","isin":"INE343H01029","index":"Nifty Next 50"},{"symbol":"TVSMOTOR","company":"TVS Motor Company Ltd.","industry":"Automobile and Auto Components","isin":"INE494B01023","index":"Nifty Next 50"},{"symbol":"TATACAP","company":"Tata Capital Ltd.","industry":"Financial Services","isin":"INE976I01016","index":"Nifty Next 50"},{"symbol":"TMCV","company":"Tata Motors Ltd.","industry":"Capital Goods","isin":"INE1TAE01010","index":"Nifty Next 50"},{"symbol":"TATAPOWER","company":"Tata Power Co. Ltd.","industry":"Power","isin":"INE245A01021","index":"Nifty Next 50"},{"symbol":"TORNTPHARM","company":"Torrent Pharmaceuticals Ltd.","industry":"Healthcare","isin":"INE685A01028","index":"Nifty Next 50"},{"symbol":"UNIONBANK","company":"Union Bank of India","industry":"Financial Services","isin":"INE692A01016","index":"Nifty Next 50"},{"symbol":"UNITDSPR","company":"United Spirits Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE854D01024","index":"Nifty Next 50"},{"symbol":"VBL","company":"Varun Beverages Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE200M01039","index":"Nifty Next 50"},{"symbol":"VEDL","company":"Vedanta Ltd.","industry":"Metals & Mining","isin":"INE205A01025","index":"Nifty Next 50"},{"symbol":"ZYDUSLIFE","company":"Zydus Lifesciences Ltd.","industry":"Healthcare","isin":"INE010B01027","index":"Nifty Next 50"},{"symbol":"360ONE","company":"360 ONE WAM Ltd.","industry":"Financial Services","isin":"INE466L01038","index":"Nifty Midcap 150"},{"symbol":"3MINDIA","company":"3M India Ltd.","industry":"Diversified","isin":"INE470A01017","index":"Nifty Midcap 150"},{"symbol":"ACC","company":"ACC Ltd.","industry":"Construction Materials","isin":"INE012A01025","index":"Nifty Midcap 150"},{"symbol":"AIAENG","company":"AIA Engineering Ltd.","industry":"Capital Goods","isin":"INE212H01026","index":"Nifty Midcap 150"},{"symbol":"APLAPOLLO","company":"APL Apollo Tubes Ltd.","industry":"Capital Goods","isin":"INE702C01027","index":"Nifty Midcap 150"},{"symbol":"AUBANK","company":"AU Small Finance Bank Ltd.","industry":"Financial Services","isin":"INE949L01017","index":"Nifty Midcap 150"},{"symbol":"AWL","company":"AWL Agri Business Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE699H01024","index":"Nifty Midcap 150"},{"symbol":"ABBOTINDIA","company":"Abbott India Ltd.","industry":"Healthcare","isin":"INE358A01014","index":"Nifty Midcap 150"},{"symbol":"ATGL","company":"Adani Total Gas Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE399L01023","index":"Nifty Midcap 150"},{"symbol":"ABCAPITAL","company":"Aditya Birla Capital Ltd.","industry":"Financial Services","isin":"INE674K01013","index":"Nifty Midcap 150"},{"symbol":"AJANTPHARM","company":"Ajanta Pharmaceuticals Ltd.","industry":"Healthcare","isin":"INE031B01049","index":"Nifty Midcap 150"},{"symbol":"ALKEM","company":"Alkem Laboratories Ltd.","industry":"Healthcare","isin":"INE540L01014","index":"Nifty Midcap 150"},{"symbol":"ANTHEM","company":"Anthem Biosciences Ltd.","industry":"Healthcare","isin":"INE0CZ201020","index":"Nifty Midcap 150"},{"symbol":"APARINDS","company":"Apar Industries Ltd.","industry":"Capital Goods","isin":"INE372A01015","index":"Nifty Midcap 150"},{"symbol":"APOLLOTYRE","company":"Apollo Tyres Ltd.","industry":"Automobile and Auto Components","isin":"INE438A01022","index":"Nifty Midcap 150"},{"symbol":"ASHOKLEY","company":"Ashok Leyland Ltd.","industry":"Capital Goods","isin":"INE208A01029","index":"Nifty Midcap 150"},{"symbol":"ASTRAL","company":"Astral Ltd.","industry":"Capital Goods","isin":"INE006I01046","index":"Nifty Midcap 150"},{"symbol":"AUROPHARMA","company":"Aurobindo Pharma Ltd.","industry":"Healthcare","isin":"INE406A01037","index":"Nifty Midcap 150"},{"symbol":"AIIL","company":"Authum Investment & Infrastructure Ltd.","industry":"Financial Services","isin":"INE206F01022","index":"Nifty Midcap 150"},{"symbol":"BSE","company":"BSE Ltd.","industry":"Financial Services","isin":"INE118H01025","index":"Nifty Midcap 150"},{"symbol":"BAJAJHFL","company":"Bajaj Housing Finance Ltd.","industry":"Financial Services","isin":"INE377Y01014","index":"Nifty Midcap 150"},{"symbol":"BALKRISIND","company":"Balkrishna Industries Ltd.","industry":"Automobile and Auto Components","isin":"INE787D01026","index":"Nifty Midcap 150"},{"symbol":"BANKINDIA","company":"Bank of India","industry":"Financial Services","isin":"INE084A01016","index":"Nifty Midcap 150"},{"symbol":"MAHABANK","company":"Bank of Maharashtra","industry":"Financial Services","isin":"INE457A01014","index":"Nifty Midcap 150"},{"symbol":"BERGEPAINT","company":"Berger Paints India Ltd.","industry":"Consumer Durables","isin":"INE463A01038","index":"Nifty Midcap 150"},{"symbol":"BDL","company":"Bharat Dynamics Ltd.","industry":"Capital Goods","isin":"INE171Z01026","index":"Nifty Midcap 150"},{"symbol":"BHARATFORG","company":"Bharat Forge Ltd.","industry":"Automobile and Auto Components","isin":"INE465A01025","index":"Nifty Midcap 150"},{"symbol":"BHEL","company":"Bharat Heavy Electricals Ltd.","industry":"Capital Goods","isin":"INE257A01026","index":"Nifty Midcap 150"},{"symbol":"BHARTIHEXA","company":"Bharti Hexacom Ltd.","industry":"Telecommunication","isin":"INE343G01021","index":"Nifty Midcap 150"},{"symbol":"GROWW","company":"Billionbrains Garage Ventures Ltd.","industry":"Financial Services","isin":"INE0HOQ01053","index":"Nifty Midcap 150"},{"symbol":"BIOCON","company":"Biocon Ltd.","industry":"Healthcare","isin":"INE376G01013","index":"Nifty Midcap 150"},{"symbol":"BLUESTARCO","company":"Blue Star Ltd.","industry":"Consumer Durables","isin":"INE472A01039","index":"Nifty Midcap 150"},{"symbol":"CRISIL","company":"CRISIL Ltd.","industry":"Financial Services","isin":"INE007A01025","index":"Nifty Midcap 150"},{"symbol":"COCHINSHIP","company":"Cochin Shipyard Ltd.","industry":"Capital Goods","isin":"INE704P01025","index":"Nifty Midcap 150"},{"symbol":"COFORGE","company":"Coforge Ltd.","industry":"Information Technology","isin":"INE591G01025","index":"Nifty Midcap 150"},{"symbol":"COLPAL","company":"Colgate Palmolive (India) Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE259A01022","index":"Nifty Midcap 150"},{"symbol":"CONCOR","company":"Container Corporation of India Ltd.","industry":"Services","isin":"INE111A01025","index":"Nifty Midcap 150"},{"symbol":"COROMANDEL","company":"Coromandel International Ltd.","industry":"Chemicals","isin":"INE169A01031","index":"Nifty Midcap 150"},{"symbol":"DABUR","company":"Dabur India Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE016A01026","index":"Nifty Midcap 150"},{"symbol":"DALBHARAT","company":"Dalmia Bharat Ltd.","industry":"Construction Materials","isin":"INE00R701025","index":"Nifty Midcap 150"},{"symbol":"DIXON","company":"Dixon Technologies (India) Ltd.","industry":"Consumer Durables","isin":"INE935N01020","index":"Nifty Midcap 150"},{"symbol":"ENDURANCE","company":"Endurance Technologies Ltd.","industry":"Automobile and Auto Components","isin":"INE913H01037","index":"Nifty Midcap 150"},{"symbol":"ESCORTS","company":"Escorts Kubota Ltd.","industry":"Capital Goods","isin":"INE042A01014","index":"Nifty Midcap 150"},{"symbol":"EXIDEIND","company":"Exide Industries Ltd.","industry":"Automobile and Auto Components","isin":"INE302A01020","index":"Nifty Midcap 150"},{"symbol":"NYKAA","company":"FSN E-Commerce Ventures Ltd.","industry":"Consumer Services","isin":"INE388Y01029","index":"Nifty Midcap 150"},{"symbol":"FEDERALBNK","company":"Federal Bank Ltd.","industry":"Financial Services","isin":"INE171A01029","index":"Nifty Midcap 150"},{"symbol":"FORTIS","company":"Fortis Healthcare Ltd.","industry":"Healthcare","isin":"INE061F01013","index":"Nifty Midcap 150"},{"symbol":"GVT&D","company":"GE Vernova T&D India Ltd.","industry":"Capital Goods","isin":"INE200A01026","index":"Nifty Midcap 150"},{"symbol":"GMRAIRPORT","company":"GMR Airports Ltd.","industry":"Services","isin":"INE776C01039","index":"Nifty Midcap 150"},{"symbol":"GICRE","company":"General Insurance Corporation of India","industry":"Financial Services","isin":"INE481Y01014","index":"Nifty Midcap 150"},{"symbol":"GLAXO","company":"Glaxosmithkline Pharmaceuticals Ltd.","industry":"Healthcare","isin":"INE159A01016","index":"Nifty Midcap 150"},{"symbol":"GLENMARK","company":"Glenmark Pharmaceuticals Ltd.","industry":"Healthcare","isin":"INE935A01035","index":"Nifty Midcap 150"},{"symbol":"MEDANTA","company":"Global Health Ltd.","industry":"Healthcare","isin":"INE474Q01031","index":"Nifty Midcap 150"},{"symbol":"GODFRYPHLP","company":"Godfrey Phillips India Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE260B01028","index":"Nifty Midcap 150"},{"symbol":"GODREJIND","company":"Godrej Industries Ltd.","industry":"Diversified","isin":"INE233A01035","index":"Nifty Midcap 150"},{"symbol":"GODREJPROP","company":"Godrej Properties Ltd.","industry":"Realty","isin":"INE484J01027","index":"Nifty Midcap 150"},{"symbol":"FLUOROCHEM","company":"Gujarat Fluorochemicals Ltd.","industry":"Chemicals","isin":"INE09N301011","index":"Nifty Midcap 150"},{"symbol":"HDBFS","company":"HDB Financial Services Ltd.","industry":"Financial Services","isin":"INE756I01012","index":"Nifty Midcap 150"},{"symbol":"HAVELLS","company":"Havells India Ltd.","industry":"Consumer Durables","isin":"INE176B01034","index":"Nifty Midcap 150"},{"symbol":"HEROMOTOCO","company":"Hero MotoCorp Ltd.","industry":"Automobile and Auto Components","isin":"INE158A01026","index":"Nifty Midcap 150"},{"symbol":"HEXT","company":"Hexaware Technologies Ltd.","industry":"Information Technology","isin":"INE093A01041","index":"Nifty Midcap 150"},{"symbol":"HINDPETRO","company":"Hindustan Petroleum Corporation Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE094A01015","index":"Nifty Midcap 150"},{"symbol":"POWERINDIA","company":"Hitachi Energy India Ltd.","industry":"Capital Goods","isin":"INE07Y701011","index":"Nifty Midcap 150"},{"symbol":"HONAUT","company":"Honeywell Automation India Ltd.","industry":"Capital Goods","isin":"INE671A01010","index":"Nifty Midcap 150"},{"symbol":"HUDCO","company":"Housing & Urban Development Corporation Ltd.","industry":"Financial Services","isin":"INE031A01017","index":"Nifty Midcap 150"},{"symbol":"ICICIGI","company":"ICICI Lombard General Insurance Company Ltd.","industry":"Financial Services","isin":"INE765G01017","index":"Nifty Midcap 150"},{"symbol":"ICICIAMC","company":"ICICI Prudential Asset Management Company Ltd.","industry":"Financial Services","isin":"INE346A01027","index":"Nifty Midcap 150"},{"symbol":"ICICIPRULI","company":"ICICI Prudential Life Insurance Company Ltd.","industry":"Financial Services","isin":"INE726G01019","index":"Nifty Midcap 150"},{"symbol":"IDFCFIRSTB","company":"IDFC First Bank Ltd.","industry":"Financial Services","isin":"INE092T01019","index":"Nifty Midcap 150"},{"symbol":"ITCHOTELS","company":"ITC Hotels Ltd.","industry":"Consumer Services","isin":"INE379A01028","index":"Nifty Midcap 150"},{"symbol":"INDIANB","company":"Indian Bank","industry":"Financial Services","isin":"INE562A01011","index":"Nifty Midcap 150"},{"symbol":"IRCTC","company":"Indian Railway Catering And Tourism Corporation Ltd.","industry":"Consumer Services","isin":"INE335Y01020","index":"Nifty Midcap 150"},{"symbol":"IREDA","company":"Indian Renewable Energy Development Agency Ltd.","industry":"Financial Services","isin":"INE202E01016","index":"Nifty Midcap 150"},{"symbol":"INDUSTOWER","company":"Indus Towers Ltd.","industry":"Telecommunication","isin":"INE121J01017","index":"Nifty Midcap 150"},{"symbol":"INDUSINDBK","company":"IndusInd Bank Ltd.","industry":"Financial Services","isin":"INE095A01012","index":"Nifty Midcap 150"},{"symbol":"NAUKRI","company":"Info Edge (India) Ltd.","industry":"Consumer Services","isin":"INE663F01032","index":"Nifty Midcap 150"},{"symbol":"IPCALAB","company":"Ipca Laboratories Ltd.","industry":"Healthcare","isin":"INE571A01038","index":"Nifty Midcap 150"},{"symbol":"JKCEMENT","company":"J.K. Cement Ltd.","industry":"Construction Materials","isin":"INE823G01014","index":"Nifty Midcap 150"},{"symbol":"JSWENERGY","company":"JSW Energy Ltd.","industry":"Power","isin":"INE121E01018","index":"Nifty Midcap 150"},{"symbol":"JSWINFRA","company":"JSW Infrastructure Ltd.","industry":"Services","isin":"INE880J01026","index":"Nifty Midcap 150"},{"symbol":"JSL","company":"Jindal Stainless Ltd.","industry":"Metals & Mining","isin":"INE220G01021","index":"Nifty Midcap 150"},{"symbol":"JUBLFOOD","company":"Jubilant Foodworks Ltd.","industry":"Consumer Services","isin":"INE797F01020","index":"Nifty Midcap 150"},{"symbol":"KPRMILL","company":"K.P.R. Mill Ltd.","industry":"Textiles","isin":"INE930H01031","index":"Nifty Midcap 150"},{"symbol":"KEI","company":"KEI Industries Ltd.","industry":"Capital Goods","isin":"INE878B01027","index":"Nifty Midcap 150"},{"symbol":"KPITTECH","company":"KPIT Technologies Ltd.","industry":"Information Technology","isin":"INE04I401011","index":"Nifty Midcap 150"},{"symbol":"KALYANKJIL","company":"Kalyan Jewellers India Ltd.","industry":"Consumer Durables","isin":"INE303R01014","index":"Nifty Midcap 150"},{"symbol":"LTF","company":"L&T Finance Ltd.","industry":"Financial Services","isin":"INE498L01015","index":"Nifty Midcap 150"},{"symbol":"LTTS","company":"L&T Technology Services Ltd.","industry":"Information Technology","isin":"INE010V01017","index":"Nifty Midcap 150"},{"symbol":"LGEINDIA","company":"LG Electronics India Ltd.","industry":"Consumer Durables","isin":"INE324D01010","index":"Nifty Midcap 150"},{"symbol":"LICHSGFIN","company":"LIC Housing Finance Ltd.","industry":"Financial Services","isin":"INE115A01026","index":"Nifty Midcap 150"},{"symbol":"LAURUSLABS","company":"Laurus Labs Ltd.","industry":"Healthcare","isin":"INE947Q01028","index":"Nifty Midcap 150"},{"symbol":"LENSKART","company":"Lenskart Solutions Ltd.","industry":"Consumer Services","isin":"INE956O01016","index":"Nifty Midcap 150"},{"symbol":"LICI","company":"Life Insurance Corporation of India","industry":"Financial Services","isin":"INE0J1Y01017","index":"Nifty Midcap 150"},{"symbol":"LINDEINDIA","company":"Linde India Ltd.","industry":"Chemicals","isin":"INE473A01011","index":"Nifty Midcap 150"},{"symbol":"LLOYDSME","company":"Lloyds Metals And Energy Ltd.","industry":"Metals & Mining","isin":"INE281B01032","index":"Nifty Midcap 150"},{"symbol":"LUPIN","company":"Lupin Ltd.","industry":"Healthcare","isin":"INE326A01037","index":"Nifty Midcap 150"},{"symbol":"MRF","company":"MRF Ltd.","industry":"Automobile and Auto Components","isin":"INE883A01011","index":"Nifty Midcap 150"},{"symbol":"M&MFIN","company":"Mahindra & Mahindra Financial Services Ltd.","industry":"Financial Services","isin":"INE774D01024","index":"Nifty Midcap 150"},{"symbol":"MANKIND","company":"Mankind Pharma Ltd.","industry":"Healthcare","isin":"INE634S01028","index":"Nifty Midcap 150"},{"symbol":"MARICO","company":"Marico Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE196A01026","index":"Nifty Midcap 150"},{"symbol":"MFSL","company":"Max Financial Services Ltd.","industry":"Financial Services","isin":"INE180A01020","index":"Nifty Midcap 150"},{"symbol":"MOTILALOFS","company":"Motilal Oswal Financial Services Ltd.","industry":"Financial Services","isin":"INE338I01027","index":"Nifty Midcap 150"},{"symbol":"MPHASIS","company":"MphasiS Ltd.","industry":"Information Technology","isin":"INE356A01018","index":"Nifty Midcap 150"},{"symbol":"MCX","company":"Multi Commodity Exchange of India Ltd.","industry":"Financial Services","isin":"INE745G01043","index":"Nifty Midcap 150"},{"symbol":"NHPC","company":"NHPC Ltd.","industry":"Power","isin":"INE848E01016","index":"Nifty Midcap 150"},{"symbol":"NLCINDIA","company":"NLC India Ltd.","industry":"Power","isin":"INE589A01014","index":"Nifty Midcap 150"},{"symbol":"NMDC","company":"NMDC Ltd.","industry":"Metals & Mining","isin":"INE584A01023","index":"Nifty Midcap 150"},{"symbol":"NTPCGREEN","company":"NTPC Green Energy Ltd.","industry":"Power","isin":"INE0ONG01011","index":"Nifty Midcap 150"},{"symbol":"NATIONALUM","company":"National Aluminium Co. Ltd.","industry":"Metals & Mining","isin":"INE139A01034","index":"Nifty Midcap 150"},{"symbol":"NAM-INDIA","company":"Nippon Life India Asset Management Ltd.","industry":"Financial Services","isin":"INE298J01013","index":"Nifty Midcap 150"},{"symbol":"OBEROIRLTY","company":"Oberoi Realty Ltd.","industry":"Realty","isin":"INE093I01010","index":"Nifty Midcap 150"},{"symbol":"OIL","company":"Oil India Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE274J01014","index":"Nifty Midcap 150"},{"symbol":"PAYTM","company":"One 97 Communications Ltd.","industry":"Financial Services","isin":"INE982J01020","index":"Nifty Midcap 150"},{"symbol":"OFSS","company":"Oracle Financial Services Software Ltd.","industry":"Information Technology","isin":"INE881D01027","index":"Nifty Midcap 150"},{"symbol":"POLICYBZR","company":"PB Fintech Ltd.","industry":"Financial Services","isin":"INE417T01026","index":"Nifty Midcap 150"},{"symbol":"PIIND","company":"PI Industries Ltd.","industry":"Chemicals","isin":"INE603J01030","index":"Nifty Midcap 150"},{"symbol":"PAGEIND","company":"Page Industries Ltd.","industry":"Textiles","isin":"INE761H01022","index":"Nifty Midcap 150"},{"symbol":"PATANJALI","company":"Patanjali Foods Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE619A01035","index":"Nifty Midcap 150"},{"symbol":"PERSISTENT","company":"Persistent Systems Ltd.","industry":"Information Technology","isin":"INE262H01021","index":"Nifty Midcap 150"},{"symbol":"PETRONET","company":"Petronet LNG Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE347G01014","index":"Nifty Midcap 150"},{"symbol":"PHOENIXLTD","company":"Phoenix Mills Ltd.","industry":"Realty","isin":"INE211B01039","index":"Nifty Midcap 150"},{"symbol":"POLYCAB","company":"Polycab India Ltd.","industry":"Capital Goods","isin":"INE455K01017","index":"Nifty Midcap 150"},{"symbol":"PREMIERENE","company":"Premier Energies Ltd.","industry":"Capital Goods","isin":"INE0BS701011","index":"Nifty Midcap 150"},{"symbol":"PRESTIGE","company":"Prestige Estates Projects Ltd.","industry":"Realty","isin":"INE811K01011","index":"Nifty Midcap 150"},{"symbol":"RADICO","company":"Radico Khaitan Ltd","industry":"Fast Moving Consumer Goods","isin":"INE944F01028","index":"Nifty Midcap 150"},{"symbol":"RVNL","company":"Rail Vikas Nigam Ltd.","industry":"Construction","isin":"INE415G01027","index":"Nifty Midcap 150"},{"symbol":"SBICARD","company":"SBI Cards and Payment Services Ltd.","industry":"Financial Services","isin":"INE018E01016","index":"Nifty Midcap 150"},{"symbol":"SJVN","company":"SJVN Ltd.","industry":"Power","isin":"INE002L01015","index":"Nifty Midcap 150"},{"symbol":"SRF","company":"SRF Ltd.","industry":"Chemicals","isin":"INE647A01010","index":"Nifty Midcap 150"},{"symbol":"SCHAEFFLER","company":"Schaeffler India Ltd.","industry":"Automobile and Auto Components","isin":"INE513A01022","index":"Nifty Midcap 150"},{"symbol":"SAIL","company":"Steel Authority of India Ltd.","industry":"Metals & Mining","isin":"INE114A01011","index":"Nifty Midcap 150"},{"symbol":"SUNDARMFIN","company":"Sundaram Finance Ltd.","industry":"Financial Services","isin":"INE660A01013","index":"Nifty Midcap 150"},{"symbol":"SUPREMEIND","company":"Supreme Industries Ltd.","industry":"Capital Goods","isin":"INE195A01028","index":"Nifty Midcap 150"},{"symbol":"SUZLON","company":"Suzlon Energy Ltd.","industry":"Capital Goods","isin":"INE040H01021","index":"Nifty Midcap 150"},{"symbol":"SWIGGY","company":"Swiggy Ltd.","industry":"Consumer Services","isin":"INE00H001014","index":"Nifty Midcap 150"},{"symbol":"TATACOMM","company":"Tata Communications Ltd.","industry":"Telecommunication","isin":"INE151A01013","index":"Nifty Midcap 150"},{"symbol":"TATAELXSI","company":"Tata Elxsi Ltd.","industry":"Information Technology","isin":"INE670A01012","index":"Nifty Midcap 150"},{"symbol":"TATAINVEST","company":"Tata Investment Corporation Ltd.","industry":"Financial Services","isin":"INE672A01026","index":"Nifty Midcap 150"},{"symbol":"NIACL","company":"The New India Assurance Company Ltd.","industry":"Financial Services","isin":"INE470Y01017","index":"Nifty Midcap 150"},{"symbol":"THERMAX","company":"Thermax Ltd.","industry":"Capital Goods","isin":"INE152A01029","index":"Nifty Midcap 150"},{"symbol":"TORNTPOWER","company":"Torrent Power Ltd.","industry":"Power","isin":"INE813H01021","index":"Nifty Midcap 150"},{"symbol":"TIINDIA","company":"Tube Investments of India Ltd.","industry":"Automobile and Auto Components","isin":"INE974X01010","index":"Nifty Midcap 150"},{"symbol":"UNOMINDA","company":"UNO Minda Ltd.","industry":"Automobile and Auto Components","isin":"INE405E01023","index":"Nifty Midcap 150"},{"symbol":"UPL","company":"UPL Ltd.","industry":"Chemicals","isin":"INE628A01036","index":"Nifty Midcap 150"},{"symbol":"UBL","company":"United Breweries Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE686F01025","index":"Nifty Midcap 150"},{"symbol":"VMM","company":"Vishal Mega Mart Ltd.","industry":"Consumer Services","isin":"INE01EA01019","index":"Nifty Midcap 150"},{"symbol":"IDEA","company":"Vodafone Idea Ltd.","industry":"Telecommunication","isin":"INE669E01016","index":"Nifty Midcap 150"},{"symbol":"VOLTAS","company":"Voltas Ltd.","industry":"Consumer Durables","isin":"INE226A01021","index":"Nifty Midcap 150"},{"symbol":"WAAREEENER","company":"Waaree Energies Ltd.","industry":"Capital Goods","isin":"INE377N01017","index":"Nifty Midcap 150"},{"symbol":"YESBANK","company":"Yes Bank Ltd.","industry":"Financial Services","isin":"INE528G01035","index":"Nifty Midcap 150"},{"symbol":"ACMESOLAR","company":"ACME Solar Holdings Ltd.","industry":"Power","isin":"INE622W01025","index":"Nifty Smallcap 250"},{"symbol":"AADHARHFC","company":"Aadhar Housing Finance Ltd.","industry":"Financial Services","isin":"INE883F01010","index":"Nifty Smallcap 250"},{"symbol":"AARTIIND","company":"Aarti Industries Ltd.","industry":"Chemicals","isin":"INE769A01020","index":"Nifty Smallcap 250"},{"symbol":"AAVAS","company":"Aavas Financiers Ltd.","industry":"Financial Services","isin":"INE216P01012","index":"Nifty Smallcap 250"},{"symbol":"ACE","company":"Action Construction Equipment Ltd.","industry":"Capital Goods","isin":"INE731H01025","index":"Nifty Smallcap 250"},{"symbol":"ACUTAAS","company":"Acutaas Chemicals Ltd.","industry":"Healthcare","isin":"INE00FF01025","index":"Nifty Smallcap 250"},{"symbol":"ABFRL","company":"Aditya Birla Fashion and Retail Ltd.","industry":"Consumer Services","isin":"INE647O01011","index":"Nifty Smallcap 250"},{"symbol":"ABLBL","company":"Aditya Birla Lifestyle Brands Ltd.","industry":"Consumer Services","isin":"INE14LE01019","index":"Nifty Smallcap 250"},{"symbol":"ABREL","company":"Aditya Birla Real Estate Ltd.","industry":"Realty","isin":"INE055A01016","index":"Nifty Smallcap 250"},{"symbol":"ABSLAMC","company":"Aditya Birla Sun Life AMC Ltd.","industry":"Financial Services","isin":"INE404A01024","index":"Nifty Smallcap 250"},{"symbol":"CPPLUS","company":"Aditya Infotech Ltd.","industry":"Capital Goods","isin":"INE819V01029","index":"Nifty Smallcap 250"},{"symbol":"AEGISLOG","company":"Aegis Logistics Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE208C01025","index":"Nifty Smallcap 250"},{"symbol":"AEGISVOPAK","company":"Aegis Vopak Terminals Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE0INX01018","index":"Nifty Smallcap 250"},{"symbol":"AFCONS","company":"Afcons Infrastructure Ltd.","industry":"Construction","isin":"INE101I01011","index":"Nifty Smallcap 250"},{"symbol":"AFFLE","company":"Affle 3i Ltd.","industry":"Information Technology","isin":"INE00WC01027","index":"Nifty Smallcap 250"},{"symbol":"ABDL","company":"Allied Blenders and Distillers Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE552Z01027","index":"Nifty Smallcap 250"},{"symbol":"ARE&M","company":"Amara Raja Energy & Mobility Ltd.","industry":"Automobile and Auto Components","isin":"INE885A01032","index":"Nifty Smallcap 250"},{"symbol":"AMBER","company":"Amber Enterprises India Ltd.","industry":"Consumer Durables","isin":"INE371P01015","index":"Nifty Smallcap 250"},{"symbol":"ANANDRATHI","company":"Anand Rathi Wealth Ltd.","industry":"Financial Services","isin":"INE463V01026","index":"Nifty Smallcap 250"},{"symbol":"ANANTRAJ","company":"Anant Raj Ltd.","industry":"Realty","isin":"INE242C01024","index":"Nifty Smallcap 250"},{"symbol":"ANGELONE","company":"Angel One Ltd.","industry":"Financial Services","isin":"INE732I01021","index":"Nifty Smallcap 250"},{"symbol":"ANURAS","company":"Anupam Rasayan India Ltd.","industry":"Chemicals","isin":"INE930P01018","index":"Nifty Smallcap 250"},{"symbol":"APTUS","company":"Aptus Value Housing Finance India Ltd.","industry":"Financial Services","isin":"INE852O01025","index":"Nifty Smallcap 250"},{"symbol":"ASAHIINDIA","company":"Asahi India Glass Ltd.","industry":"Automobile and Auto Components","isin":"INE439A01020","index":"Nifty Smallcap 250"},{"symbol":"ASTERDM","company":"Aster DM Healthcare Ltd.","industry":"Healthcare","isin":"INE914M01019","index":"Nifty Smallcap 250"},{"symbol":"ATHERENERG","company":"Ather Energy Ltd.","industry":"Automobile and Auto Components","isin":"INE0LEZ01016","index":"Nifty Smallcap 250"},{"symbol":"ATUL","company":"Atul Ltd.","industry":"Chemicals","isin":"INE100A01010","index":"Nifty Smallcap 250"},{"symbol":"BEML","company":"BEML Ltd.","industry":"Capital Goods","isin":"INE258A01024","index":"Nifty Smallcap 250"},{"symbol":"BLS","company":"BLS International Services Ltd.","industry":"Consumer Services","isin":"INE153T01027","index":"Nifty Smallcap 250"},{"symbol":"BALRAMCHIN","company":"Balrampur Chini Mills Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE119A01028","index":"Nifty Smallcap 250"},{"symbol":"BANDHANBNK","company":"Bandhan Bank Ltd.","industry":"Financial Services","isin":"INE545U01014","index":"Nifty Smallcap 250"},{"symbol":"BATAINDIA","company":"Bata India Ltd.","industry":"Consumer Durables","isin":"INE176A01028","index":"Nifty Smallcap 250"},{"symbol":"BAYERCROP","company":"Bayer Cropscience Ltd.","industry":"Chemicals","isin":"INE462A01022","index":"Nifty Smallcap 250"},{"symbol":"BELRISE","company":"Belrise Industries Ltd.","industry":"Automobile and Auto Components","isin":"INE894V01022","index":"Nifty Smallcap 250"},{"symbol":"BIKAJI","company":"Bikaji Foods International Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE00E101023","index":"Nifty Smallcap 250"},{"symbol":"BSOFT","company":"Birlasoft Ltd.","industry":"Information Technology","isin":"INE836A01035","index":"Nifty Smallcap 250"},{"symbol":"BLUEDART","company":"Blue Dart Express Ltd.","industry":"Services","isin":"INE233B01017","index":"Nifty Smallcap 250"},{"symbol":"BLUEJET","company":"Blue Jet Healthcare Ltd.","industry":"Healthcare","isin":"INE0KBH01020","index":"Nifty Smallcap 250"},{"symbol":"BBTC","company":"Bombay Burmah Trading Corporation Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE050A01025","index":"Nifty Smallcap 250"},{"symbol":"FIRSTCRY","company":"Brainbees Solutions Ltd.","industry":"Consumer Services","isin":"INE02RE01045","index":"Nifty Smallcap 250"},{"symbol":"BRIGADE","company":"Brigade Enterprises Ltd.","industry":"Realty","isin":"INE791I01019","index":"Nifty Smallcap 250"},{"symbol":"MAPMYINDIA","company":"C.E. Info Systems Ltd.","industry":"Information Technology","isin":"INE0BV301023","index":"Nifty Smallcap 250"},{"symbol":"CCL","company":"CCL Products (I) Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE421D01022","index":"Nifty Smallcap 250"},{"symbol":"CESC","company":"CESC Ltd.","industry":"Power","isin":"INE486A01021","index":"Nifty Smallcap 250"},{"symbol":"CANFINHOME","company":"Can Fin Homes Ltd.","industry":"Financial Services","isin":"INE477A01020","index":"Nifty Smallcap 250"},{"symbol":"CANHLIFE","company":"Canara HSBC Life Insurance Company Ltd.","industry":"Financial Services","isin":"INE01TY01017","index":"Nifty Smallcap 250"},{"symbol":"CAPLIPOINT","company":"Caplin Point Laboratories Ltd.","industry":"Healthcare","isin":"INE475E01026","index":"Nifty Smallcap 250"},{"symbol":"CGCL","company":"Capri Global Capital Ltd.","industry":"Financial Services","isin":"INE180C01042","index":"Nifty Smallcap 250"},{"symbol":"CARBORUNIV","company":"Carborundum Universal Ltd.","industry":"Capital Goods","isin":"INE120A01034","index":"Nifty Smallcap 250"},{"symbol":"CARTRADE","company":"Cartrade Tech Ltd.","industry":"Consumer Services","isin":"INE290S01011","index":"Nifty Smallcap 250"},{"symbol":"CASTROLIND","company":"Castrol India Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE172A01027","index":"Nifty Smallcap 250"},{"symbol":"CEATLTD","company":"Ceat Ltd.","industry":"Automobile and Auto Components","isin":"INE482A01020","index":"Nifty Smallcap 250"},{"symbol":"CEMPRO","company":"Cemindia Projects Ltd.","industry":"Construction","isin":"INE686A01026","index":"Nifty Smallcap 250"},{"symbol":"CENTRALBK","company":"Central Bank of India","industry":"Financial Services","isin":"INE483A01010","index":"Nifty Smallcap 250"},{"symbol":"CDSL","company":"Central Depository Services (India) Ltd.","industry":"Financial Services","isin":"INE736A01011","index":"Nifty Smallcap 250"},{"symbol":"CHALET","company":"Chalet Hotels Ltd.","industry":"Consumer Services","isin":"INE427F01016","index":"Nifty Smallcap 250"},{"symbol":"CHAMBLFERT","company":"Chambal Fertilizers & Chemicals Ltd.","industry":"Chemicals","isin":"INE085A01013","index":"Nifty Smallcap 250"},{"symbol":"CHENNPETRO","company":"Chennai Petroleum Corporation Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE178A01016","index":"Nifty Smallcap 250"},{"symbol":"CHOICEIN","company":"Choice International Ltd.","industry":"Financial Services","isin":"INE102B01014","index":"Nifty Smallcap 250"},{"symbol":"CHOLAHLDNG","company":"Cholamandalam Financial Holdings Ltd.","industry":"Financial Services","isin":"INE149A01033","index":"Nifty Smallcap 250"},{"symbol":"CUB","company":"City Union Bank Ltd.","industry":"Financial Services","isin":"INE491A01021","index":"Nifty Smallcap 250"},{"symbol":"CLEAN","company":"Clean Science and Technology Ltd.","industry":"Chemicals","isin":"INE227W01023","index":"Nifty Smallcap 250"},{"symbol":"COHANCE","company":"Cohance Lifesciences Ltd.","industry":"Healthcare","isin":"INE03QK01018","index":"Nifty Smallcap 250"},{"symbol":"CAMS","company":"Computer Age Management Services Ltd.","industry":"Financial Services","isin":"INE596I01020","index":"Nifty Smallcap 250"},{"symbol":"CONCORDBIO","company":"Concord Biotech Ltd.","industry":"Healthcare","isin":"INE338H01029","index":"Nifty Smallcap 250"},{"symbol":"CRAFTSMAN","company":"Craftsman Automation Ltd.","industry":"Automobile and Auto Components","isin":"INE00LO01017","index":"Nifty Smallcap 250"},{"symbol":"CREDITACC","company":"CreditAccess Grameen Ltd.","industry":"Financial Services","isin":"INE741K01010","index":"Nifty Smallcap 250"},{"symbol":"CROMPTON","company":"Crompton Greaves Consumer Electricals Ltd.","industry":"Consumer Durables","isin":"INE299U01018","index":"Nifty Smallcap 250"},{"symbol":"CYIENT","company":"Cyient Ltd.","industry":"Information Technology","isin":"INE136B01020","index":"Nifty Smallcap 250"},{"symbol":"DCMSHRIRAM","company":"DCM Shriram Ltd.","industry":"Diversified","isin":"INE499A01024","index":"Nifty Smallcap 250"},{"symbol":"DOMS","company":"DOMS Industries Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE321T01012","index":"Nifty Smallcap 250"},{"symbol":"DATAPATTNS","company":"Data Patterns (India) Ltd.","industry":"Capital Goods","isin":"INE0IX101010","index":"Nifty Smallcap 250"},{"symbol":"DEEPAKFERT","company":"Deepak Fertilisers & Petrochemicals Corp. Ltd.","industry":"Chemicals","isin":"INE501A01019","index":"Nifty Smallcap 250"},{"symbol":"DEEPAKNTR","company":"Deepak Nitrite Ltd.","industry":"Chemicals","isin":"INE288B01029","index":"Nifty Smallcap 250"},{"symbol":"DELHIVERY","company":"Delhivery Ltd.","industry":"Services","isin":"INE148O01028","index":"Nifty Smallcap 250"},{"symbol":"DEVYANI","company":"Devyani International Ltd.","industry":"Consumer Services","isin":"INE872J01023","index":"Nifty Smallcap 250"},{"symbol":"LALPATHLAB","company":"Dr. Lal Path Labs Ltd.","industry":"Healthcare","isin":"INE600L01024","index":"Nifty Smallcap 250"},{"symbol":"EIDPARRY","company":"E.I.D. Parry (India) Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE126A01031","index":"Nifty Smallcap 250"},{"symbol":"EIHOTEL","company":"EIH Ltd.","industry":"Consumer Services","isin":"INE230A01023","index":"Nifty Smallcap 250"},{"symbol":"ELECON","company":"Elecon Engineering Co. Ltd.","industry":"Capital Goods","isin":"INE205B01031","index":"Nifty Smallcap 250"},{"symbol":"ELGIEQUIP","company":"Elgi Equipments Ltd.","industry":"Capital Goods","isin":"INE285A01027","index":"Nifty Smallcap 250"},{"symbol":"EMAMILTD","company":"Emami Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE548C01032","index":"Nifty Smallcap 250"},{"symbol":"EMCURE","company":"Emcure Pharmaceuticals Ltd.","industry":"Healthcare","isin":"INE168P01015","index":"Nifty Smallcap 250"},{"symbol":"EMMVEE","company":"Emmvee Photovoltaic Power Ltd.","industry":"Capital Goods","isin":"INE1C6T01020","index":"Nifty Smallcap 250"},{"symbol":"ENGINERSIN","company":"Engineers India Ltd.","industry":"Construction","isin":"INE510A01028","index":"Nifty Smallcap 250"},{"symbol":"ERIS","company":"Eris Lifesciences Ltd.","industry":"Healthcare","isin":"INE406M01024","index":"Nifty Smallcap 250"},{"symbol":"FACT","company":"Fertilisers and Chemicals Travancore Ltd.","industry":"Chemicals","isin":"INE188A01015","index":"Nifty Smallcap 250"},{"symbol":"FINCABLES","company":"Finolex Cables Ltd.","industry":"Capital Goods","isin":"INE235A01022","index":"Nifty Smallcap 250"},{"symbol":"FSL","company":"Firstsource Solutions Ltd.","industry":"Services","isin":"INE684F01012","index":"Nifty Smallcap 250"},{"symbol":"FIVESTAR","company":"Five-Star Business Finance Ltd.","industry":"Financial Services","isin":"INE128S01021","index":"Nifty Smallcap 250"},{"symbol":"FORCEMOT","company":"Force Motors Ltd.","industry":"Automobile and Auto Components","isin":"INE451A01017","index":"Nifty Smallcap 250"},{"symbol":"GABRIEL","company":"Gabriel India Ltd.","industry":"Automobile and Auto Components","isin":"INE524A01029","index":"Nifty Smallcap 250"},{"symbol":"GALLANTT","company":"Gallantt Ispat Ltd.","industry":"Capital Goods","isin":"INE297H01019","index":"Nifty Smallcap 250"},{"symbol":"GRSE","company":"Garden Reach Shipbuilders & Engineers Ltd.","industry":"Capital Goods","isin":"INE382Z01011","index":"Nifty Smallcap 250"},{"symbol":"GILLETTE","company":"Gillette India Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE322A01010","index":"Nifty Smallcap 250"},{"symbol":"GLAND","company":"Gland Pharma Ltd.","industry":"Healthcare","isin":"INE068V01023","index":"Nifty Smallcap 250"},{"symbol":"GODIGIT","company":"Go Digit General Insurance Ltd.","industry":"Financial Services","isin":"INE03JT01014","index":"Nifty Smallcap 250"},{"symbol":"GPIL","company":"Godawari Power & Ispat Ltd.","industry":"Capital Goods","isin":"INE177H01039","index":"Nifty Smallcap 250"},{"symbol":"GRANULES","company":"Granules India Ltd.","industry":"Healthcare","isin":"INE101D01020","index":"Nifty Smallcap 250"},{"symbol":"GRAPHITE","company":"Graphite India Ltd.","industry":"Capital Goods","isin":"INE371A01025","index":"Nifty Smallcap 250"},{"symbol":"GRAVITA","company":"Gravita India Ltd.","industry":"Metals & Mining","isin":"INE024L01027","index":"Nifty Smallcap 250"},{"symbol":"GESHIP","company":"Great Eastern Shipping Co. Ltd.","industry":"Services","isin":"INE017A01032","index":"Nifty Smallcap 250"},{"symbol":"GMDCLTD","company":"Gujarat Mineral Development Corporation Ltd.","industry":"Metals & Mining","isin":"INE131A01031","index":"Nifty Smallcap 250"},{"symbol":"GSPL","company":"Gujarat State Petronet Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE246F01010","index":"Nifty Smallcap 250"},{"symbol":"HEG","company":"H.E.G. Ltd.","industry":"Capital Goods","isin":"INE545A01024","index":"Nifty Smallcap 250"},{"symbol":"HBLENGINE","company":"HBL Engineering Ltd.","industry":"Capital Goods","isin":"INE292B01021","index":"Nifty Smallcap 250"},{"symbol":"HFCL","company":"HFCL Ltd.","industry":"Telecommunication","isin":"INE548A01028","index":"Nifty Smallcap 250"},{"symbol":"HSCL","company":"Himadri Speciality Chemical Ltd.","industry":"Chemicals","isin":"INE019C01026","index":"Nifty Smallcap 250"},{"symbol":"HINDCOPPER","company":"Hindustan Copper Ltd.","industry":"Metals & Mining","isin":"INE531E01026","index":"Nifty Smallcap 250"},{"symbol":"HOMEFIRST","company":"Home First Finance Company India Ltd.","industry":"Financial Services","isin":"INE481N01025","index":"Nifty Smallcap 250"},{"symbol":"HONASA","company":"Honasa Consumer Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE0J5401028","index":"Nifty Smallcap 250"},{"symbol":"IDBI","company":"IDBI Bank Ltd.","industry":"Financial Services","isin":"INE008A01015","index":"Nifty Smallcap 250"},{"symbol":"IFCI","company":"IFCI Ltd.","industry":"Financial Services","isin":"INE039A01010","index":"Nifty Smallcap 250"},{"symbol":"IIFL","company":"IIFL Finance Ltd.","industry":"Financial Services","isin":"INE530B01024","index":"Nifty Smallcap 250"},{"symbol":"IRB","company":"IRB Infrastructure Developers Ltd.","industry":"Construction","isin":"INE821I01022","index":"Nifty Smallcap 250"},{"symbol":"IRCON","company":"IRCON International Ltd.","industry":"Construction","isin":"INE962Y01021","index":"Nifty Smallcap 250"},{"symbol":"ITI","company":"ITI Ltd.","industry":"Telecommunication","isin":"INE248A01017","index":"Nifty Smallcap 250"},{"symbol":"INDGN","company":"Indegene Ltd.","industry":"Healthcare","isin":"INE065X01017","index":"Nifty Smallcap 250"},{"symbol":"INDIACEM","company":"India Cements Ltd.","industry":"Construction Materials","isin":"INE383A01012","index":"Nifty Smallcap 250"},{"symbol":"INDIAMART","company":"Indiamart Intermesh Ltd.","industry":"Consumer Services","isin":"INE933S01016","index":"Nifty Smallcap 250"},{"symbol":"IEX","company":"Indian Energy Exchange Ltd.","industry":"Financial Services","isin":"INE022Q01020","index":"Nifty Smallcap 250"},{"symbol":"IOB","company":"Indian Overseas Bank","industry":"Financial Services","isin":"INE565A01014","index":"Nifty Smallcap 250"},{"symbol":"IGL","company":"Indraprastha Gas Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE203G01027","index":"Nifty Smallcap 250"},{"symbol":"INOXWIND","company":"Inox Wind Ltd.","industry":"Capital Goods","isin":"INE066P01011","index":"Nifty Smallcap 250"},{"symbol":"INTELLECT","company":"Intellect Design Arena Ltd.","industry":"Information Technology","isin":"INE306R01017","index":"Nifty Smallcap 250"},{"symbol":"IGIL","company":"International Gemological Institute Ltd.","industry":"Services","isin":"INE0Q9301021","index":"Nifty Smallcap 250"},{"symbol":"IKS","company":"Inventurus Knowledge Solutions Ltd.","industry":"Information Technology","isin":"INE115Q01022","index":"Nifty Smallcap 250"},{"symbol":"JBCHEPHARM","company":"J.B. Chemicals & Pharmaceuticals Ltd.","industry":"Healthcare","isin":"INE572A01036","index":"Nifty Smallcap 250"},{"symbol":"JBMA","company":"JBM Auto Ltd.","industry":"Automobile and Auto Components","isin":"INE927D01051","index":"Nifty Smallcap 250"},{"symbol":"JKTYRE","company":"JK Tyre & Industries Ltd.","industry":"Automobile and Auto Components","isin":"INE573A01042","index":"Nifty Smallcap 250"},{"symbol":"JMFINANCIL","company":"JM Financial Ltd.","industry":"Financial Services","isin":"INE780C01023","index":"Nifty Smallcap 250"},{"symbol":"JSWCEMENT","company":"JSW Cement Ltd.","industry":"Construction Materials","isin":"INE718I01012","index":"Nifty Smallcap 250"},{"symbol":"JSWDULUX","company":"JSW Dulux Ltd.","industry":"Consumer Durables","isin":"INE133A01011","index":"Nifty Smallcap 250"},{"symbol":"JAINREC","company":"Jain Resource Recycling Ltd.","industry":"Metals & Mining","isin":"INE0YD401026","index":"Nifty Smallcap 250"},{"symbol":"JPPOWER","company":"Jaiprakash Power Ventures Ltd.","industry":"Power","isin":"INE351F01018","index":"Nifty Smallcap 250"},{"symbol":"J&KBANK","company":"Jammu & Kashmir Bank Ltd.","industry":"Financial Services","isin":"INE168A01041","index":"Nifty Smallcap 250"},{"symbol":"JINDALSAW","company":"Jindal Saw Ltd.","industry":"Capital Goods","isin":"INE324A01032","index":"Nifty Smallcap 250"},{"symbol":"JUBLINGREA","company":"Jubilant Ingrevia Ltd.","industry":"Chemicals","isin":"INE0BY001018","index":"Nifty Smallcap 250"},{"symbol":"JUBLPHARMA","company":"Jubilant Pharmova Ltd.","industry":"Healthcare","isin":"INE700A01033","index":"Nifty Smallcap 250"},{"symbol":"JWL","company":"Jupiter Wagons Ltd.","industry":"Capital Goods","isin":"INE209L01016","index":"Nifty Smallcap 250"},{"symbol":"JYOTICNC","company":"Jyoti CNC Automation Ltd.","industry":"Capital Goods","isin":"INE980O01024","index":"Nifty Smallcap 250"},{"symbol":"KAJARIACER","company":"Kajaria Ceramics Ltd.","industry":"Consumer Durables","isin":"INE217B01036","index":"Nifty Smallcap 250"},{"symbol":"KPIL","company":"Kalpataru Projects International Ltd.","industry":"Construction","isin":"INE220B01022","index":"Nifty Smallcap 250"},{"symbol":"KARURVYSYA","company":"Karur Vysya Bank Ltd.","industry":"Financial Services","isin":"INE036D01028","index":"Nifty Smallcap 250"},{"symbol":"KAYNES","company":"Kaynes Technology India Ltd.","industry":"Capital Goods","isin":"INE918Z01012","index":"Nifty Smallcap 250"},{"symbol":"KEC","company":"Kec International Ltd.","industry":"Construction","isin":"INE389H01022","index":"Nifty Smallcap 250"},{"symbol":"KFINTECH","company":"Kfin Technologies Ltd.","industry":"Financial Services","isin":"INE138Y01010","index":"Nifty Smallcap 250"},{"symbol":"KIRLOSENG","company":"Kirloskar Oil Eng Ltd.","industry":"Capital Goods","isin":"INE146L01010","index":"Nifty Smallcap 250"},{"symbol":"KIMS","company":"Krishna Institute of Medical Sciences Ltd.","industry":"Healthcare","isin":"INE967H01025","index":"Nifty Smallcap 250"},{"symbol":"LTFOODS","company":"LT Foods Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE818H01020","index":"Nifty Smallcap 250"},{"symbol":"LATENTVIEW","company":"Latent View Analytics Ltd.","industry":"Information Technology","isin":"INE0I7C01011","index":"Nifty Smallcap 250"},{"symbol":"THELEELA","company":"Leela Palaces Hotels & Resorts Ltd.","industry":"Consumer Services","isin":"INE0AQ201015","index":"Nifty Smallcap 250"},{"symbol":"LEMONTREE","company":"Lemon Tree Hotels Ltd.","industry":"Consumer Services","isin":"INE970X01018","index":"Nifty Smallcap 250"},{"symbol":"MMTC","company":"MMTC Ltd.","industry":"Services","isin":"INE123F01029","index":"Nifty Smallcap 250"},{"symbol":"MGL","company":"Mahanagar Gas Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE002S01010","index":"Nifty Smallcap 250"},{"symbol":"MANAPPURAM","company":"Manappuram Finance Ltd.","industry":"Financial Services","isin":"INE522D01027","index":"Nifty Smallcap 250"},{"symbol":"MRPL","company":"Mangalore Refinery & Petrochemicals Ltd.","industry":"Oil Gas & Consumable Fuels","isin":"INE103A01014","index":"Nifty Smallcap 250"},{"symbol":"MEESHO","company":"Meesho Ltd.","industry":"Consumer Services","isin":"INE0VDM01015","index":"Nifty Smallcap 250"},{"symbol":"MINDACORP","company":"Minda Corporation Ltd.","industry":"Automobile and Auto Components","isin":"INE842C01021","index":"Nifty Smallcap 250"},{"symbol":"MSUMI","company":"Motherson Sumi Wiring India Ltd.","industry":"Automobile and Auto Components","isin":"INE0FS801015","index":"Nifty Smallcap 250"},{"symbol":"NATCOPHARM","company":"NATCO Pharma Ltd.","industry":"Healthcare","isin":"INE987B01026","index":"Nifty Smallcap 250"},{"symbol":"NBCC","company":"NBCC (India) Ltd.","industry":"Construction","isin":"INE095N01031","index":"Nifty Smallcap 250"},{"symbol":"NCC","company":"NCC Ltd.","industry":"Construction","isin":"INE868B01028","index":"Nifty Smallcap 250"},{"symbol":"NSLNISP","company":"NMDC Steel Ltd.","industry":"Metals & Mining","isin":"INE0NNS01018","index":"Nifty Smallcap 250"},{"symbol":"NH","company":"Narayana Hrudayalaya Ltd.","industry":"Healthcare","isin":"INE410P01011","index":"Nifty Smallcap 250"},{"symbol":"NAVA","company":"Nava Ltd.","industry":"Power","isin":"INE725A01030","index":"Nifty Smallcap 250"},{"symbol":"NAVINFLUOR","company":"Navin Fluorine International Ltd.","industry":"Chemicals","isin":"INE048G01026","index":"Nifty Smallcap 250"},{"symbol":"NETWEB","company":"Netweb Technologies India Ltd.","industry":"Information Technology","isin":"INE0NT901020","index":"Nifty Smallcap 250"},{"symbol":"NEULANDLAB","company":"Neuland Laboratories Ltd.","industry":"Healthcare","isin":"INE794A01010","index":"Nifty Smallcap 250"},{"symbol":"NEWGEN","company":"Newgen Software Technologies Ltd.","industry":"Information Technology","isin":"INE619B01017","index":"Nifty Smallcap 250"},{"symbol":"NIVABUPA","company":"Niva Bupa Health Insurance Company Ltd.","industry":"Financial Services","isin":"INE995S01015","index":"Nifty Smallcap 250"},{"symbol":"NUVAMA","company":"Nuvama Wealth Management Ltd.","industry":"Financial Services","isin":"INE531F01023","index":"Nifty Smallcap 250"},{"symbol":"NUVOCO","company":"Nuvoco Vistas Corporation Ltd.","industry":"Construction Materials","isin":"INE118D01016","index":"Nifty Smallcap 250"},{"symbol":"OLAELEC","company":"Ola Electric Mobility Ltd.","industry":"Automobile and Auto Components","isin":"INE0LXG01040","index":"Nifty Smallcap 250"},{"symbol":"OLECTRA","company":"Olectra Greentech Ltd.","industry":"Automobile and Auto Components","isin":"INE260D01016","index":"Nifty Smallcap 250"},{"symbol":"ONESOURCE","company":"Onesource Specialty Pharma Ltd.","industry":"Healthcare","isin":"INE013P01021","index":"Nifty Smallcap 250"},{"symbol":"PCBL","company":"PCBL Chemical Ltd.","industry":"Chemicals","isin":"INE602A01031","index":"Nifty Smallcap 250"},{"symbol":"PGEL","company":"PG Electroplast Ltd.","industry":"Consumer Durables","isin":"INE457L01029","index":"Nifty Smallcap 250"},{"symbol":"PNBHOUSING","company":"PNB Housing Finance Ltd.","industry":"Financial Services","isin":"INE572E01012","index":"Nifty Smallcap 250"},{"symbol":"PTCIL","company":"PTC Industries Ltd.","industry":"Capital Goods","isin":"INE596F01018","index":"Nifty Smallcap 250"},{"symbol":"PVRINOX","company":"PVR INOX Ltd.","industry":"Media Entertainment & Publication","isin":"INE191H01014","index":"Nifty Smallcap 250"},{"symbol":"PARADEEP","company":"Paradeep Phosphates Ltd.","industry":"Chemicals","isin":"INE088F01024","index":"Nifty Smallcap 250"},{"symbol":"PFIZER","company":"Pfizer Ltd.","industry":"Healthcare","isin":"INE182A01018","index":"Nifty Smallcap 250"},{"symbol":"PWL","company":"Physicswallah Ltd.","industry":"Consumer Services","isin":"INE0LP301011","index":"Nifty Smallcap 250"},{"symbol":"PINELABS","company":"Pine Labs Ltd.","industry":"Financial Services","isin":"INE15B701018","index":"Nifty Smallcap 250"},{"symbol":"PIRAMALFIN","company":"Piramal Finance Ltd.","industry":"Financial Services","isin":"INE202B01038","index":"Nifty Smallcap 250"},{"symbol":"PPLPHARMA","company":"Piramal Pharma Ltd.","industry":"Healthcare","isin":"INE0DK501011","index":"Nifty Smallcap 250"},{"symbol":"POLYMED","company":"Poly Medicure Ltd.","industry":"Healthcare","isin":"INE205C01021","index":"Nifty Smallcap 250"},{"symbol":"POONAWALLA","company":"Poonawalla Fincorp Ltd.","industry":"Financial Services","isin":"INE511C01022","index":"Nifty Smallcap 250"},{"symbol":"RRKABEL","company":"R R Kabel Ltd.","industry":"Capital Goods","isin":"INE777K01022","index":"Nifty Smallcap 250"},{"symbol":"RBLBANK","company":"RBL Bank Ltd.","industry":"Financial Services","isin":"INE976G01028","index":"Nifty Smallcap 250"},{"symbol":"RHIM","company":"RHI MAGNESITA INDIA LTD.","industry":"Capital Goods","isin":"INE743M01012","index":"Nifty Smallcap 250"},{"symbol":"RITES","company":"RITES Ltd.","industry":"Construction","isin":"INE320J01015","index":"Nifty Smallcap 250"},{"symbol":"RAILTEL","company":"Railtel Corporation Of India Ltd.","industry":"Telecommunication","isin":"INE0DD101019","index":"Nifty Smallcap 250"},{"symbol":"RAINBOW","company":"Rainbow Childrens Medicare Ltd.","industry":"Healthcare","isin":"INE961O01016","index":"Nifty Smallcap 250"},{"symbol":"RKFORGE","company":"Ramkrishna Forgings Ltd.","industry":"Automobile and Auto Components","isin":"INE399G01023","index":"Nifty Smallcap 250"},{"symbol":"REDINGTON","company":"Redington Ltd.","industry":"Services","isin":"INE891D01026","index":"Nifty Smallcap 250"},{"symbol":"RPOWER","company":"Reliance Power Ltd.","industry":"Power","isin":"INE614G01033","index":"Nifty Smallcap 250"},{"symbol":"SBFC","company":"SBFC Finance Ltd.","industry":"Financial Services","isin":"INE423Y01016","index":"Nifty Smallcap 250"},{"symbol":"SAGILITY","company":"Sagility Ltd.","industry":"Information Technology","isin":"INE0W2G01015","index":"Nifty Smallcap 250"},{"symbol":"SAILIFE","company":"Sai Life Sciences Ltd.","industry":"Healthcare","isin":"INE570L01029","index":"Nifty Smallcap 250"},{"symbol":"SAMMAANCAP","company":"Sammaan Capital Ltd.","industry":"Financial Services","isin":"INE148I01020","index":"Nifty Smallcap 250"},{"symbol":"SAPPHIRE","company":"Sapphire Foods India Ltd.","industry":"Consumer Services","isin":"INE806T01020","index":"Nifty Smallcap 250"},{"symbol":"SARDAEN","company":"Sarda Energy and Minerals Ltd.","industry":"Metals & Mining","isin":"INE385C01021","index":"Nifty Smallcap 250"},{"symbol":"SAREGAMA","company":"Saregama India Ltd","industry":"Media Entertainment & Publication","isin":"INE979A01025","index":"Nifty Smallcap 250"},{"symbol":"SCHNEIDER","company":"Schneider Electric Infrastructure Ltd.","industry":"Capital Goods","isin":"INE839M01018","index":"Nifty Smallcap 250"},{"symbol":"SCI","company":"Shipping Corporation of India Ltd.","industry":"Services","isin":"INE109A01011","index":"Nifty Smallcap 250"},{"symbol":"SHYAMMETL","company":"Shyam Metalics and Energy Ltd.","industry":"Capital Goods","isin":"INE810G01011","index":"Nifty Smallcap 250"},{"symbol":"SIGNATURE","company":"Signatureglobal (India) Ltd.","industry":"Realty","isin":"INE903U01023","index":"Nifty Smallcap 250"},{"symbol":"SOBHA","company":"Sobha Ltd.","industry":"Realty","isin":"INE671H01015","index":"Nifty Smallcap 250"},{"symbol":"SONACOMS","company":"Sona BLW Precision Forgings Ltd.","industry":"Automobile and Auto Components","isin":"INE073K01018","index":"Nifty Smallcap 250"},{"symbol":"SONATSOFTW","company":"Sonata Software Ltd.","industry":"Information Technology","isin":"INE269A01021","index":"Nifty Smallcap 250"},{"symbol":"STARHEALTH","company":"Star Health and Allied Insurance Company Ltd.","industry":"Financial Services","isin":"INE575P01011","index":"Nifty Smallcap 250"},{"symbol":"SUMICHEM","company":"Sumitomo Chemical India Ltd.","industry":"Chemicals","isin":"INE258G01013","index":"Nifty Smallcap 250"},{"symbol":"SUNTV","company":"Sun TV Network Ltd.","industry":"Media Entertainment & Publication","isin":"INE424H01027","index":"Nifty Smallcap 250"},{"symbol":"SPLPETRO","company":"Supreme Petrochem Ltd.","industry":"Chemicals","isin":"INE663A01033","index":"Nifty Smallcap 250"},{"symbol":"SWANCORP","company":"Swan Corp Ltd.","industry":"Chemicals","isin":"INE665A01038","index":"Nifty Smallcap 250"},{"symbol":"SYNGENE","company":"Syngene International Ltd.","industry":"Healthcare","isin":"INE398R01022","index":"Nifty Smallcap 250"},{"symbol":"SYRMA","company":"Syrma SGS Technology Ltd.","industry":"Capital Goods","isin":"INE0DYJ01015","index":"Nifty Smallcap 250"},{"symbol":"TBOTEK","company":"TBO Tek Ltd.","industry":"Consumer Services","isin":"INE673O01025","index":"Nifty Smallcap 250"},{"symbol":"TATACHEM","company":"Tata Chemicals Ltd.","industry":"Chemicals","isin":"INE092A01019","index":"Nifty Smallcap 250"},{"symbol":"TATATECH","company":"Tata Technologies Ltd.","industry":"Information Technology","isin":"INE142M01025","index":"Nifty Smallcap 250"},{"symbol":"TTML","company":"Tata Teleservices (Maharashtra) Ltd.","industry":"Telecommunication","isin":"INE517B01013","index":"Nifty Smallcap 250"},{"symbol":"TECHNOE","company":"Techno Electric & Engineering Company Ltd.","industry":"Construction","isin":"INE285K01026","index":"Nifty Smallcap 250"},{"symbol":"TEGA","company":"Tega Industries Ltd.","industry":"Capital Goods","isin":"INE011K01018","index":"Nifty Smallcap 250"},{"symbol":"TEJASNET","company":"Tejas Networks Ltd.","industry":"Telecommunication","isin":"INE010J01012","index":"Nifty Smallcap 250"},{"symbol":"TENNIND","company":"Tenneco Clean Air India Ltd.","industry":"Automobile and Auto Components","isin":"INE19RI01016","index":"Nifty Smallcap 250"},{"symbol":"RAMCOCEM","company":"The Ramco Cements Ltd.","industry":"Construction Materials","isin":"INE331A01037","index":"Nifty Smallcap 250"},{"symbol":"TIMKEN","company":"Timken India Ltd.","industry":"Capital Goods","isin":"INE325A01013","index":"Nifty Smallcap 250"},{"symbol":"TITAGARH","company":"Titagarh Rail Systems Ltd.","industry":"Capital Goods","isin":"INE615H01020","index":"Nifty Smallcap 250"},{"symbol":"TARIL","company":"Transformers And Rectifiers (India) Ltd.","industry":"Capital Goods","isin":"INE763I01026","index":"Nifty Smallcap 250"},{"symbol":"TRAVELFOOD","company":"Travel Food Services Ltd.","industry":"Consumer Services","isin":"INE103V01028","index":"Nifty Smallcap 250"},{"symbol":"TRIDENT","company":"Trident Ltd.","industry":"Textiles","isin":"INE064C01022","index":"Nifty Smallcap 250"},{"symbol":"TRITURBINE","company":"Triveni Turbine Ltd.","industry":"Capital Goods","isin":"INE152M01016","index":"Nifty Smallcap 250"},{"symbol":"UCOBANK","company":"UCO Bank","industry":"Financial Services","isin":"INE691A01018","index":"Nifty Smallcap 250"},{"symbol":"UTIAMC","company":"UTI Asset Management Company Ltd.","industry":"Financial Services","isin":"INE094J01016","index":"Nifty Smallcap 250"},{"symbol":"URBANCO","company":"Urban Company Ltd.","industry":"Consumer Services","isin":"INE0CAZ01013","index":"Nifty Smallcap 250"},{"symbol":"USHAMART","company":"Usha Martin Ltd.","industry":"Capital Goods","isin":"INE228A01035","index":"Nifty Smallcap 250"},{"symbol":"VTL","company":"Vardhman Textiles Ltd.","industry":"Textiles","isin":"INE825A01020","index":"Nifty Smallcap 250"},{"symbol":"VIJAYA","company":"Vijaya Diagnostic Centre Ltd.","industry":"Healthcare","isin":"INE043W01024","index":"Nifty Smallcap 250"},{"symbol":"WELCORP","company":"Welspun Corp Ltd.","industry":"Capital Goods","isin":"INE191B01025","index":"Nifty Smallcap 250"},{"symbol":"WELSPUNLIV","company":"Welspun Living Ltd.","industry":"Textiles","isin":"INE192B01031","index":"Nifty Smallcap 250"},{"symbol":"WHIRLPOOL","company":"Whirlpool of India Ltd.","industry":"Consumer Durables","isin":"INE716A01013","index":"Nifty Smallcap 250"},{"symbol":"WOCKPHARMA","company":"Wockhardt Ltd.","industry":"Healthcare","isin":"INE049B01025","index":"Nifty Smallcap 250"},{"symbol":"ZFCVINDIA","company":"ZF Commercial Vehicle Control Systems India Ltd.","industry":"Automobile and Auto Components","isin":"INE342J01019","index":"Nifty Smallcap 250"},{"symbol":"ZEEL","company":"Zee Entertainment Enterprises Ltd.","industry":"Media Entertainment & Publication","isin":"INE256A01028","index":"Nifty Smallcap 250"},{"symbol":"ZENTEC","company":"Zen Technologies Ltd.","industry":"Capital Goods","isin":"INE251B01027","index":"Nifty Smallcap 250"},{"symbol":"ZENSARTECH","company":"Zensar Technolgies Ltd.","industry":"Information Technology","isin":"INE520A01027","index":"Nifty Smallcap 250"},{"symbol":"ZYDUSWELL","company":"Zydus Wellness Ltd.","industry":"Fast Moving Consumer Goods","isin":"INE768C01028","index":"Nifty Smallcap 250"},{"symbol":"ECLERX","company":"eClerx Services Ltd.","industry":"Services","isin":"INE738I01010","index":"Nifty Smallcap 250"}];
+
+const BADGE_CLASS = {
+  'Nifty 50': 'badge-n50',
+  'Nifty Next 50': 'badge-nnext',
+  'Nifty Midcap 150': 'badge-nmid',
+  'Nifty Smallcap 250': 'badge-nsmall'
+};
+
+let currentFilter = 'all';
+let currentSort = { col: 'symbol', dir: 1 };
+let currentQuery = '';
+
+const searchInput = document.getElementById('searchInput');
+const clearBtn = document.getElementById('clearBtn');
+const tableBody = document.getElementById('tableBody');
+const emptyState = document.getElementById('emptyState');
+const shownCount = document.getElementById('shownCount');
+const resultsBar = document.getElementById('resultsBar');
+
+function esc(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function highlight(text, query) {
+  if (!query) return esc(text);
+  const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+  return esc(text).replace(re, '<mark>$1</mark>');
+}
+
+function getBadge(index) {
+  return `<span class="badge ${BADGE_CLASS[index]}"><span class="badge-dot"></span>${esc(index)}</span>`;
+}
+
+function render() {
+  const q = currentQuery.trim().toUpperCase();
+  let filtered = STOCKS.filter(s => {
+    const matchIndex = currentFilter === 'all' || s.index === currentFilter;
+    if (!matchIndex) return false;
+    if (!q) return true;
+    return s.symbol.toUpperCase().includes(q) ||
+           s.company.toUpperCase().includes(q) ||
+           s.isin.toUpperCase().includes(q) ||
+           s.industry.toUpperCase().includes(q);
+  });
+
+  filtered.sort((a, b) => {
+    const va = a[currentSort.col].toLowerCase();
+    const vb = b[currentSort.col].toLowerCase();
+    return va < vb ? -currentSort.dir : va > vb ? currentSort.dir : 0;
+  });
+
+  shownCount.textContent = filtered.length;
+
+  if (filtered.length === 0) {
+    tableBody.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  const rows = filtered.map(s => `
+    <tr>
+      <td class="col-symbol">${highlight(s.symbol, q)}</td>
+      <td class="col-company">${highlight(s.company, q)}</td>
+      <td>${getBadge(s.index)}</td>
+      <td class="col-industry">${highlight(s.industry, q)}</td>
+      <td class="col-isin">${highlight(s.isin, q)}</td>
+    </tr>
+  `).join('');
+  tableBody.innerHTML = rows;
+}
+
+// Search
+searchInput.addEventListener('input', () => {
+  currentQuery = searchInput.value;
+  clearBtn.classList.toggle('visible', !!currentQuery);
+  render();
+});
+
+clearBtn.addEventListener('click', () => {
+  searchInput.value = '';
+  currentQuery = '';
+  clearBtn.classList.remove('visible');
+  searchInput.focus();
+  render();
+});
+
+// Filters
+document.getElementById('filters').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = btn.dataset.index;
+  render();
+});
+
+// Sort
+document.querySelectorAll('thead th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (currentSort.col === col) {
+      currentSort.dir *= -1;
+    } else {
+      currentSort = { col, dir: 1 };
+    }
+    document.querySelectorAll('thead th').forEach(h => h.classList.remove('sorted'));
+    th.classList.add('sorted');
+    th.querySelector('.sort-icon').textContent = currentSort.dir === 1 ? '↑' : '↓';
+    render();
+  });
+});
+
+// Init
+render();
+</script>
+</body>
+</html>
