@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>React 3-Day Crash Guide</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    margin: 0;
+    background-color: #fdfdfd;
+  }
+
+  /* Wrapper centers the sidebar + content as one unit instead of
+     pinning the sidebar to the browser edge */
+  .layout {
+    display: flex;
+    max-width: 1140px;
+    margin: 0 auto;
+  }
+
+  /* Sidebar */
+  nav.sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    height: 100vh;
+    overflow-y: auto;
+    position: sticky;
+    top: 0;
+    background-color: #24292e;
+    color: #d1d5da;
+    padding: 24px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  nav.sidebar .brand {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #fff;
+    padding: 0 20px 16px;
+    border-bottom: 1px solid #444c56;
+    margin-bottom: 12px;
+  }
+  nav.sidebar .day-label {
+    text-transform: uppercase;
+    font-size: 0.75em;
+    letter-spacing: 0.05em;
+    color: #79b8ff;
+    padding: 16px 20px 6px;
+    font-weight: 600;
+  }
+  nav.sidebar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  nav.sidebar li a {
+    display: block;
+    padding: 6px 20px 6px 28px;
+    color: #d1d5da;
+    text-decoration: none;
+    font-size: 0.9em;
+    border-left: 3px solid transparent;
+  }
+  nav.sidebar li a:hover {
+    background-color: #2f363d;
+    color: #fff;
+    border-left-color: #79b8ff;
+  }
+
+  /* Main content */
+  main {
+    flex: 1;
+    min-width: 0;
+    padding: 30px 40px 80px;
+  }
+  h1 {
+    border-bottom: 3px solid #0078d4;
+    padding-bottom: 10px;
+    color: #0078d4;
+    font-size: 2em;
+  }
+  h2 {
+    color: #24292e;
+    margin-top: 50px;
+    border-bottom: 2px solid #eaecef;
+    padding-bottom: 5px;
+    scroll-margin-top: 16px;
+  }
+  h3 {
+    color: #b78103;
+    margin-top: 28px;
+    scroll-margin-top: 16px;
+  }
+  p.desc {
+    background-color: #f1f8ff;
+    border-left: 4px solid #79b8ff;
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin: 8px 0 14px;
+    color: #444;
+    font-size: 0.96em;
+  }
+  pre {
+    background-color: #f6f8fa;
+    padding: 12px;
+    border-radius: 6px;
+    overflow: auto;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 90%;
+    border: 1px solid #e1e4e8;
+  }
+  code {
+    background-color: #fff5b1;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  pre code {
+    background-color: transparent;
+    padding: 0;
+  }
+  ul.result {
+    background: #f6f8fa;
+    padding: 15px 15px 15px 35px;
+    border-radius: 6px;
+  }
+  ul.result li {
+    margin-bottom: 8px;
+  }
+
+  @media (max-width: 800px) {
+    .layout { display: block; }
+    nav.sidebar { display: none; }
+    main { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+<nav class="sidebar">
+  <div class="brand">⚛️ React Guide</div>
+
+  <div class="day-label">Day 1 — Fundamentals</div>
+  <ul>
+    <li><a href="#d1-jsx">1. JSX & Components</a></li>
+    <li><a href="#d1-props">2. Props</a></li>
+    <li><a href="#d1-state">3. State (useState)</a></li>
+    <li><a href="#d1-events">4. Event Handling</a></li>
+    <li><a href="#d1-conditional">5. Conditional Rendering</a></li>
+    <li><a href="#d1-lists">6. Lists & Keys</a></li>
+    <li><a href="#d1-forms">7. Forms</a></li>
+  </ul>
+
+  <div class="day-label">Day 2 — Hooks & Architecture</div>
+  <ul>
+    <li><a href="#d2-useeffect">1. useEffect</a></li>
+    <li><a href="#d2-usecontext">2. useContext</a></li>
+    <li><a href="#d2-useref">3. useRef</a></li>
+    <li><a href="#d2-usereducer">4. useReducer</a></li>
+    <li><a href="#d2-customhooks">5. Custom Hooks</a></li>
+    <li><a href="#d2-perf">6. useMemo & useCallback</a></li>
+    <li><a href="#d2-composition">7. Component Composition</a></li>
+  </ul>
+
+  <div class="day-label">Day 3 — Real-World Apps</div>
+  <ul>
+    <li><a href="#d3-router">1. React Router</a></li>
+    <li><a href="#d3-api">2. Fetching APIs</a></li>
+    <li><a href="#d3-globalstate">3. Global State</a></li>
+    <li><a href="#d3-errors">4. Error Boundaries</a></li>
+    <li><a href="#d3-testing">5. Component Testing</a></li>
+    <li><a href="#d3-nextjs">6. Next.js Integration</a></li>
+    <li><a href="#d3-perfprod">7. Performance & Production</a></li>
+  </ul>
+
+  <div class="day-label">Wrap-up</div>
+  <ul>
+    <li><a href="#end-result">🎯 End Result</a></li>
+  </ul>
+</nav>
+
+<main>
+  <h1>⚛️ React 3‑Day Crash Guide</h1>
+
+  <h2 id="day1">📅 Day 1 — Core React Fundamentals</h2>
+
+  <h3 id="d1-jsx">1. JSX & Components</h3>
+  <p class="desc">JSX lets you write HTML-like markup directly inside JavaScript. A component is just a function that returns JSX — it's the basic building block of every React app.</p>
+  <pre><code>function Welcome() {
+  return &lt;h1&gt;Hello, Venudhar&lt;/h1&gt;;
+}
+
+// Functional component with JSX expressions
+const Greeting = ({ name }) =&gt; {
+  return &lt;h2&gt;Welcome back, {name}!&lt;/h2&gt;;
+};
+</code></pre>
+
+  <h3 id="d1-props">2. Props</h3>
+  <p class="desc">Props are how a parent component passes data into a child component — similar to method parameters in C#. They're read-only inside the child.</p>
+  <pre><code>function UserCard({ name, role }) {
+  return (
+    &lt;div&gt;
+      &lt;p&gt;{name}&lt;/p&gt;
+      &lt;p&gt;{role}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+
+// Usage
+&lt;UserCard name="Venudhar" role="Tech Lead" /&gt;
+</code></pre>
+
+  <h3 id="d1-state">3. State with useState</h3>
+  <p class="desc">State is data that belongs to a component and can change over time. <code>useState</code> gives you a value plus a setter function — updating the value triggers a re-render.</p>
+  <pre><code>import { useState } from "react";
+
+function Counter() {
+  const [count, setCount] = useState(0);
+  return (
+    &lt;button onClick={() =&gt; setCount(count + 1)}&gt;
+      Count: {count}
+    &lt;/button&gt;
+  );
+}
+</code></pre>
+
+  <h3 id="d1-events">4. Event Handling</h3>
+  <p class="desc">React wraps native DOM events in its own synthetic event system, but the syntax stays close to plain JS — you pass a function reference, not a string.</p>
+  <pre><code>function SearchBox() {
+  const handleChange = (e) =&gt; {
+    console.log(e.target.value);
+  };
+  return &lt;input onChange={handleChange} placeholder="Search..." /&gt;;
+}
+</code></pre>
+
+  <h3 id="d1-conditional">5. Conditional Rendering</h3>
+  <p class="desc">There's no special syntax for "if" in JSX — you use regular JavaScript expressions like ternaries or <code>&&</code> to decide what gets rendered.</p>
+  <pre><code>function Status({ isLoggedIn }) {
+  return (
+    &lt;div&gt;
+      {isLoggedIn ? &lt;p&gt;Welcome back!&lt;/p&gt; : &lt;p&gt;Please log in.&lt;/p&gt;}
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+
+  <h3 id="d1-lists">6. Lists & Keys</h3>
+  <p class="desc">Use <code>.map()</code> to render arrays of data as elements. Each item needs a stable, unique <code>key</code> so React can track changes efficiently.</p>
+  <pre><code>function StockList({ stocks }) {
+  return (
+    &lt;ul&gt;
+      {stocks.map((stock) =&gt; (
+        &lt;li key={stock.id}&gt;{stock.symbol} — {stock.price}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}
+</code></pre>
+
+  <h3 id="d1-forms">7. Forms (Controlled Components)</h3>
+  <p class="desc">A "controlled" input ties its value directly to React state, so the component always knows the current input value instead of reading it from the DOM.</p>
+  <pre><code>function LoginForm() {
+  const [email, setEmail] = useState("");
+
+  const handleSubmit = (e) =&gt; {
+    e.preventDefault();
+    console.log(email);
+  };
+
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;input value={email} onChange={(e) =&gt; setEmail(e.target.value)} /&gt;
+      &lt;button type="submit"&gt;Submit&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}
+</code></pre>
+
+  <h2 id="day2">📅 Day 2 — Hooks & Component Architecture</h2>
+
+  <h3 id="d2-useeffect">1. useEffect (Side Effects & Lifecycle)</h3>
+  <p class="desc">useEffect runs code after render — for things like data fetching, subscriptions, or timers. The dependency array controls when it re-runs, and the returned function handles cleanup.</p>
+  <pre><code>import { useEffect, useState } from "react";
+
+function StockPrice({ symbol }) {
+  const [price, setPrice] = useState(null);
+
+  useEffect(() =&gt; {
+    fetchPrice(symbol).then(setPrice);
+
+    return () =&gt; {
+      // cleanup (e.g. cancel subscription/interval)
+    };
+  }, [symbol]); // dependency array
+
+  return &lt;p&gt;{symbol}: {price}&lt;/p&gt;;
+}
+</code></pre>
+
+  <h3 id="d2-usecontext">2. useContext (Avoiding Prop Drilling)</h3>
+  <p class="desc">Context lets you share a value across many components without manually passing props down through every level — useful for themes, auth state, or app-wide settings.</p>
+  <pre><code>const ThemeContext = createContext("light");
+
+function App() {
+  return (
+    &lt;ThemeContext.Provider value="dark"&gt;
+      &lt;Toolbar /&gt;
+    &lt;/ThemeContext.Provider&gt;
+  );
+}
+
+function Toolbar() {
+  const theme = useContext(ThemeContext);
+  return &lt;div className={theme}&gt;Toolbar&lt;/div&gt;;
+}
+</code></pre>
+
+  <h3 id="d2-useref">3. useRef (DOM Access & Mutable Values)</h3>
+  <p class="desc">useRef gives you a mutable container that persists across renders without causing a re-render when changed — commonly used to directly access a DOM element.</p>
+  <pre><code>function FocusInput() {
+  const inputRef = useRef(null);
+
+  useEffect(() =&gt; {
+    inputRef.current.focus();
+  }, []);
+
+  return &lt;input ref={inputRef} /&gt;;
+}
+</code></pre>
+
+  <h3 id="d2-usereducer">4. useReducer (Complex State Logic)</h3>
+  <p class="desc">When state updates depend on more than a simple "set this value" — like multiple related fields or action-driven changes — useReducer centralizes that logic, similar to a switch-based state machine.</p>
+  <pre><code>function reducer(state, action) {
+  switch (action.type) {
+    case "increment": return { count: state.count + 1 };
+    case "decrement": return { count: state.count - 1 };
+    default: return state;
+  }
+}
+
+function Counter() {
+  const [state, dispatch] = useReducer(reducer, { count: 0 });
+  return (
+    &lt;button onClick={() =&gt; dispatch({ type: "increment" })}&gt;
+      {state.count}
+    &lt;/button&gt;
+  );
+}
+</code></pre>
+
+  <h3 id="d2-customhooks">5. Custom Hooks</h3>
+  <p class="desc">A custom hook is just a function starting with "use" that wraps reusable stateful logic — letting you share behavior between components without repeating code.</p>
+  <pre><code>function useStockData(symbol) {
+  const [data, setData] = useState(null);
+
+  useEffect(() =&gt; {
+    let active = true;
+    fetchStock(symbol).then((res) =&gt; { if (active) setData(res); });
+    return () =&gt; { active = false; };
+  }, [symbol]);
+
+  return data;
+}
+
+// Usage
+const data = useStockData("ONGC");
+</code></pre>
+
+  <h3 id="d2-perf">6. Performance: useMemo & useCallback</h3>
+  <p class="desc">These hooks memoize expensive calculations or function references so they aren't recreated on every render — useful for optimizing large lists or avoiding unnecessary child re-renders.</p>
+  <pre><code>const sortedStocks = useMemo(
+  () =&gt; stocks.sort((a, b) =&gt; b.changePercent - a.changePercent),
+  [stocks]
+);
+
+const handleSelect = useCallback(
+  (id) =&gt; setSelectedId(id),
+  []
+);
+</code></pre>
+
+  <h3 id="d2-composition">7. Component Composition (children prop)</h3>
+  <p class="desc">Instead of building rigid, configurable components, React favors composition — passing JSX as <code>children</code> so a wrapper component can render whatever is placed inside it.</p>
+  <pre><code>function Card({ children }) {
+  return &lt;div className="card"&gt;{children}&lt;/div&gt;;
+}
+
+// Usage
+&lt;Card&gt;
+  &lt;h3&gt;ONGC&lt;/h3&gt;
+  &lt;p&gt;-20% from entry&lt;/p&gt;
+&lt;/Card&gt;
+</code></pre>
+
+  <h2 id="day3">📅 Day 3 — React in Real-World Apps</h2>
+
+  <h3 id="d3-router">1. React Router (Navigation)</h3>
+  <p class="desc">React Router handles client-side navigation between "pages" in a single-page app, matching URL paths to the components that should render.</p>
+  <pre><code>import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+
+function App() {
+  return (
+    &lt;BrowserRouter&gt;
+      &lt;nav&gt;
+        &lt;Link to="/"&gt;Home&lt;/Link&gt;
+        &lt;Link to="/portfolio"&gt;Portfolio&lt;/Link&gt;
+      &lt;/nav&gt;
+      &lt;Routes&gt;
+        &lt;Route path="/" element={&lt;Home /&gt;} /&gt;
+        &lt;Route path="/portfolio" element={&lt;Portfolio /&gt;} /&gt;
+      &lt;/Routes&gt;
+    &lt;/BrowserRouter&gt;
+  );
+}
+</code></pre>
+
+  <h3 id="d3-api">2. Fetching APIs (Data Layer)</h3>
+  <p class="desc">Combining useState and useEffect is the classic pattern for loading data from a backend — track the data, a loading flag, and fetch once on mount.</p>
+  <pre><code>function usePortfolio() {
+  const [stocks, setStocks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() =&gt; {
+    fetch("/api/portfolio")
+      .then((res) =&gt; res.json())
+      .then((data) =&gt; { setStocks(data); setLoading(false); });
+  }, []);
+
+  return { stocks, loading };
+}
+</code></pre>
+
+  <h3 id="d3-globalstate">3. Global State Management (Context vs Redux/Zustand)</h3>
+  <p class="desc">For state shared across many unrelated components (like a logged-in user or a portfolio list), a dedicated store like Zustand or Redux is often simpler to scale than nested Context providers.</p>
+  <pre><code>// Lightweight global state with Zustand
+import { create } from "zustand";
+
+const usePortfolioStore = create((set) =&gt; ({
+  stocks: [],
+  addStock: (stock) =&gt; set((state) =&gt; ({ stocks: [...state.stocks, stock] })),
+}));
+
+function PortfolioList() {
+  const stocks = usePortfolioStore((s) =&gt; s.stocks);
+  return &lt;ul&gt;{stocks.map((s) =&gt; &lt;li key={s.id}&gt;{s.symbol}&lt;/li&gt;)}&lt;/ul&gt;;
+}
+</code></pre>
+
+  <h3 id="d3-errors">4. Error Boundaries & Loading States</h3>
+  <p class="desc">An error boundary catches rendering errors in its child components and shows a fallback UI instead of crashing the whole app — React's equivalent of a try/catch for the component tree.</p>
+  <pre><code>class ErrorBoundary extends React.Component {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) return &lt;p&gt;Something went wrong.&lt;/p&gt;;
+    return this.props.children;
+  }
+}
+
+function LoadingSpinner() {
+  return &lt;p&gt;Loading...&lt;/p&gt;;
+}
+</code></pre>
+
+  <h3 id="d3-testing">5. Component Testing (React Testing Library)</h3>
+  <p class="desc">React Testing Library encourages testing components the way a user interacts with them — querying rendered text and simulating clicks rather than testing internal implementation details.</p>
+  <pre><code>import { render, screen, fireEvent } from "@testing-library/react";
+
+test("counter increments on click", () =&gt; {
+  render(&lt;Counter /&gt;);
+  fireEvent.click(screen.getByRole("button"));
+  expect(screen.getByText("Count: 1")).toBeInTheDocument();
+});
+</code></pre>
+
+  <h3 id="d3-nextjs">6. Next.js Integration (Server + Client Components)</h3>
+  <p class="desc">Next.js's App Router splits components into Server Components (rendered on the server, can fetch data directly) and Client Components (marked with "use client", needed for interactivity like state and event handlers).</p>
+  <pre><code>// Server Component (default in App Router)
+async function PortfolioPage() {
+  const stocks = await fetch("https://api.example.com/portfolio").then(r =&gt; r.json());
+  return &lt;PortfolioList stocks={stocks} /&gt;;
+}
+
+// Client Component (interactivity)
+"use client";
+function PortfolioList({ stocks }) {
+  const [filter, setFilter] = useState("all");
+  return (
+    &lt;div&gt;
+      &lt;input onChange={(e) =&gt; setFilter(e.target.value)} /&gt;
+      {/* render filtered stocks */}
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+
+  <h3 id="d3-perfprod">7. Performance & Production Readiness</h3>
+  <p class="desc">Code splitting defers loading parts of your app until they're needed, and <code>React.memo</code> skips re-rendering a component when its props haven't changed — both reduce wasted work in larger apps.</p>
+  <pre><code>// Code splitting with lazy loading
+const Dashboard = React.lazy(() =&gt; import("./Dashboard"));
+
+function App() {
+  return (
+    &lt;Suspense fallback={&lt;LoadingSpinner /&gt;}&gt;
+      &lt;Dashboard /&gt;
+    &lt;/Suspense&gt;
+  );
+}
+
+// React.memo to avoid unnecessary re-renders
+const StockRow = React.memo(({ stock }) =&gt; &lt;tr&gt;&lt;td&gt;{stock.symbol}&lt;/td&gt;&lt;/tr&gt;);
+</code></pre>
+
+  <h2 id="end-result">🎯 End Result</h2>
+  <ul class="result">
+    <li>Understand React fundamentals (JSX, props, state, events, lists, forms).</li>
+    <li>Master Hooks (useEffect, useContext, useRef, useReducer, custom hooks) and performance patterns (useMemo, useCallback, memo).</li>
+    <li>Apply React in real-world apps: routing, API integration, global state (Zustand/Redux), error boundaries, testing, and Next.js Server/Client Components.</li>
+    <li>Be ready to combine this with your TypeScript foundation for type-safe, production-grade full stack development.</li>
+  </ul>
+</main>
+</div>
+
+</body>
+</html>
