@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SQL Interview Question Bank - Tech Lead</title>
+<style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm;
+            @bottom-right {
+                content: counter(page);
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-size: 9pt;
+                color: #718096;
+            }
+            @bottom-left {
+                content: "SQL Interview Question Bank | 16+ Years Experience";
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-size: 9pt;
+                color: #718096;
+            }
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #2d3748;
+            line-height: 1.6;
+            font-size: 10.5pt;
+            margin: 0;
+            padding: 0;
+            background-color: #f7fafc; /* Subtle light background for readability */
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        /* Full-bleed header stays spanning across the screen */
+        .header-container {
+            background-color: #1a365d;
+            color: #ffffff;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24pt;
+            margin: 0 0 10px 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 13pt;
+            color: #90cdf4;
+            margin: 0;
+            font-weight: 400;
+        }
+
+        /* NEW: This container adds elegant breathing room on both sides */
+        .content-container {
+            max-width: 900px;      /* Restricts line length for comfortable reading */
+            margin: 0 auto;        /* Centers the layout horizontally */
+            padding: 0 30px 60px 30px; /* Generous 30px space on the left and right */
+        }
+
+        h2 {
+            font-size: 15pt;
+            color: #2b6cb0;
+            border-left: 4px solid #2b6cb0;
+            padding-left: 12px;
+            margin-top: 35px;
+            margin-bottom: 20px;
+            page-break-after: avoid;
+        }
+
+        .question-block {
+            margin-bottom: 24px;
+            background: #ffffff;    /* Clear separation card style */
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            page-break-inside: avoid;
+        }
+
+        .question-text {
+            font-weight: 600;
+            font-size: 11.5pt;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+
+        .answer-text {
+            margin-top: 0;
+            margin-bottom: 10px;
+            text-align: justify;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            page-break-inside: avoid;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 10px 12px;
+            font-size: 10pt;
+            text-align: left;
+        }
+
+        th {
+            background-color: #edf2f7;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f7fafc;
+        }
+
+        pre {
+            background-color: #1a202c; /* Modern dark mode style syntax window */
+            color: #edf2f7;
+            border-radius: 6px;
+            padding: 14px 16px;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 9.5pt;
+            overflow-x: auto;
+            margin: 12px 0;
+            page-break-inside: avoid;
+        }
+
+        ol, ul {
+            margin-top: 6px;
+            margin-bottom: 10px;
+            padding-left: 24px;
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1>Top 50 SQL Server & RDBMS Interview Questions</h1>
+        <div class="subtitle">Curated for Tech Leads & Principal Developers (16+ Years Experience)</div>
+    </div>
+
+    <h2>1. SQL Core Concepts & Architecture</h2>
+    
+    <div class="question-block">
+        <div class="question-text">Q1. What is the logical order of execution of a SQL query?</div>
+        <div class="answer-text">
+            The logical order differs significantly from the syntactic order written by developers. Understanding this is critical for querying accuracy and optimization:
+            <ol>
+                <li><code>FROM</code> / <code>JOIN</code> (Data gathering across tables)</li>
+                <li><code>WHERE</code> (Row-level filtering)</li>
+                <li><code>GROUP BY</code> (Row grouping/aggregation setup)</li>
+                <li><code>HAVING</code> (Group-level filtering)</li>
+                <li><code>SELECT</code> (Column projection and Window function evaluation)</li>
+                <li><code>DISTINCT</code> (Deduplication of projected rows)</li>
+                <li><code>ORDER BY</code> (Final sorting)</li>
+                <li><code>LIMIT</code> / <code>OFFSET</code> / <code>TOP</code> (Row counts restriction)</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q2. Explain the difference between Clustered and Non-Clustered indexes.</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>Clustered Index:</strong> Dictates the physical storage layout of the table data rows. Because the table data itself can only be sorted in one way, there can only be <strong>one</strong> clustered index per table (typically aligned to the Primary Key). The leaf nodes contain the actual data rows.</li>
+                <li><strong>Non-Clustered Index:</strong> A separate B-Tree architecture completely decoupled from the data rows. It contains structured index keys and pointers (either a Row ID or the Clustered Index Key) back to the actual data location. A table can sustain multiple non-clustered indexes.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q3. What is a Composite Index, and what is the "Left-Prefix Rule"?</div>
+        <div class="answer-text">
+            A composite index is an index constructed across multiple separate columns (e.g., <code>Index(ColA, ColB, ColC)</code>). 
+            The <strong>Left-Prefix Rule</strong> dictates that the query optimizer can only utilize the index if the query constraints include the leftmost column(s) specified in the index definition. A lookup filtering on <code>(ColA)</code> or <code>(ColA, ColB)</code> utilizes the structure efficiently; filtering solely on <code>(ColB, ColC)</code> or <code>(ColC)</code> completely invalidates it.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q4. Explain the differences between WHERE and HAVING.</div>
+        <div class="answer-text">
+            <ul>
+                <li><code>WHERE</code> performs filtering on individual rows <strong>before</strong> group compositions or calculations occur. It cannot evaluate or parse aggregate expressions (e.g., <code>SUM()</code>, <code>COUNT()</code>).</li>
+                <li><code>HAVING</code> executes filters exclusively on group records <strong>after</strong> the execution of the <code>GROUP BY</code> sequence. It evaluates conditions explicitly based on summary operations.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q5. What are the core architectural differences between DELETE, TRUNCATE, and DROP?</div>
+        <div class="answer-text">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>DELETE</th>
+                        <th>TRUNCATE</th>
+                        <th>DROP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Type</strong></td>
+                        <td>DML (Data Manipulation)</td>
+                        <td>DDL (Data Definition)</td>
+                        <td>DDL (Data Definition)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Execution</strong></td>
+                        <td>Slower (Logs individual row removals)</td>
+                        <td>Faster (Deallocates physical pages)</td>
+                        <td>Immediate structural deletion</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Where Filter</strong></td>
+                        <td>Supported</td>
+                        <td>Not supported</td>
+                        <td>Not supported</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Transaction Rollback</strong></td>
+                        <td>Fully supported</td>
+                        <td>Supported in most modern systems</td>
+                        <td>Supported only inside explicit transaction blocks</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Identity Counter</strong></td>
+                        <td>Preserves current value</td>
+                        <td>Resets back to seed value</td>
+                        <td>Removes the entity entirely</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q6. Explain UNION vs UNION ALL.</div>
+        <div class="answer-text">
+            <ul>
+                <li><code>UNION</code> combines distinct result outputs from multiple distinct query targets and executes an implicit distinct sort operation to eliminate duplicate rows, making it resource-heavy.</li>
+                <li><code>UNION ALL</code> merges individual results concurrently without performing a sorting pass or removing duplicate rows, offering significantly faster throughput.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q7. What is an Execution Plan, and how do you use it as a Tech Lead?</div>
+        <div class="answer-text">
+            An execution plan is a physical breakdown mapping how the database query engine evaluates and returns results for a specific statement. It visually demonstrates index coverage, join loops, hashing operations, and implicit conversions. Tech Leads look for high-cost Table Scans, Key Lookups, and large differences between estimated and actual row counts to identify outdated statistics or structural index deficiencies.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q8. What is the difference between an Index Scan and an Index Seek?</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>Index Scan:</strong> The database engine traverses the entire B-Tree structure from leaf to leaf, reading every row to capture matches. This occurs when search predicates are missing proper indexing columns.</li>
+                <li><strong>Index Seek:</strong> The engine uses index criteria to pinpoint the exact memory/page boundaries of the target records directly. This is highly efficient.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q9. What is Database Normalization, and what are 1NF, 2NF, and 3NF?</div>
+        <div class="answer-text">
+            Normalization organizes transactional database schemas to mitigate data redundancy and improve structural data integrity:
+            <ul>
+                <li><strong>1NF:</strong> Ensures all table columns hold atomic, indivisible values, and rules out repetitive group configurations.</li>
+                <li><strong>2NF:</strong> Complies with 1NF and guarantees all non-key columns depend explicitly on the full Primary Key (eliminates partial key dependencies).</li>
+                <li><strong>3NF:</strong> Complies with 2NF and establishes that no non-key columns maintain dependency links to other non-key columns (eliminates transitive dependencies).</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q10. Explain the architectural trade-offs of Over-Normalization vs. Denormalization.</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>Normalization:</strong> Optimizes <strong>Write-intensive Systems (OLTP)</strong> by drastically reducing data footprints, ensuring data consistency, and minimizing maintenance locking. It increases complexity for read paths due to extensive multi-table joins.</li>
+                <li><strong>Denormalization:</strong> Optimizes <strong>Read-intensive environments (OLAP/Reporting)</strong> by introducing controlled redundancies or pre-aggregating metrics. It eliminates compute overhead on joins, but slows down writes and introduces data anomaly risks.</li>
+            </ul>
+        </div>
+    </div>
+
+    <h2>2. Transactions, Concurrency & Isolation Levels</h2>
+
+    <div class="question-block">
+        <div class="question-text">Q11. What are ACID properties in an RDBMS context?</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>Atomicity:</strong> Guarantees a unit of work commits entirely or rolls back completely ("All or nothing").</li>
+                <li><strong>Consistency:</strong> Ensures transitions transform database states within strict compliance boundaries of all active schema constraints.</li>
+                <li><strong>Isolation:</strong> Separates concurrent transaction modifications so states match serial execution order patterns.</li>
+                <li><strong>Durability:</strong> Guarantees that committed records persist across hardware or OS failures.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q12. Describe the 4 standard Transaction Isolation Levels and the concurrency anomalies they mitigate.</div>
+        <div class="answer-text">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Isolation Level</th>
+                        <th>Dirty Reads</th>
+                        <th>Non-Repeatable Reads</th>
+                        <th>Phantom Reads</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Read Uncommitted</strong></td>
+                        <td>Allowed</td>
+                        <td>Allowed</td>
+                        <td>Allowed</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Read Committed</strong></td>
+                        <td>Prevented</td>
+                        <td>Allowed</td>
+                        <td>Allowed</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Repeatable Read</strong></td>
+                        <td>Prevented</td>
+                        <td>Prevented</td>
+                        <td>Allowed</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Serializable</strong></td>
+                        <td>Prevented</td>
+                        <td>Prevented</td>
+                        <td>Prevented</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q13. What are Dirty Reads, Non-Repeatable Reads, and Phantom Reads?</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>Dirty Read:</strong> Tx1 accesses records currently altered by Tx2 before Tx2 issues a formal commit. If Tx2 aborts and rolls back, Tx1 handles phantom data.</li>
+                <li><strong>Non-Repeatable Read:</strong> Tx1 fetches a row target; Tx2 executes an update or delete statement against that precise row and commits. Tx1 re-reads the data and finds discrepancies.</li>
+                <li><strong>Phantom Read:</strong> Tx1 polls a range of matching criteria rows. Tx2 inserts an entirely new row matching that scope and commits. Tx1 re-reads the range and gets an extra record.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q14. Explain Snapshot Isolation and Row Versioning (MVCC).</div>
+        <div class="answer-text">
+            Multi-Version Concurrency Control (MVCC) leverages row versioning schemas to handle transaction isolation instead of acquiring heavy exclusive locks. When a transaction modifies a record, the engine creates and isolates historical snapshots of previous row states (e.g., inside <code>tempdb</code> for SQL Server). Readers fetch unchanged point-in-time states without blocking active writers, and writers execute without blocking readers.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q15. What is a Deadlock, and how do you prevent and troubleshoot it?</div>
+        <div class="answer-text">
+            A deadlock occurs when two or more active transactions maintain exclusive locks on individual resources while requesting lock access to structures held by the other, establishing an unresolvable cyclic block.
+            <ul>
+                <li><strong>Prevention:</strong> Ensure database transactions acquire resources in a uniform, predictable table sequence across the application layer; avoid long-running, bulky units of work; lower isolation constraints where safe; leverage index design to bypass collisions.</li>
+                <li><strong>Troubleshooting:</strong> Extract deadlock graphs, enable diagnostic flags (e.g., Trace Flag 1222 in SQL Server), or aggregate Extended Events trace records.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q16. Compare Optimistic vs. Pessimistic Concurrency control paradigms.</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>Pessimistic:</strong> Locks database records immediately upon execution access, blocking competing statements until processing finishes. Designed for heavy data contention scenarios.</li>
+                <li><strong>Optimistic:</strong> Processes mutations without taking row locks initially. Right before saving, it reviews a timestamp or version marker column. If the record changed, the transaction fails and throws a concurrency error for the application to handle. Designed for low data contention environments.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q17. What are Intent Locks (IS, IX)?</div>
+        <div class="answer-text">
+            Intent locks are structural lock abstractions captured at higher layers of the database hierarchy (such as table or page levels) right before low-level fine-grained row locks are taken. They signal down the chain that granular modifications exist below, preventing a competing query from acquiring global table locks that would disrupt minor row operations.
+        </div>
+    </div>
+
+    <h2>3. Window Functions & Advanced Querying</h2>
+
+    <div class="question-block">
+        <div class="question-text">Q18. What is a Window Function, and how does it differ from a GROUP BY expression?</div>
+        <div class="answer-text">
+            Window functions execute specialized aggregate calculations across an isolated subset of table records mapped to the current row context. Unlike <code>GROUP BY</code>, window functions do not collapse individual rows into a single summary output. Every individual record preserves its unique identity while retaining analytical context.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q19. Explain the behavioral variances between ROW_NUMBER(), RANK(), and DENSE_RANK().</div>
+        <div class="answer-text">
+            When parsing identical matching values (e.g., scores: 95, 95, 85):
+            <ul>
+                <li><code>ROW_NUMBER()</code> outputs a strict incremental sequence regardless of ties: <code>1, 2, 3</code>.</li>
+                <li><code>RANK()</code> applies identical values to ties, but skips numbers for subsequent evaluations to match count footprints: <code>1, 1, 3</code>.</li>
+                <li><code>DENSE_RANK()</code> applies identical values to ties, but keeps continuous numeric rankings without skipping numbers: <code>1, 1, 2</code>.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q20. How do LEAD() and LAG() window functions work?</div>
+        <div class="answer-text">
+            They enable a statement to pull data parameters from an alternative row in the active dataset without using a self-join:
+            <ul>
+                <li><code>LAG()</code> reads specific attributes from a previous row step aligned to a configured offset.</li>
+                <li><code>LEAD()</code> pulls data values from a trailing row step aligned to a configured offset.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q21. What is the explicit role of the PARTITION BY clause?</div>
+        <div class="answer-text">
+            <code>PARTITION BY</code> partitions the window function's target result layout into distinct subgroups. The analytical calculation restarts from scratch when crossing over partition boundaries, isolating calculations to specific logical groups.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q22. What is a Common Table Expression (CTE), and when should you choose it over a Subquery or Temp Table?</div>
+        <div class="answer-text">
+            A CTE represents an inline, isolated temporary result set scoped within the context of a single DML statement.
+            <ul>
+                <li><strong>Use CTE:</strong> To improve query readability, structural modularization, or to handle recursive hierarchic records.</li>
+                <li><strong>Use Temp Table:</strong> When processing highly volatile datasets that require iterative access across independent steps, or require their own unique indexes for high-volume joins.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q23. How does a Recursive CTE process hierarchical records?</div>
+        <div class="answer-text">
+            A recursive CTE references its own output structure. It evaluates an initial <strong>Anchor Member</strong> query (establishing base records), then links via <code>UNION ALL</code> to a <strong>Recursive Member</strong> query that references the parent CTE name. It loops until the relational step yields no matching rows.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q24. Explain CROSS APPLY vs. OUTER APPLY (Lateral Joins).</div>
+        <div class="answer-text">
+            Used to join a principal data record set to an inline table-valued function or correlated subquery evaluated row-by-row against the outer data elements:
+            <ul>
+                <li><code>CROSS APPLY</code> models an <code>INNER JOIN</code> behavior; rows from the outer scope are excluded if the subquery returns an empty dataset.</li>
+                <li><code>OUTER APPLY</code> models a <code>LEFT OUTER JOIN</code> behavior; outer rows are preserved, populating subquery columns with <code>NULL</code> if no records are matched.</li>
+            </ul>
+        </div>
+    </div>
+
+    <h2>4. Performance Tuning & Query Optimization</h2>
+
+    <div class="question-block">
+        <div class="question-text">Q25. Walk through your step-by-step methodology for debugging a slow-running query.</div>
+        <div class="answer-text">
+            <ol>
+                <li>Review the actual query execution plan.</li>
+                <li>Check for high-cost operations (e.g., Table/Index Scans, heavy Hash Matches instead of Nested Loops).</li>
+                <li>Evaluate index coverage and look for warning markers or missing statistics warnings.</li>
+                <li>Analyze precise operational runtime footprints via <code>SET STATISTICS IO, TIME ON</code>.</li>
+                <li>Check for parameter sniffing issues or implicit data type conversions.</li>
+                <li>Refactor problematic constructs (e.g., remove column-level expressions in the <code>WHERE</code> clause).</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q26. What is Parameter Sniffing, and how do you handle it?</div>
+        <div class="answer-text">
+            Parameter Sniffing happens when the database optimizer compiles a specific execution plan optimized for the exact parameter values provided during the plan's <em>initial</em> compile run. If future requests invoke parameter inputs with significantly different data densities, the cached plan can run slowly.
+            <br><strong>Mitigation:</strong> Inject hints such as <code>OPTIMIZE FOR UNKNOWN</code>, <code>RECOMPILE</code>, or assign input parameters to local variables inside the stored procedure scope.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q27. What does it mean when a query predicate is non-SARGable? Give an example.</div>
+        <div class="answer-text">
+            A predicate condition is <strong>SARGable</strong> (Search Argumentable) if the query engine can directly leverage a B-Tree index to perform a direct seek. Using functions, arithmetic, or type casting on columns inside the <code>WHERE</code> clause renders it non-SARGable, forcing a full index/table scan.
+            <br><em>Non-SARGable example:</em> <code>WHERE YEAR(OrderDate) = 2026</code>
+            <br><em>SARGable alternative:</em> <code>WHERE OrderDate >= '2026-01-01' AND OrderDate &lt; '2027-01-01'</code>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q28. Compare the three physical join operators: Nested Loops, Hash Match, and Merge Join.</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>Nested Loops:</strong> Highly efficient for small outer data tables joined to properly indexed inner tables. Loops through outer rows and performs a quick lookup into the inner structure.</li>
+                <li><strong>Merge Join:</strong> Fast and lightweight; occurs when both inputs are pre-sorted along the join key attributes. It processes both inputs simultaneously.</li>
+                <li><strong>Hash Match:</strong> Resource-heavy join path used for unindexed, large data inputs. It constructs an in-memory hash table of the smaller dataset to probe matching values from the larger dataset, using more memory.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q29. What are Covering Indexes, and how do INCLUDE columns help?</div>
+        <div class="answer-text">
+            A covering index houses all column elements requested by a query (covering <code>SELECT</code>, <code>WHERE</code>, and <code>JOIN</code> requirements). This allows the database engine to return data completely from the index leaf nodes without performing a secondary lookup into the base table pages. Adding columns via <code>INCLUDE</code> attaches non-key data fields strictly to the leaf level, providing a covering path without increasing the sorting or maintenance overhead of the main index key structure.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q30. How do you identify and handle Index Fragmentation?</div>
+        <div class="answer-text">
+            Fragmentation occurs as continuous modifications alter database rows, causing data pages to split and drop out of clean physical order.
+            <ul>
+                <li><strong>Handling:</strong> If fragmentation levels reside between 5% and 30%, run an online index <strong>Reorganize</strong> operation. If fragmentation exceeds 30%, perform an index <strong>Rebuild</strong> to restructure the physical layout.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q31. What are Database Statistics, and why are they critical?</div>
+        <div class="answer-text">
+            Database statistics store distribution and density maps of values across columns and indexes. The query optimizer relies on this metadata to estimate cardinality (row counts per operation step) and select execution plans. Corrupt or outdated statistics can lead to sub-optimal plan generation and slow queries.
+        </div>
+    </div>
+
+    <h2>5. Programmability, Architecture & Security</h2>
+
+    <div class="question-block">
+        <div class="question-text">Q32. Contrast Stored Procedures against User-Defined Functions (UDFs).</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>Stored Procedures:</strong> Can return multiple outputs, perform full DML mutations, manage transactions (e.g., <code>COMMIT</code> / <code>ROLLBACK</code>), and output execution status codes. They can optimize execution paths efficiently.</li>
+                <li><strong>UDFs:</strong> Must compute and return a singular value or explicit table structure. They cannot execute side-effecting DML operations, cannot manage transactions, and can be embedded inside a <code>SELECT</code> projection. Scalar UDFs can sometimes introduce performance overhead if executed row-by-row.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q33. What is a View, and what is an Indexed/Materialized View?</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>View:</strong> A virtual reference structure representing a saved query definition. It consumes no physical storage.</li>
+                <li><strong>Indexed / Materialized View:</strong> A view that has been structurally finalized with a physical clustered index. The database engine calculates and stores the view's data on disk, automatically updating it when base tables shift. This is ideal for optimizing complex aggregation queries over large tables.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q34. What are Triggers? Distinguish between AFTER and INSTEAD OF triggers.</div>
+        <div class="answer-text">
+            Triggers represent automated processing units invoked in response to explicit data mutation paths (<code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>):
+            <ul>
+                <li><strong>AFTER Trigger:</strong> Fires after the underlying DML execution completes successfully and passes all integrity checks.</li>
+                <li><strong>INSTEAD OF Trigger:</strong> Executes in place of the triggering DML statement, intercepting the operation. This is useful for translating modifications targeting complex views.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q35. Explain the purpose of the INSERTED and DELETED tables in triggers.</div>
+        <div class="answer-text">
+            These represent temporary, system-managed memory tables populated during DML execution loops:
+            <ul>
+                <li><code>INSERTED</code>: Preserves state captures of newly added or updated rows during <code>INSERT</code> and <code>UPDATE</code> sequences.</li>
+                <li><code>DELETED</code>: Preserves state captures of rows removed or replaced during <code>DELETE</code> and <code>UPDATE</code> sequences.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q36. What is SQL Injection, and how do you protect database ecosystems against it?</div>
+        <div class="answer-text">
+            SQL Injection is a vulnerability where unvalidated user inputs are concatenated directly into execution strings, allowing malicious commands to execute inside the database engine.
+            <br><strong>Defenses:</strong> Enforce parameterized inputs / prepared statements, apply strongly typed variable definitions, avoid dynamic execution paths unless using parameterized bindings, and implement the Principle of Least Privilege across data connections.
+        </div>
+    </div>
+
+    <h2>6. Advanced Architecture & Modern Design Patterns</h2>
+
+    <div class="question-block">
+        <div class="question-text">Q37. Explain Database Sharding vs. Horizontal Table Partitioning.</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>Horizontal Table Partitioning:</strong> Divides a single massive table structure inside a <em>single database instance</em> into separate row groups based on a partition key (e.g., partitioning an orders table by year).</li>
+                <li><strong>Sharding:</strong> A architecture where data subsets are spread across <em>multiple independent database instances/servers</em>, physically isolating compute and storage profiles to scale horizontal growth.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q38. What is Replication, and what are its main architectural forms?</div>
+        <div class="answer-text">
+            Replication clones and streams database records across independent endpoints to support read-scale operations or high availability:
+            <ul>
+                <li><strong>Snapshot Replication:</strong> Overwrites downstream targets periodically with a point-in-time capture of the source schema.</li>
+                <li><strong>Transactional Replication:</strong> Streams incremental DML data modifications in near real-time from source to target servers.</li>
+                <li><strong>Merge Replication:</strong> Allows distributed targets to execute independent mutations, then aggregates changes later using conflict-resolution rules.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q39. What is a Cursor, and why is it generally discouraged in high-concurrency systems?</div>
+        <div class="answer-text">
+            A cursor is an element that traverses a query result set row-by-row. Cursors run counter to relational query engines, which are designed for optimized **set-based** operations. Cursors introduce row-by-row lock contention and higher memory consumption, which can impact performance in high-concurrency systems.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q40. Explain the implications of using a GUID/UUID as a Primary Key compared to an Auto-Incrementing Integer.</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>Auto-Incrementing Integer (Int/BigInt):</strong> Compact storage footprint (4–8 bytes). Sequential growth helps prevent page splitting during inserts, but sequential numbers can reveal business scale or create insertion bottlenecks in highly distributed engines.</li>
+                <li><strong>GUID / UUID:</strong> Larger storage footprint (16 bytes). Guarantees global identity generation uniqueness across distributed systems, but random UUID patterns can cause severe index fragmentation and page splits when applied as a Clustered Key.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q41. What is Columnstore Indexing, and when should you adopt it?</div>
+        <div class="answer-text">
+            Columnstore indexes compress and organize table storage data along columns rather than traditional rows. They offer high data compression ratios and query speeds for analytical processing over massive datasets (millions of rows), making them well-suited for data warehousing workloads.
+        </div>
+    </div>
+
+    <h2>7. Technical Scenarios & Practical Code Writing</h2>
+
+    <div class="question-block">
+        <div class="question-text">Q42. Write a query to find the 2nd highest salary from an Employees table without using TOP or LIMIT.</div>
+<pre>SELECT MAX(Salary) 
+FROM Employees 
+WHERE Salary < (SELECT MAX(Salary) FROM Employees);</pre>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q43. Write a query to delete all duplicate rows from a table named Users based on Email, keeping the row with the lowest Id.</div>
+<pre>WITH CTE_Duplicates AS (
+    SELECT Id, Email,
+           ROW_NUMBER() OVER (PARTITION BY Email ORDER BY Id ASC) as RowNum
+    FROM Users
+)
+DELETE FROM CTE_Duplicates 
+WHERE RowNum > 1;</pre>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q44. Given a table Logins with columns UserId and LoginDate, write a query to find users who logged in on consecutive days.</div>
+<pre>WITH CTE_Lag AS (
+    SELECT UserId, LoginDate,
+           LAG(LoginDate) OVER (PARTITION BY UserId ORDER BY LoginDate) as PrevLoginDate
+    FROM Logins
+)
+SELECT DISTINCT UserId 
+FROM CTE_Lag 
+WHERE DATEDIFF(day, PrevLoginDate, LoginDate) = 1;</pre>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q45. How do you pivot a dataset using standard SQL? Provide a clear template.</div>
+<pre>SELECT Year,
+       SUM(CASE WHEN Month = 'Jan' THEN Sales END) AS Jan_Sales,
+       SUM(CASE WHEN Month = 'Feb' THEN Sales END) AS Feb_Sales,
+       SUM(CASE WHEN Month = 'Mar' THEN Sales END) AS Mar_Sales
+FROM MonthlySales
+GROUP BY Year;</pre>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q46. Write a query to find all departments that have more than 5 employees.</div>
+<pre>SELECT DepartmentId, COUNT(EmployeeId) AS EmployeeCount
+FROM Employees
+GROUP BY DepartmentId
+HAVING COUNT(EmployeeId) > 5;</pre>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q46. Write a query to find all departments that have more than 5 employees.</div>
+<pre>SELECT DepartmentId, COUNT(EmployeeId) AS EmployeeCount
+FROM Employees
+GROUP BY DepartmentId
+HAVING COUNT(EmployeeId) > 5;</pre>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q47. Write a query to retrieve the top 3 highest-paid employees inside each department.</div>
+<pre>WITH RankedEmployees AS (
+    SELECT Name, DepartmentId, Salary,
+           DENSE_RANK() OVER (PARTITION BY DepartmentId ORDER BY Salary DESC) as SalaryRank
+    FROM Employees
+)
+SELECT Name, DepartmentId, Salary 
+FROM RankedEmployees 
+WHERE SalaryRank &lt;= 3;</pre>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q48. Given a Sales table with columns SaleDate and Amount, write a query to compute a running total of the sales sorted by date.</div>
+<pre>SELECT SaleDate, Amount,
+       SUM(Amount) OVER (ORDER BY SaleDate ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS RunningTotal
+FROM Sales;</pre>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q49. Write a query to find missing sequence values in an identity column table (Gaps analysis concept).</div>
+<pre>SELECT Id + 1 
+FROM Orders o
+WHERE NOT EXISTS (
+    SELECT 1 FROM Orders i WHERE i.Id = o.Id + 1
+) AND Id &lt; (SELECT MAX(Id) FROM Orders);</pre>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q50. Write a scenario query checking for a correlation between an Employee's salary and their Department's average salary.</div>
+<pre>SELECT e.Name, e.DepartmentId, e.Salary, d.AvgSalary
+FROM Employees e
+INNER JOIN (
+    SELECT DepartmentId, AVG(Salary) as AvgSalary
+    FROM Employees
+    GROUP BY DepartmentId
+) d ON e.DepartmentId = d.DepartmentId
+WHERE e.Salary > d.AvgSalary;</pre>
+    </div>
+
+<h2>6. Distributed Systems & Cloud Architecture</h2>
+
+    <div class="question-block">
+        <div class="question-text">Q51. How do you implement the "Outbox Pattern" to guarantee reliable messaging between SQL Server and a message broker (like Kafka or RabbitMQ)?</div>
+        <div class="answer-text">
+            To prevent dual-write failures (where a database commit succeeds but the subsequent message broker publish fails), the <strong>Transactional Outbox Pattern</strong> is used. Inside a single local ACID transaction, the application updates the core business entity table and inserts an event payload into a dedicated <code>Outbox</code> table. 
+            A separate, asynchronous background polling service or an engine parsing the database transaction log (CDC) reads unread rows from the <code>Outbox</code> table, publishes them to the message broker, and marks them as processed upon acknowledgment. This shifts the architectural boundary from a fragile distributed transaction to reliable eventual consistency.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q52. Explain the difference between "Read-After-Write Consistency" and "Eventual Consistency" in distributed read-replica configurations.</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>Read-After-Write Consistency:</strong> Guarantees that if a user submits a data modification, their immediate subsequent read request will accurately display that modification. Architecturally, this requires routing write-dependent read operations explicitly to the Primary node.</li>
+                <li><strong>Eventual Consistency:</strong> Occurs when read traffic is offloaded to asynchronous Read Replicas (e.g., Always On replicas utilizing asynchronous commit). Due to inherent replication lag, a user might write data to the primary node but temporarily fetch a stale data state from the replica until the transaction log catch-up loop completes.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q53. How do you design a database schema to support a "Global Multi-Region" architecture where data must be written locally in different countries?</div>
+        <div class="answer-text">
+            <ol>
+                <li><strong>Primary Key Strategy:</strong> Avoid auto-incrementing integer identities to eliminate multi-region value collisions; use <strong>Sequential GUIDs</strong> (via <code>NEWSEQUENTIALID()</code>) to maintain uniqueness while reducing index B-Tree fragmentation.</li>
+                <li><strong>Data Partitioning:</strong> Embed a <code>RegionId</code> or <code>CountryCode</code> directly into a composite primary/clustering key layout.</li>
+                <li><strong>Conflict Resolution Schema:</strong> Include high-precision synchronization timestamps to support Last-Write-Wins or structural state tracking for CRDTs (Conflict-free Replicated Data Types) if designing active-active replication models.</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q54. Explain the "Saga Pattern" and how database locks are handled compared to a traditional 2-Phase Commit (2PC).</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>2-Phase Commit (2PC):</strong> Coordinates a distributed transaction across multiple database nodes by holding global locks across all participating nodes concurrently until everyone agrees to commit. This introduces severe latency and single-point-of-failure vulnerabilities.</li>
+                <li><strong>Saga Pattern:</strong> Deconstructs a distributed transaction into a sequence of distinct, localized database transactions. Each independent microservice executes its local unit of work, releases its local database locks immediately, and publishes a trigger event. If a downstream service fails, the orchestration layer invokes explicit <strong>Compensating Transactions</strong> to run reverse operations (e.g., executing an account refund to roll back a charge).</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q55. What is "Database Polyglot Persistence," and how do you evaluate when to move data out of SQL Server?</div>
+        <div class="answer-text">
+            Polyglot persistence is the practice of using diverse database technologies tailored for specific data access patterns within an enterprise ecosystem. You should architecturally offload data from SQL Server under these conditions:
+            <ul>
+                <li><strong>Unstructured Blobs/Media Logs:</strong> Move to Cloud Object Storage (e.g., Azure Blob, AWS S3) to prevent heavy LOB data from polluting the SQL Server memory buffer pool.</li>
+                <li><strong>High-Velocity, Transient Volatile Data:</strong> Move session states and caching components to in-memory key-value stores like Redis.</li>
+                <li><strong>Complex Deeply Connected Networks:</strong> Move highly interconnected relationship models to dedicated graph databases like Neo4j.</li>
+            </ul>
+        </div>
+    </div>
+
+    <h2>7. Extreme Performance Tuning & Internals</h2>
+
+    <div class="question-block">
+        <div class="question-text">Q56. What is "Latch Contention" (PAGIOLATCH vs PAGELATCH), and how do you diagnose it?</div>
+        <div class="answer-text">
+            Latches are internal, lightweight synchronization mechanisms used by the engine to protect memory structures.
+            <ul>
+                <li><code>PAGIOLATCH</code> waits indicate that a query thread is blocked waiting to read a data page from slow physical disk storage into the memory buffer pool. This points to I/O constraints or missing index coverage forcing table scans.</li>
+                <li><code>PAGELATCH</code> waits indicate concurrency contention for a data page that <em>already resides in memory</em>. This typically occurs on high-throughput write systems using sequential <code>IDENTITY</code> values, where multiple concurrent threads collide trying to write to the exact same trailing leaf-node page.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q57. What are "Implicit Conversions," and why are they silent killers of production performance?</div>
+        <div class="answer-text">
+            An implicit conversion occurs when a query passes a search predicate data type that does not precisely match the target column's schema configuration (for instance, passing an <code>NVARCHAR</code> argument against a <code>VARCHAR</code> column). 
+            To evaluate the condition, SQL Server must apply a scalar type-conversion function to <em>every single row</em> of the underlying column inside the execution loop. This renders the query completely <strong>non-SARGable</strong>, turning an efficient Index Seek into an expensive, CPU-intensive Index Scan.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q58. Explain the difference between MAXDOP and "Cost Threshold for Parallelism."</div>
+        <div class="answer-text">
+            <ul>
+                <li><code>MAXDOP</code> (Maximum Degree of Parallelism) dictates the maximum number of CPU cores/threads assigned to evaluate a single parallel query execution plan branch.</li>
+                <li><strong>Cost Threshold for Parallelism:</strong> The engine's internal optimizer cost calculation limit at which SQL Server determines a query is expensive enough to warrant splitting it across multiple parallel CPU paths. The default value of 5 is heavily outdated; leads elevate this baseline to 50+ to prevent minor operational queries from misusing parallel resources.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q59. What is "Spinlock Contention" in SQL Server internals?</div>
+        <div class="answer-text">
+            Spinlocks are highly granular, short-lived mutual exclusion primitives used by the engine to regulate access to core internal memory allocations (like the buffer pool hash buckets). Unlike standard locks, a thread waiting on a spinlock does not yield or enter a sleep state; it continuously loops ("spins") on the CPU core testing for availability. High spinlock wait metrics point to deep internal concurrency bottlenecks operating under intense CPU workloads.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q60. How do "Filtered Indexes" save space and speed up queries? Give an architecture example.</div>
+        <div class="answer-text">
+            A filtered index builds an optimized B-Tree structure over a targeted subset of table records by introducing a <code>WHERE</code> condition directly into the index generation syntax.
+<pre>CREATE NONCLUSTERED INDEX IX_Orders_Unprocessed
+ON Orders(OrderDate)
+WHERE Status = 'Pending';</pre>
+            Instead of tracking 200 million rows, the index only tracks the minor fraction of records that active asynchronous background processors require. This maximizes memory cache density, shrinks disk footprints, and reduces index maintenance overhead.
+        </div>
+    </div>
+
+    <h2>8. Security, Compliance & Governance</h2>
+
+    <div class="question-block">
+        <div class="question-text">Q61. How do you design Data Masking vs. Column-Level Encryption for compliance (e.g., GDPR, PCI-DSS)?</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>Dynamic Data Masking (DDM):</strong> Obfuscates sensitive data on the fly at the presentation layer (e.g., displaying credit cards as <code>XXXX-XXXX-XXXX-1234</code>) based on the database user's execution privilege. The raw data remains completely <strong>unencrypted</strong> on disk and in memory buffers.</li>
+                <li><strong>Column-Level Encryption:</strong> Uses cryptographic keys to structurally transform row values before storage. It physically encrypts the data layout, limits index-driven search performance (disallowing smooth range scans), and imposes a notable CPU cost for ongoing encryption/decryption cycles.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q62. Explain the vulnerability of "SQL Injection in Stored Procedures" if EXEC() or sp_executesql is misused.</div>
+        <div class="answer-text">
+            Encapsulating code inside a stored procedure does not automatically guarantee security. If untrusted user text variables are directly concatenated into a dynamic SQL string execution block within the procedure body, it remains vulnerable to injection:
+<pre>-- HIGHLY VULNERABLE SP PATTERN
+SET @SqlString = 'SELECT * FROM Users WHERE Name = ''' + @InputParam + '''';
+EXEC(@SqlString);</pre>
+            To eliminate this flaw, always pass dynamic SQL queries through <code>sp_executesql</code> and enforce explicit, strongly-typed parameter binding definitions.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q63. What is an "Infrastructure Audit Trail," and how do you monitor unauthorized Schema Changes (DDL)?</div>
+        <div class="answer-text">
+            To establish an immutable governance ledger against unauthorized structural variations, implement database or server-level <strong>DDL Triggers</strong>. These elements intercept modification actions (such as <code>DROP_TABLE</code>, <code>ALTER_INDEX</code>), extract execution context data via <code>EVENTDATA()</code> (including machine footprint, user logins, and the raw SQL text), log the parameters to a hardened audit table, and can automatically execute a <code>ROLLBACK</code> if safety compliance boundaries are violated.
+        </div>
+    </div>
+
+    <h2>9. Database Programmability & Advanced Patterns</h2>
+
+    <div class="question-block">
+        <div class="question-text">Q64. Explain the performance risk of using Scalar User-Defined Functions (UDFs) and how SQL Server 2019+ mitigates it.</div>
+        <div class="answer-text">
+            Historically, scalar UDFs forced SQL Server to adopt an iterative row-by-row processing loop known as "RBAR" (Row-By-Agonizing-Row). The optimizer could not calculate cost estimations on these paths, disabling parallel processing and significantly degrading query execution speed. 
+            SQL Server 2019 introduced <strong>Scalar UDF Inlining</strong>, which automatically transforms eligible scalar function routines into equivalent relational subqueries behind the scenes, allowing the engine to leverage set-based execution plans and indexes.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q65. What are "In-Memory OLTP" (Hekaton) tables, and when should they be integrated?</div>
+        <div class="answer-text">
+            In-Memory OLTP tables utilize memory-optimized data layouts that decouple storage paths completely from traditional disk pages, using a lock-free concurrency architecture driven by optimistic row versioning. 
+            They should be integrated into high-concurrency environments experiencing extreme ingestion pressures (such as IoT telematics processing), heavy session-state tracking modules, or systems suffering from intense tempdb allocation bottlenecks. They compile directly into native C DLLs for execution.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q66. How do you handle "Concurrency Checks" using a rowversion / timestamp column in .NET applications?</div>
+        <div class="answer-text">
+            To protect against lost updates under optimistic concurrency models, add an automatically updating <code>rowversion</code> binary column to the table schema. The .NET application reads this tracking value and passes it back during mutation requests:
+<pre>UPDATE Products 
+SET Stock = @NewStock 
+WHERE Id = @ProductId AND CurrentRowVersion = @ExpectedRowVersion;</pre>
+            If a competing thread altered the row state in the interval between read and write, the underlying row version shifts, the statement updates zero rows, and Entity Framework or ADO.NET throws a concurrency exception to trigger retry or resolution loops.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q67. Explain the "Entity-Attribute-Value (EAV)" anti-pattern, its performance limitations, and modern alternatives.</div>
+        <div class="answer-text">
+            The EAV anti-pattern attempts to support dynamic schemas by breaking entities down into generic rows structured as <code>[EntityId, AttributeName, AttributeValue]</code>. While highly flexible, fetching a complete object profile requires executing repetitive self-joins for every attribute evaluated, severely impacting performance and breaking type safety. 
+            The modern alternative is a relational-hybrid architecture, keeping core static attributes structured in standard columns while offloading dynamic fields into a native <strong><code>JSON</code> column</strong> paired with filtered indexes or <code>JSON_VALUE</code> computed columns.
+        </div>
+    </div>
+
+    <h2>10. Data Lifecycle Management & Maintenance</h2>
+
+    <div class="question-block">
+        <div class="question-text">Q68. What is the "Sliding Window" pattern in table partitioning?</div>
+        <div class="answer-text">
+            The Sliding Window pattern is an automated maintenance routine for time-series architectures. A scheduled database job rolls partition bounds forward over time by executing three sequential metadata steps:
+            <ol>
+                <li>Empties the oldest historical partition range by swapping its boundaries into an isolated historical archive table using the near-instantaneous <code>ALTER TABLE ... SWITCH</code> statement.</li>
+                <li>Executes a <code>MERGE</code> operation on the old partition function boundary.</li>
+                <li>Executes a <code>SPLIT</code> operation on the newest boundary range to prepare storage blocks for incoming future data streams.</li>
+            </ol>
+            This strategy keeps active operational tables at a stable, high-performance physical volume size.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q69. How do you rebuild massive indexes online without knocking out a high-availability production cluster?</div>
+        <div class="answer-text">
+            Execute the index rebuild using the <code>ONLINE = ON</code> hint to ensure concurrent transactional workloads retain full read/write access to the active pages during construction. 
+            Furthermore, append the <code>RESUMABLE = ON</code> flag (available in SQL Server 2017+). This allows you to pause a heavy index rebuild operation during peak operational traffic windows to preserve system resources and resume execution later from the exact page boundary it left off without discarding completed work.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q70. Explain "Mirrored Backups" and "Checksum Verification" for enterprise disaster recovery.</div>
+        <div class="answer-text">
+            <ul>
+                <li><strong>Backup Checksum:</strong> Enforces page integrity validation routines during the backup generation stream. If any database page contains underlying silent corruption on disk, the backup operation halts and alerts early, preventing the system from backing up a corrupted image.</li>
+                <li><strong>Mirrored Backups:</strong> Instructs the storage engine to split and write identical byte streams to multiple distinct physical target locations simultaneously (such as a fast local array and a secure remote network storage location), eliminating post-backup file copying stages.</li>
+            </ul>
+        </div>
+    </div>
+
+    <h2>11. Real-World Scenario Engineering</h2>
+
+    <div class="question-block">
+        <div class="question-text">Q71. Production Incident: CPU spikes to 100%, and query blockings skyrocket. What are your first 3 commands?</div>
+        <div class="answer-text">
+            <ol>
+                <li>Execute <code>sp_whoisactive</code> (or query <code>sys.dm_exec_requests</code> coupled with <code>sys.dm_exec_sql_text</code>) to pinpoint the active connection IDs executing the longest-running statements, sorted by CPU utilization or open transaction locks.</li>
+                <li>Review top global wait statistics to categorize the structural bottleneck:
+<pre>SELECT wait_type, waiting_tasks_count, wait_time_ms 
+FROM sys.dm_os_wait_stats 
+ORDER BY wait_time_ms DESC;</pre>
+                </li>
+                <li>Query the locking hierarchy via <code>sys.dm_tran_locks</code> and cross-reference with session block maps to isolate the root blocker ID holding exclusive resources.</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q72. Scenario: Your .NET API throws a "Timeout Expired" exception, but the query runs in under 1 second when pasted into SSMS. Why?</div>
+        <div class="answer-text">
+            This behavior is typically driven by <strong>Parameter Sniffing</strong> acting across divergent <code>SET</code> environments. SSMS connections run with specific environment settings (such as <code>ARITHABORT ON</code>), whereas .NET connections pass through ADO.NET with alternative defaults. 
+            Because SQL Server treats differing connection environmental configurations as separate execution profiles, it caches separate plans. The plan cached for the .NET profile is likely optimized for an unrepresentative parameter density and timing out, while your SSMS session triggers or compiles a fresh, efficient plan layout.
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q73. Scenario: A legacy financial system requires calculating a rolling 30-day average cash balance over millions of records. How do you implement this efficiently?</div>
+        <div class="answer-text">
+            Avoid row-by-row cursors or subqueries. Establish a covering index structured on the transaction tracking date and account identifier columns, then execute a set-based query leveraging window aggregation boundaries:
+<pre>SELECT AccountId, TransactionDate, Balance,
+       AVG(Balance) OVER(
+           PARTITION BY AccountId 
+           ORDER BY TransactionDate 
+           ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
+       ) AS Rolling30DayAverage
+FROM CashLedger;</pre>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q74. Scenario: You must migrate a 500GB table to a new schema format with near-zero downtime. What is your strategy?</div>
+        <div class="answer-text">
+            <ol>
+                <li>Deploy the new target table containing the updated structural schema parameters.</li>
+                <li>Implement an <strong>Instead-Of Trigger</strong> or an application-layer dual-write path so that all incoming production <code>INSERT</code>, <code>UPDATE</code>, and <code>DELETE</code> statements modify both tables simultaneously.</li>
+                <li>Execute a background chunking script to migrate historical records from the old layout to the new table in small batches (e.g., 5,000 records per transaction block bound by primary key scopes) to prevent log escalation.</li>
+                <li>Once the historical copy captures up to the dual-write threshold, run a quick metadata operation to rename the tables and drop the legacy table.</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-text">Q75. Scenario: A reporting query needs to join a table variables output to a 10M row table, resulting in very slow performance. How do you optimize it?</div>
+        <div class="answer-text">
+            The query optimizer assumes a table variable holds exactly 1 row because table variables lack distribution statistics. When joining this 1-row estimate against a 10 million row table, the optimizer selects an inefficient Nested Loops join plan. 
+            To optimize this path, attach the hint <code>OPTION (RECOMPILE)</code> at the base of the statement, forcing the engine to review the actual runtime row footprint of the variable during compilation. This guides the engine to choose a much more efficient Hash Match or Merge join plan. Alternatively, refactor the variable into a standard temporary table (<code>#temp</code>).
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- Prism.js Dark Theme -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+
+<meta charset="UTF-8">
+<title>Tech Lead/Full Stack Developer</title>
+<style>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        counter-reset: question-counter;
+    }
+    h2 { color: #24292e; margin-top: 20px; border-bottom: 1px solid #eaecef; padding-bottom: 5px; }
+    h3 { color: #444; }
+    pre { background-color: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; font-family: Consolas, monospace; font-size: 85%; border: 1px solid #e1e4e8; }
+    details { counter-increment: question-counter; margin-bottom: 20px; }
+    summary {
+        font-size: 1.4em;
+        font-weight: bold;
+        color: #0078d4;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    summary::-webkit-details-marker { display: none; }
+    details summary::before {
+        content: counter(question-counter) ". ";
+        color: #0078d4;
+        font-weight: bold;
+        margin-right: 8px;
+    }
+</style>
+
+  <!-- Custom Overrides -->
+  <style>
+    /* Keywords (public, class, return, etc.) → Blue */
+    .token.keyword {
+      color: #4aa3ff; /* bright blue */
+    }
+
+    /* Strings → Green */
+    .token.string {
+      color: #6aff6a; /* green */
+    }
+
+    /* Numbers → Orange */
+    .token.number {
+      color: #ff9933; /* orange */
+    }
+
+    /* Default text → White */
+    code[class*="language-"], pre[class*="language-"] {
+      color: #ffffff; /* white */
+    }
+  </style>
+</head>
+<body>
+
+<details>
+  <summary>Beginner SQL Interview Questions & Answers</summary>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 20px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th {
+      background-color: #0078d4; /* Solid blue header */
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-size: 1.1em;
+      border: thin solid #ccc;
+    }
+    td {
+      padding: 12px;
+      border: thin solid #ccc;
+      vertical-align: top;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    code {
+      background: #f4f4f4;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: Consolas, monospace;
+    }
+  </style>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Question</th>
+        <th>Answer</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Difference between DELETE, TRUNCATE, DROP</td>
+        <td>
+          <b>DELETE</b>: Removes rows, can use WHERE, logged, rollback possible.<br>
+          <b>TRUNCATE</b>: Removes all rows, faster, minimal logging, resets identity.<br>
+          <b>DROP</b>: Removes entire table (structure + data).
+        </td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Primary Key vs Unique Key vs Foreign Key</td>
+        <td>
+          <b>Primary Key</b>: Unique, no NULLs, one per table.<br>
+          <b>Unique Key</b>: Ensures uniqueness, allows one NULL, multiple per table.<br>
+          <b>Foreign Key</b>: Enforces referential integrity.
+        </td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>WHERE vs HAVING</td>
+        <td><b>WHERE</b>: Filters rows before grouping.<br><b>HAVING</b>: Filters groups after aggregation.</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>INNER JOIN vs LEFT JOIN vs FULL JOIN</td>
+        <td>
+          <b>INNER JOIN</b>: Matching rows only.<br>
+          <b>LEFT JOIN</b>: All rows from left + matches.<br>
+          <b>FULL JOIN</b>: All rows from both sides.
+        </td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Second Highest Salary Query</td>
+        <td>
+          <code>
+            SELECT MAX(salary)<br>
+            FROM employees<br>
+            WHERE salary &lt; (SELECT MAX(salary) FROM employees);
+          </code>
+        </td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Find Duplicate Records</td>
+        <td>
+          <code>
+            SELECT column_name, COUNT(*)<br>
+            FROM table_name<br>
+            GROUP BY column_name<br>
+            HAVING COUNT(*) &gt; 1;
+          </code>
+        </td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>Subquery vs CTE</td>
+        <td>
+          <b>Subquery</b>: Nested inline.<br>
+          <b>CTE</b>: Defined with WITH, reusable, supports recursion.
+        </td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td>GROUP BY & Aggregates</td>
+        <td>
+          Groups rows and applies aggregate functions.<br>
+          <code>
+            SELECT department, AVG(salary)<br>
+            FROM employees<br>
+            GROUP BY department;
+          </code>
+        </td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td>CHAR vs VARCHAR</td>
+        <td>
+          <b>CHAR(n)</b>: Fixed length, pads with spaces.<br>
+          <b>VARCHAR(n)</b>: Variable length, saves space.
+        </td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td>NULL Handling</td>
+        <td>
+          Use <code>IS NULL</code> / <code>IS NOT NULL</code>.<br>
+          Replace with <code>COALESCE()</code> or <code>ISNULL()</code>.<br>
+          Example: <code>SELECT COALESCE(middle_name, 'N/A') FROM employees;</code>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</details>
+
+<details>
+  <summary>Intermediate SQL Interview Questions & Answers</summary>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 20px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th {
+      background-color: #0078d4; /* Solid blue header */
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-size: 1.1em;
+      border: thin solid #ccc;
+    }
+    td {
+      padding: 12px;
+      border: thin solid #ccc;
+      vertical-align: top;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    code {
+      background: #f4f4f4;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: Consolas, monospace;
+    }
+  </style>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Question</th>
+        <th>Answer</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>11</td>
+        <td>Clustered vs Non‑Clustered Index</td>
+        <td>
+          <b>Clustered</b>: Sorts and stores data rows physically, one per table.<br>
+          <b>Non‑Clustered</b>: Separate structure with pointers to data, multiple allowed.<br>
+          Example: Clustered on <code>OrderID</code>, Non‑Clustered on <code>CustomerID</code>.
+        </td>
+      </tr>
+      <tr>
+        <td>12</td>
+        <td>Covering Index</td>
+        <td>
+          An index that contains all columns needed by a query, avoiding lookups.<br>
+          Example: <code>CREATE INDEX idx_orders ON Orders(CustomerID, OrderDate, TotalAmount)</code>.
+        </td>
+      </tr>
+      <tr>
+        <td>13</td>
+        <td>Query Execution Plan</td>
+        <td>
+          Shows how SQL Server executes a query (scans, seeks, joins).<br>
+          Used to identify bottlenecks like table scans or missing indexes.
+        </td>
+      </tr>
+      <tr>
+        <td>14</td>
+        <td>UNION vs UNION ALL</td>
+        <td>
+          <b>UNION</b>: Removes duplicates, adds sorting overhead.<br>
+          <b>UNION ALL</b>: Keeps duplicates, faster.<br>
+          Example: Reporting queries often use <code>UNION ALL</code> for performance.
+        </td>
+      </tr>
+      <tr>
+        <td>15</td>
+        <td>Window Functions</td>
+        <td>
+          Functions like <code>ROW_NUMBER()</code>, <code>RANK()</code>, <code>DENSE_RANK()</code>.<br>
+          Example: 
+          <code>
+            SELECT Name, Salary, RANK() OVER (ORDER BY Salary DESC) AS Rank<br>
+            FROM Employees;
+          </code>
+        </td>
+      </tr>
+      <tr>
+        <td>16</td>
+        <td>Nth Highest Salary</td>
+        <td>
+          <code>
+            SELECT Salary FROM (SELECT Salary, DENSE_RANK() OVER (ORDER BY Salary DESC) AS rnk<br>
+            FROM Employees) t WHERE rnk = N;
+          </code>
+        </td>
+      </tr>
+      <tr>
+        <td>17</td>
+        <td>Transactions & ACID</td>
+        <td>
+          Ensures <b>Atomicity, Consistency, Isolation, Durability</b>.<br>
+          Example: Bank transfer = debit + credit in one transaction.
+        </td>
+      </tr>
+      <tr>
+        <td>18</td>
+        <td>Isolation Levels</td>
+        <td>
+          <b>Read Uncommitted</b>: Dirty reads.<br>
+          <b>Read Committed</b>: Prevents dirty reads.<br>
+          <b>Repeatable Read</b>: Prevents non‑repeatable reads.<br>
+          <b>Serializable</b>: Prevents phantom reads, strictest.
+        </td>
+      </tr>
+      <tr>
+        <td>19</td>
+        <td>Deadlocks</td>
+        <td>
+          Occur when two transactions wait on each other’s locks.<br>
+          Prevention: Consistent locking order, shorter transactions, use <code>WITH (NOLOCK)</code> carefully.
+        </td>
+      </tr>
+      <tr>
+        <td>20</td>
+        <td>Optimistic vs Pessimistic Locking</td>
+        <td>
+          <b>Optimistic</b>: Assume no conflict, check at commit.<br>
+          <b>Pessimistic</b>: Lock resources immediately.<br>
+          Example: High‑concurrency systems prefer optimistic.
+        </td>
+      </tr>
+      <tr>
+        <td>21</td>
+        <td>Partitioning</td>
+        <td>
+          Splits large tables into smaller partitions for performance.<br>
+          Example: Partition sales data by year.
+        </td>
+      </tr>
+      <tr>
+        <td>22</td>
+        <td>Sharding vs Partitioning</td>
+        <td>
+          <b>Partitioning</b>: Within one DB instance.<br>
+          <b>Sharding</b>: Across multiple DB servers.<br>
+          Example: Global apps shard by region.
+        </td>
+      </tr>
+      <tr>
+        <td>23</td>
+        <td>Materialized Views</td>
+        <td>
+          Precomputed query results stored physically.<br>
+          Speeds up reporting but needs refresh.<br>
+          Example: Monthly sales summary.
+        </td>
+      </tr>
+      <tr>
+        <td>24</td>
+        <td>OLTP vs OLAP Schema</td>
+        <td>
+          <b>OLTP</b>: Normalized, fast inserts/updates.<br>
+          <b>OLAP</b>: Denormalized, star/snowflake schema for analytics.
+        </td>
+      </tr>
+      <tr>
+        <td>25</td>
+        <td>Audit Logging</td>
+        <td>
+          Track changes for compliance.<br>
+          Example: Use triggers to insert into <code>AuditLog</code> table on UPDATE/DELETE.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</details>
+
+<details>
+  <summary>Advanced SQL Interview Questions & Answers</summary>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 20px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th {
+      background-color: #0078d4; /* Solid blue header */
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-size: 1.1em;
+      border: thin solid #ccc;
+    }
+    td {
+      padding: 12px;
+      border: thin solid #ccc;
+      vertical-align: top;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    code {
+      background: #f4f4f4;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: Consolas, monospace;
+    }
+  </style>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Question</th>
+        <th>Answer</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>26</td>
+        <td>Schema for Ride‑Sharing App</td>
+        <td>
+          Tables: <b>Drivers</b>, <b>Riders</b>, <b>Trips</b>, <b>Payments</b>.<br>
+          Example: Trips table links DriverID, RiderID, StartLocation, EndLocation, Fare.
+        </td>
+      </tr>
+      <tr>
+        <td>27</td>
+        <td>Scaling Queries for 200M Row Orders Table</td>
+        <td>
+          Use <b>partitioning</b> by date, <b>indexes</b> on CustomerID/OrderDate, and <b>covering indexes</b>.<br>
+          Example: <code>CREATE INDEX idx_orders ON Orders(CustomerID, OrderDate)</code>.
+        </td>
+      </tr>
+      <tr>
+        <td>28</td>
+        <td>Fact & Dimension Tables</td>
+        <td>
+          <b>Fact</b>: Transactional data (Sales, Orders).<br>
+          <b>Dimension</b>: Descriptive attributes (Customer, Product, Time).<br>
+          Example: Star schema for sales reporting.
+        </td>
+      </tr>
+      <tr>
+        <td>29</td>
+        <td>Troubleshooting Slow Query</td>
+        <td>
+          Steps: Check execution plan → Index usage → Statistics → Locks → Hardware bottlenecks.<br>
+          Example: Add missing index to avoid table scan.
+        </td>
+      </tr>
+      <tr>
+        <td>30</td>
+        <td>Index Fragmentation</td>
+        <td>
+          Caused by frequent inserts/updates.<br>
+          Fix: <code>ALTER INDEX REBUILD</code> or <code>ALTER INDEX REORGANIZE</code>.
+        </td>
+      </tr>
+      <tr>
+        <td>31</td>
+        <td>Heap vs Clustered Tables</td>
+        <td>
+          <b>Heap</b>: No clustered index, unordered.<br>
+          <b>Clustered</b>: Ordered by clustered key.<br>
+          Example: Heap for staging, clustered for production.
+        </td>
+      </tr>
+      <tr>
+        <td>32</td>
+        <td>Soft Deletes</td>
+        <td>
+          Add <code>IsDeleted BIT</code> column instead of removing rows.<br>
+          Example: <code>UPDATE Users SET IsDeleted = 1 WHERE UserID = 10;</code>
+        </td>
+      </tr>
+      <tr>
+        <td>33</td>
+        <td>Change Data Capture (CDC)</td>
+        <td>
+          Tracks inserts/updates/deletes for auditing or ETL.<br>
+          Example: Enable CDC on Orders table for downstream reporting.
+        </td>
+      </tr>
+      <tr>
+        <td>34</td>
+        <td>Replication vs Log Shipping</td>
+        <td>
+          <b>Replication</b>: Real‑time copy for reporting.<br>
+          <b>Log Shipping</b>: Periodic backup/restore for disaster recovery.
+        </td>
+      </tr>
+      <tr>
+        <td>35</td>
+        <td>Data Consistency Across Microservices</td>
+        <td>
+          Use <b>distributed transactions</b>, <b>event sourcing</b>, or <b>outbox pattern</b>.<br>
+          Example: Outbox table ensures reliable message publishing.
+        </td>
+      </tr>
+      <tr>
+        <td>36</td>
+        <td>CQRS Pattern</td>
+        <td>
+          Separate <b>Command</b> (writes) and <b>Query</b> (reads).<br>
+          Example: Commands update DB, Queries use read‑optimized schema.
+        </td>
+      </tr>
+      <tr>
+        <td>37</td>
+        <td>Multi‑Tenant Database</td>
+        <td>
+          Approaches: Shared schema with TenantID, separate schema per tenant, or separate DB per tenant.<br>
+          Example: SaaS apps often use TenantID column.
+        </td>
+      </tr>
+      <tr>
+        <td>38</td>
+        <td>Horizontal vs Vertical Scaling</td>
+        <td>
+          <b>Horizontal</b>: Add more servers (sharding).<br>
+          <b>Vertical</b>: Increase server resources (CPU, RAM).
+        </td>
+      </tr>
+      <tr>
+        <td>39</td>
+        <td>Securing Sensitive Data</td>
+        <td>
+          Use <b>encryption</b> (TDE, Always Encrypted), masking, and role‑based access.<br>
+          Example: Encrypt SSN column.
+        </td>
+      </tr>
+      <tr>
+        <td>40</td>
+        <td>Row‑Level Security</td>
+        <td>
+          Restrict access based on user context.<br>
+          Example: Sales reps see only their region’s data.
+        </td>
+      </tr>
+      <tr>
+        <td>41</td>
+        <td>High Availability in SQL Server</td>
+        <td>
+          Options: Failover clustering, AlwaysOn Availability Groups, Log Shipping.<br>
+          Example: AlwaysOn for mission‑critical apps.
+        </td>
+      </tr>
+      <tr>
+        <td>42</td>
+        <td>Temp Tables vs Table Variables</td>
+        <td>
+          <b>Temp Tables</b>: Support indexes, statistics, better for large sets.<br>
+          <b>Table Variables</b>: In‑memory, lightweight, no stats.
+        </td>
+      </tr>
+      <tr>
+        <td>43</td>
+        <td>Large Batch Inserts</td>
+        <td>
+          Use <code>BULK INSERT</code>, <code>BCP</code>, or batching with transactions.<br>
+          Example: Insert 10k rows per batch.
+        </td>
+      </tr>
+      <tr>
+        <td>44</td>
+        <td>Query Hints</td>
+        <td>
+          Force optimizer behavior (e.g., <code>OPTION (FORCE INDEX)</code>).<br>
+          Use cautiously, only when optimizer misbehaves.
+        </td>
+      </tr>
+      <tr>
+        <td>45</td>
+        <td>Monitoring SQL Server Performance</td>
+        <td>
+          Tools: Profiler, Extended Events, DMVs.<br>
+          Example: DMV query for top CPU‑consuming queries.
+        </td>
+      </tr>
+      <tr>
+        <td>46</td>
+        <td>Index Seek vs Index Scan</td>
+        <td>
+          <b>Seek</b>: Efficient, uses index key.<br>
+          <b>Scan</b>: Reads entire index/table.<br>
+          Example: Seek on <code>WHERE CustomerID = 100</code>.
+        </td>
+      </tr>
+      <tr>
+        <td>47</td>
+        <td>Schema for Event Sourcing</td>
+        <td>
+          Store events instead of state.<br>
+          Example: Orders table replaced by Events table (OrderCreated, OrderShipped).
+        </td>
+      </tr>
+      <tr>
+        <td>48</td>
+        <td>Denormalization</td>
+        <td>
+          Add redundancy for performance.<br>
+          Example: Store CustomerName in Orders table to avoid join.
+        </td>
+      </tr>
+<tr>
+  <td>49</td>
+  <td>Legacy Database Migration</td>
+  <td>
+    <ul>
+      <li><b>Assessment:</b> Analyze existing schema, dependencies, and data quality.</li>
+      <li><b>ETL Process:</b> Extract, Transform, Load using tools like SSIS or custom scripts.</li>
+      <li><b>Validation:</b> Compare row counts, checksums, and sample queries to ensure accuracy.</li>
+      <li><b>Optimization:</b> Add indexes, constraints, and normalize/denormalize as needed.</li>
+      <li><b>Rollback Plan:</b> Always prepare backups and rollback scripts before migration.</li>
+    </ul>
+    <p><b>Example:</b> Use <code>SQL Server Integration Services (SSIS)</code> to migrate data from Oracle to SQL Server, applying transformations during the load.</p>
+  </td>
+</tr>
+
+<tr>
+  <td>50</td>
+  <td>Best Practices for Schema Versioning in Enterprise Systems</td>
+  <td>
+    <ul>
+      <li><b>Use Version Control:</b> Keep all schema changes in source control (e.g., Git).</li>
+      <li><b>Migration Scripts:</b> Apply changes via incremental scripts (CREATE/ALTER), not manual edits.</li>
+      <li><b>Automated Deployment:</b> Use CI/CD pipelines to apply schema changes consistently.</li>
+      <li><b>Backward Compatibility:</b> Ensure changes don’t break existing applications (e.g., add columns instead of dropping).</li>
+      <li><b>Documentation:</b> Maintain clear change logs for auditing and rollback.</li>
+      <li><b>Testing:</b> Validate schema changes in staging before production.</li>
+    </ul>
+    <p><b>Example:</b> Use tools like <code>Flyway</code> or <code>Liquibase</code> to manage schema migrations with version tags.</p>
+  </td>
+</tr>
+
+</body>
+</html>
