@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Angular 3-Day Crash Guide</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    margin: 0;
+    background-color: #fdfdfd;
+  }
+
+  /* Wrapper centers the sidebar + content as one unit instead of
+     pinning the sidebar to the browser edge */
+  .layout {
+    display: flex;
+    max-width: 1140px;
+    margin: 0 auto;
+  }
+
+  /* Sidebar */
+  nav.sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    height: 100vh;
+    overflow-y: auto;
+    position: sticky;
+    top: 0;
+    background-color: #24292e;
+    color: #d1d5da;
+    padding: 24px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  nav.sidebar .brand {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #fff;
+    padding: 0 20px 16px;
+    border-bottom: 1px solid #444c56;
+    margin-bottom: 12px;
+  }
+  nav.sidebar .day-label {
+    text-transform: uppercase;
+    font-size: 0.75em;
+    letter-spacing: 0.05em;
+    color: #f44336; /* Red accented for Angular */
+    padding: 16px 20px 6px;
+    font-weight: 600;
+  }
+  nav.sidebar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  nav.sidebar li a {
+    display: block;
+    padding: 6px 20px 6px 28px;
+    color: #d1d5da;
+    text-decoration: none;
+    font-size: 0.9em;
+    border-left: 3px solid transparent;
+  }
+  nav.sidebar li a:hover {
+    background-color: #2f363d;
+    color: #fff;
+    border-left-color: #f44336;
+  }
+
+  /* Main content */
+  main {
+    flex: 1;
+    min-width: 0;
+    padding: 30px 40px 80px;
+  }
+  h1 {
+    border-bottom: 3px solid #dd0031;
+    padding-bottom: 10px;
+    color: #dd0031;
+    font-size: 2em;
+  }
+  h2 {
+    color: #24292e;
+    margin-top: 50px;
+    border-bottom: 2px solid #eaecef;
+    padding-bottom: 5px;
+    scroll-margin-top: 16px;
+  }
+  h3 {
+    color: #b78103;
+    margin-top: 28px;
+    scroll-margin-top: 16px;
+  }
+  p.desc {
+    background-color: #fdf2f2;
+    border-left: 4px solid #f44336;
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin: 8px 0 14px;
+    color: #444;
+    font-size: 0.96em;
+  }
+  
+  /* Vibrant Dark Mode Code Blocks */
+  pre {
+    background-color: #1e1e1e;
+    padding: 16px;
+    border-radius: 8px;
+    overflow: auto;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 90%;
+    border: 1px solid #2d2d2d;
+    color: #d4d4d4; /* Base light gray text */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  }
+  code {
+    background-color: #fff5b1;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    color: #24292e;
+  }
+  pre code {
+    background-color: transparent;
+    padding: 0;
+    color: inherit;
+  }
+  
+  /* Syntax Highlighting Classes */
+  .keyword { color: #569cd6; font-weight: 600; } /* blue */
+  .string  { color: #ce9178; }                   /* orange/brown string */
+  .builtin { color: #4ec9b0; }                   /* teal type/decorator */
+  .comment { color: #6a9955; font-style: italic; }/* green comment */
+  .number  { color: #b5cea8; }                   /* light green number */
+  .prop    { color: #9cdcfe; }                   /* light blue variables */
+  .func    { color: #dcdcaa; }                   /* yellow function */
+
+  ul.result {
+    background: #f6f8fa;
+    padding: 15px 15px 15px 35px;
+    border-radius: 6px;
+  }
+  ul.result li {
+    margin-bottom: 8px;
+  }
+
+  @media (max-width: 800px) {
+    .layout { display: block; }
+    nav.sidebar { display: none; }
+    main { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+<nav class="sidebar">
+  <div class="brand">🅰️ Angular Guide</div>
+
+  <div class="day-label">Day 1 — Fundamentals</div>
+  <ul>
+    <li><a href="#d1-components">1. Components & Templates</a></li>
+    <li><a href="#d1-io">2. Input & Output Props</a></li>
+    <li><a href="#d1-state">3. Component State</a></li>
+    <li><a href="#d1-binding">4. Event & Binding</a></li>
+    <li><a href="#d1-controlflow">5. Control Flow</a></li>
+    <li><a href="#d1-lists">6. Tracked Lists</a></li>
+    <li><a href="#d1-forms">7. Reactive Forms</a></li>
+  </ul>
+
+  <div class="day-label">Day 2 — Core Architecture</div>
+  <ul>
+    <li><a href="#d2-lifecycle">1. Lifecycle Hooks</a></li>
+    <li><a href="#d2-di">2. Dependency Injection</a></li>
+    <li><a href="#d2-viewchild">3. DOM Access</a></li>
+    <li><a href="#d2-pipes">4. Pipes</a></li>
+    <li><a href="#d2-directives">5. Custom Directives</a></li>
+    <li><a href="#d2-rxjs">6. RxJS Basics</a></li>
+    <li><a href="#d2-projection">7. Content Projection</a></li>
+  </ul>
+
+  <div class="day-label">Day 3 — Real-World Apps</div>
+  <ul>
+    <li><a href="#d3-router">1. Angular Router</a></li>
+    <li><a href="#d3-http">2. HTTP Client</a></li>
+    <li><a href="#d3-state">3. Signals Global State</a></li>
+    <li><a href="#d3-errors">4. Global Error Handling</a></li>
+    <li><a href="#d3-testing">5. Component Testing</a></li>
+    <li><a href="#d3-ssr">6. SSR & Hydration</a></li>
+    <li><a href="#d3-defer">7. Deferrable Views</a></li>
+  </ul>
+
+  <div class="day-label">Wrap-up</div>
+  <ul>
+    <li><a href="#end-result">🎯 End Result</a></li>
+  </ul>
+</nav>
+
+<main>
+  <h1>🅰️ Angular 3‑Day Crash Guide</h1>
+
+  <h2 id="day1">📅 Day 1 — Core Angular Fundamentals</h2>
+
+  <h3 id="d1-components">1. Components & TypeScript Templates</h3>
+  <p class="desc">Angular components use a <code>@Component</code> decorator to bind a TypeScript class to an HTML template. Instead of JSX, Angular uses standard HTML extended with its own template expression syntax.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">Component</span> } <span class="keyword">from</span> <span class="string">'@angular/core'</span>;
+
+@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-welcome'</span>,
+  <span class="prop">template</span>: <span class="string">'&lt;h1&gt;Hello, Venudhar&lt;/h1&gt;'</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">WelcomeComponent</span> {}
+
+<span class="comment">// Component with template expressions</span>
+@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-greeting'</span>,
+  <span class="prop">template</span>: <span class="string">'&lt;h2&gt;Welcome back, {{ name }}!&lt;/h2&gt;'</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">GreetingComponent</span> {
+  <span class="prop">name</span> = <span class="string">'Venudhar'</span>;
+}</code></pre>
+
+  <h3 id="d1-io">2. Input & Output Properties (Props Equivalent)</h3>
+  <p class="desc">Data flows down into components via <code>@Input()</code> properties. Data flows up to parent components by emitting events using <code>@Output()</code> and an <code>EventEmitter</code>.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">Component</span>, <span class="builtin">Input</span>, <span class="builtin">Output</span>, <span class="builtin">EventEmitter</span> } <span class="keyword">from</span> <span class="string">'@angular/core'</span>;
+
+@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-user-card'</span>,
+  <span class="prop">template</span>: <span class="string">`
+    &lt;div&gt;
+      &lt;p&gt;{{ name }}&lt;/p&gt;
+      &lt;p&gt;{{ role }}&lt;/p&gt;
+      &lt;button (click)="notifyParent()"&gt;Click Me&lt;/button&gt;
+    &lt;/div&gt;
+  `</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">UserCardComponent</span> {
+  @<span class="builtin">Input</span>() <span class="prop">name</span>!: <span class="keyword">string</span>;
+  @<span class="builtin">Input</span>() <span class="prop">role</span>!: <span class="keyword">string</span>;
+  @<span class="builtin">Output</span>() <span class="prop">statusChange</span> = <span class="keyword">new</span> <span class="builtin">EventEmitter</span>&lt;<span class="keyword">string</span>&gt;();
+
+  <span class="func">notifyParent</span>() {
+    <span class="keyword">this</span>.<span class="prop">statusChange</span>.<span class="func">emit</span>(<span class="string">'Card Clicked!'</span>);
+  }
+}
+
+<span class="comment">// Usage in parent: &lt;app-user-card [name]="'Venudhar'" [role]="'Tech Lead'" (statusChange)="onStatus($event)"&gt;&lt;/app-user-card&gt;</span></code></pre>
+
+  <h3 id="d1-state">3. Component State & Change Detection</h3>
+  <p class="desc">In Angular, any public property on the class acts as component state. You don't need a state hook; updating the class property directly triggers Angular's change detection to update the DOM.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">Component</span> } <span class="keyword">from</span> <span class="string">'@angular/core'</span>;
+
+@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-counter'</span>,
+  <span class="prop">template</span>: <span class="string">`
+    &lt;button (click)="increment()"&gt;
+      Count: {{ count }}
+    &lt;/button&gt;
+  `</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">CounterComponent</span> {
+  <span class="prop">count</span> = <span class="number">0</span>;
+
+  <span class="func">increment</span>() {
+    <span class="keyword">this</span>.<span class="prop">count</span>++;
+  }
+}</code></pre>
+
+  <h3 id="d1-binding">4. Event & Binding Handling</h3>
+  <p class="desc">Angular separates data flow syntactically: brackets <code>[]</code> are used for property binding (data into the DOM), and parentheses <code>()</code> are used for event binding (data out of the DOM).</p>
+  <pre><code>@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-search-box'</span>,
+  <span class="prop">template</span>: <span class="string">'&lt;input (input)="handleInput($event)" placeholder="Search..." /&gt;'</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">SearchBoxComponent</span> {
+  <span class="func">handleInput</span>(<span class="prop">event</span>: <span class="builtin">Event</span>) {
+    <span class="keyword">const</span> <span class="prop">value</span> = (<span class="prop">event</span>.<span class="prop">target</span> <span class="keyword">as</span> <span class="builtin">HTMLInputElement</span>).<span class="prop">value</span>;
+    <span class="prop">console</span>.<span class="func">log</span>(<span class="prop">value</span>);
+  }
+}</code></pre>
+
+  <h3 id="d1-controlflow">5. Control Flow (Conditional Rendering)</h3>
+  <p class="desc">Angular features a built-in block syntax (<code>@if</code> / <code>@else</code>) to conditionally render fragments of HTML directly within your templates.</p>
+  <pre><code>@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-status'</span>,
+  <span class="prop">template</span>: <span class="string">`
+    &lt;div&gt;
+      @if (isLoggedIn) {
+        &lt;p&gt;Welcome back!&lt;/p>
+      } @else {
+        &lt;p&gt;Please log in.&lt;/p>
+      }
+    &lt;/div&gt;
+  `</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">StatusComponent</span> {
+  <span class="prop">isLoggedIn</span> = <span class="keyword">true</span>;
+}</code></pre>
+
+  <h3 id="d1-lists">6. Tracked Lists (@for Blocks)</h3>
+  <p class="desc">To render lists, Angular uses the <code>@for</code> block. A <code>track</code> expression is required, serving the same optimization purpose as React's unique <code>key</code> prop.</p>
+  <pre><code><span class="keyword">interface</span> <span class="builtin">Stock</span> { <span class="prop">id</span>: <span class="keyword">number</span>; <span class="prop">symbol</span>: <span class="keyword">string</span>; <span class="prop">price</span>: <span class="keyword">number</span>; }
+
+@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-stock-list'</span>,
+  <span class="prop">template</span>: <span class="string">`
+    &lt;ul&gt;
+      @for (stock of stocks; track stock.id) {
+        &lt;li&gt;{{ stock.symbol }} — {{ stock.price }}&lt;/li&gt;
+      }
+    &lt;/ul&gt;
+  `</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">StockListComponent</span> {
+  <span class="prop">stocks</span>: <span class="builtin">Stock</span>[] = [{ <span class="prop">id</span>: <span class="number">1</span>, <span class="prop">symbol</span>: <span class="string">'ONGC'</span>, <span class="prop">price</span>: <span class="number">270</span> }];
+}</code></pre>
+
+  <h3 id="d1-forms">7. Forms (Reactive Forms)</h3>
+  <p class="desc">For robust state management, Angular offers Reactive Forms. You create a <code>FormControl</code> explicitly in your TypeScript file and tie it directly to the template input.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">Component</span> } <span class="keyword">from</span> <span class="string">'@angular/core'</span>;
+<span class="keyword">import</span> { <span class="builtin">FormControl</span>, <span class="builtin">ReactiveFormsModule</span> } <span class="keyword">from</span> <span class="string">'@angular/forms'</span>;
+
+@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-login-form'</span>,
+  <span class="prop">imports</span>: [ <span class="builtin">ReactiveFormsModule</span> ],
+  <span class="prop">template</span>: <span class="string">`
+    &lt;form (ngSubmit)="handleSubmit()"&gt;
+      &lt;input [formControl]="emailControl" /&gt;
+      &lt;button type="submit"&gt;Submit&lt;/button&gt;
+    &lt;/form&gt;
+  `</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">LoginFormComponent</span> {
+  <span class="prop">emailControl</span> = <span class="keyword">new</span> <span class="builtin">FormControl</span>(<span class="string">''</span>);
+
+  <span class="func">handleSubmit</span>() {
+    <span class="prop">console</span>.<span class="func">log</span>(<span class="keyword">this</span>.<span class="prop">emailControl</span>.<span class="prop">value</span>);
+  }
+}</code></pre>
+
+  <h2 id="day2">📅 Day 2 — Core Lifecycle & Architecture</h2>
+
+  <h3 id="d2-lifecycle">1. Component Lifecycle Hooks (ngOnInit & ngOnDestroy)</h3>
+  <p class="desc">Instead of useEffect, Angular utilizes explicit lifecycle interfaces. <code>ngOnInit</code> handles initialization tasks, while <code>ngOnDestroy</code> acts as the execution cleanup mechanism.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">Component</span>, <span class="builtin">OnInit</span>, <span class="builtin">OnDestroy</span>, <span class="builtin">Input</span> } <span class="keyword">from</span> <span class="string">'@angular/core'</span>;
+
+@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: 'app-stock-price',
+  <span class="prop">template</span>: <span class="string">'&lt;p&gt;{{ symbol }}: {{ price }}&lt;/p&gt;'</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">StockPriceComponent</span> <span class="keyword">implements</span> <span class="builtin">OnInit</span>, <span class="builtin">OnDestroy</span> {
+  @<span class="builtin">Input</span>() <span class="prop">symbol</span>!: <span class="keyword">string</span>;
+  <span class="prop">price</span>: <span class="keyword">number</span> | <span class="keyword">null</span> = <span class="keyword">null</span>;
+
+  <span class="func">ngOnInit</span>() {
+    <span class="comment">// Component initialized. Fetch data here.</span>
+  }
+
+  <span class="func">ngOnDestroy</span>() {
+    <span class="comment">// Cleanup tasks (like unsubscribing from timers or streams)</span>
+  }
+}</code></pre>
+
+  <h3 id="d2-di">2. Dependency Injection & Services</h3>
+  <p class="desc">Instead of Context Providers, Angular uses Dependency Injection (DI). Services hold shared logic or values and can be cleanly injected straight into a component's constructor.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">Injectable</span>, <span class="builtin">Component</span> } <span class="keyword">from</span> <span class="string">'@angular/core'</span>;
+
+@<span class="builtin">Injectable</span>({ <span class="prop">providedIn</span>: <span class="string">'root'</span> })
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">ThemeService</span> {
+  <span class="prop">theme</span> = <span class="string">'dark'</span>;
+}
+
+@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-toolbar'</span>,
+  <span class="prop">template</span>: <span class="string">'&lt;div [class]="themeService.theme"&gt;Toolbar&lt;/div&gt;'</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">ToolbarComponent</span> {
+  <span class="keyword">constructor</span>(<span class="keyword">public</span> <span class="prop">themeService</span>: <span class="builtin">ThemeService</span>) {}
+}</code></pre>
+
+  <h3 id="d2-viewchild">3. DOM Access with @ViewChild</h3>
+  <p class="desc">To get direct reference to a DOM element or a child component without managing state, use the <code>@ViewChild</code> decorator coupled with an <code>ElementRef</code> wrapper.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">Component</span>, <span class="builtin">ViewChild</span>, <span class="builtin">ElementRef</span>, <span class="builtin">AfterViewInit</span> } <span class="keyword">from</span> <span class="string">'@angular/core'</span>;
+
+@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-focus-input'</span>,
+  <span class="prop">template</span>: <span class="string">'&lt;input #myInput /&gt;'</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">FocusInputComponent</span> <span class="keyword">implements</span> <span class="builtin">AfterViewInit</span> {
+  @<span class="builtin">ViewChild</span>(<span class="string">'myInput'</span>) <span class="prop">inputRef</span>!: <span class="builtin">ElementRef</span>&lt;<span class="builtin">HTMLInputElement</span>&gt;;
+
+  <span class="func">ngAfterViewInit</span>() {
+    <span class="keyword">this</span>.<span class="prop">inputRef</span>.<span class="prop">nativeElement</span>.<span class="func">focus</span>();
+  }
+}</code></pre>
+
+  <h3 id="d2-pipes">4. Pipes for Data Transformation</h3>
+  <p class="desc">Pipes are utility operations used to transform visible data directly within your markup layouts, acting as a clean alternative to inline logic changes.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">Component</span> } <span class="keyword">from</span> <span class="string">'@angular/core'</span>;
+<span class="keyword">import</span> { <span class="builtin">CurrencyPipe</span>, <span class="builtin">UpperCasePipe</span> } <span class="keyword">from</span> <span class="string">'@angular/common'</span>;
+
+@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-format'</span>,
+  <span class="prop">imports</span>: [ <span class="builtin">CurrencyPipe</span>, <span class="builtin">UpperCasePipe</span> ],
+  <span class="prop">template</span>: <span class="string">`
+    &lt;p&gt;Company: {{ company | uppercase }}&lt;/p&gt;
+    &lt;p&gt;Price: {{ price | currency:'INR' }}&lt;/p>
+  `</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">FormatComponent</span> {
+  <span class="prop">company</span> = <span class="string">'ongc'</span>;
+  <span class="prop">price</span> = <span class="number">270.45</span>;
+}</code></pre>
+
+  <h3 id="d2-directives">5. Custom Directives</h3>
+  <p class="desc">Directives allow you to extend HTML elements with custom behaviors. While components are structurally directives with templates, attribute directives manipulate structural elements directly.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">Directive</span>, <span class="builtin">ElementRef</span>, <span class="builtin">HostListener</span> } <span class="keyword">from</span> <span class="string">'@angular/core'</span>;
+
+@<span class="builtin">Directive</span>({ <span class="prop">selector</span>: <span class="string">'[appHighlight]'</span>, <span class="prop">standalone</span>: <span class="keyword">true</span> })
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">HighlightDirective</span> {
+  <span class="keyword">constructor</span>(<span class="keyword">private</span> <span class="prop">el</span>: <span class="builtin">ElementRef</span>) {}
+
+  @<span class="builtin">HostListener</span>(<span class="string">'mouseenter'</span>) <span class="func">onMouseEnter</span>() {
+    <span class="keyword">this</span>.<span class="prop">el</span>.<span class="prop">nativeElement</span>.<span class="prop">style</span>.<span class="prop">backgroundColor</span> = <span class="string">'yellow'</span>;
+  }
+  @<span class="builtin">HostListener</span>(<span class="string">'mouseleave'</span>) <span class="func">onMouseLeave</span>() {
+    <span class="keyword">this</span>.<span class="prop">el</span>.<span class="prop">nativeElement</span>.<span class="prop">style</span>.<span class="prop">backgroundColor</span> = <span class="keyword">null</span>;
+  }
+}</code></pre>
+
+  <h3 id="d2-rxjs">6. Reactive Programming with RxJS</h3>
+  <p class="desc">Angular deeply integrates RxJS and Observables to manage streams of asynchronous data. Think of it as a clean engine that handles data state changes smoothly over time.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">Component</span>, <span class="builtin">OnInit</span> } <span class="keyword">from</span> <span class="string">'@angular/core'</span>;
+<span class="keyword">import</span> { <span class="builtin">BehaviorSubject</span> } <span class="keyword">from</span> <span class="string">'rxjs'</span>;
+
+@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-reactive'</span>,
+  <span class="prop">template</span>: <span class="string">'&lt;p&gt;Active Users: {{ userCount$ | async }}&lt;/p&gt;'</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">ReactiveComponent</span> <span class="keyword">implements</span> <span class="builtin">OnInit</span> {
+  <span class="prop">userCount$</span> = <span class="keyword">new</span> <span class="builtin">BehaviorSubject</span>&lt;<span class="keyword">number</span>&gt;(<span class="number">0</span>);
+
+  <span class="func">ngOnInit</span>() {
+    <span class="keyword">this</span>.<span class="prop">userCount$</span>.<span class="func">next</span>(<span class="number">10</span>); <span class="comment">// Emit updated stream parameters</span>
+  }
+}</code></pre>
+
+  <h3 id="d2-projection">7. Content Projection (ng-content)</h3>
+  <p class="desc">Angular handles component composition via Content Projection. The <code>&lt;ng-content&gt;</code> tag acts as a placeholder that injects whatever markup the parent nests inside its tags.</p>
+  <pre><code>@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-card'</span>,
+  <span class="prop">template</span>: <span class="string">`
+    &lt;div class="card"&gt;
+      &lt;ng-content&gt;&lt;/ng-content&gt;
+    &lt;/div&gt;
+  `</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">CardComponent</span> {}
+
+<span class="comment">// Usage: &lt;app-card&gt;&lt;h3&gt;ONGC&lt;/h3&gt;&lt;/app-card&gt;</span></code></pre>
+
+  <h2 id="day3">📅 Day 3 — Real-World Angular Architecture</h2>
+
+  <h3 id="d3-router">1. Angular Router (Navigation)</h3>
+  <p class="desc">Angular includes a full-featured routing engine out of the box. Paths map directly to your components, and specialized directives handle client-side routing updates smoothly.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">Routes</span>, <span class="builtin">RouterLink</span>, <span class="builtin">RouterOutlet</span> } <span class="keyword">from</span> <span class="string">'@angular/router'</span>;
+
+<span class="keyword">export</span> <span class="keyword">const</span> <span class="prop">routes</span>: <span class="builtin">Routes</span> = [
+  { <span class="prop">path</span>: <span class="string">''</span>, <span class="prop">component</span>: <span class="prop">HomeComponent</span> },
+  { <span class="prop">path</span>: <span class="string">'portfolio'</span>, <span class="prop">component</span>: <span class="prop">PortfolioComponent</span> }
+];
+
+@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-root'</span>,
+  <span class="prop">imports</span>: [ <span class="builtin">RouterLink</span>, <span class="builtin">RouterOutlet</span> ],
+  <span class="prop">template</span>: <span class="string">`
+    &lt;nav&gt;
+      &lt;a routerLink="/"&gt;Home&lt;/a&gt;
+      &lt;a routerLink="/portfolio"&gt;Portfolio&lt;/a&gt;
+    &lt;/nav&gt;
+    &lt;router-outlet&gt;&lt;/router-outlet&gt;
+  `</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">AppComponent</span> {}</code></pre>
+
+  <h3 id="d3-http">2. HTTP Client (API Data Layer)</h3>
+  <p class="desc">Angular features an optimized HTTP service engine (<code>HttpClient</code>) that handles requests natively via RxJS streams, avoiding manual promise chains.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">Injectable</span>, <span class="func">inject</span> } <span class="keyword">from</span> <span class="string">'@angular/core'</span>;
+<span class="keyword">import</span> { <span class="builtin">HttpClient</span> } <span class="keyword">from</span> <span class="string">'@angular/common/http'</span>;
+<span class="keyword">import</span> { <span class="builtin">Observable</span> } <span class="keyword">from</span> <span class="string">'rxjs'</span>;
+
+@<span class="builtin">Injectable</span>({ <span class="prop">providedIn</span>: <span class="string">'root'</span> })
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">PortfolioService</span> {
+  <span class="keyword">private</span> <span class="prop">http</span> = <span class="func">inject</span>(<span class="builtin">HttpClient</span>);
+
+  <span class="func">getStocks</span>(): <span class="builtin">Observable</span>&lt;<span class="keyword">any</span>[]&gt; {
+    <span class="keyword">return</span> <span class="keyword">this</span>.<span class="prop">http</span>.<span class="func">get</span>&lt;<span class="keyword">any</span>[]&gt;(<span class="string">'/api/portfolio'</span>);
+  }
+}</code></pre>
+
+  <h3 id="d3-state">3. Global State Management (Signals)</h3>
+  <p class="desc">Angular Signals provide fine-grained reactivity built right into the core framework, tracking and informing individual template nodes without demanding heavy, external global stores.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">Injectable</span>, <span class="func">signal</span>, <span class="func">computed</span> } <span class="keyword">from</span> <span class="string">'@angular/core'</span>;
+
+@<span class="builtin">Injectable</span>({ <span class="prop">providedIn</span>: <span class="string">'root'</span> })
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">PortfolioStore</span> {
+  <span class="prop">stocks</span> = <span class="func">signal</span>&lt;{ id: <span class="keyword">number</span>; symbol: <span class="keyword">string</span> }[]&gt;([]);
+  <span class="prop">totalCount</span> = <span class="func">computed</span>(() =&gt; <span class="keyword">this</span>.<span class="func">stocks</span>().<span class="prop">length</span>);
+
+  <span class="func">addStock</span>(<span class="prop">symbol</span>: <span class="keyword">string</span>) {
+    <span class="keyword">this</span>.<span class="prop">stocks</span>.<span class="func">update</span>(<span class="prop">current</span> =&gt; [...<span class="prop">current</span>, { id: <span class="builtin">Date</span>.<span class="func">now</span>(), <span class="prop">symbol</span> }]);
+  }
+}</code></pre>
+
+  <h3 id="d3-errors">4. Global Error Handling (ErrorHandler)</h3>
+  <p class="desc">Instead of localized boundary wrappers, Angular handles core runtime failures globally by extending and overriding its default <code>ErrorHandler</code> provider class.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">ErrorHandler</span>, <span class="builtin">Injectable</span> } <span class="keyword">from</span> <span class="string">'@angular/core'</span>;
+
+@<span class="builtin">Injectable</span>()
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">GlobalErrorHandler</span> <span class="keyword">implements</span> <span class="builtin">ErrorHandler</span> {
+  <span class="func">handleError</span>(<span class="prop">error</span>: <span class="keyword">any</span>): <span class="keyword">void</span> {
+    <span class="prop">console</span>.<span class="func">error</span>(<span class="string">'An error occurred globally:'</span>, <span class="prop">error</span>.<span class="prop">message</span>);
+  }
+}
+<span class="comment">// Registered via: { provide: ErrorHandler, useClass: GlobalErrorHandler }</span></code></pre>
+
+  <h3 id="d3-testing">5. Component Testing (TestBed)</h3>
+  <p class="desc">Angular comes packaged with comprehensive test suites. The <code>TestBed</code> utility simplifies mock behaviors, click triggers, and UI assertions.</p>
+  <pre><code><span class="keyword">import</span> { <span class="builtin">TestBed</span>, <span class="builtin">ComponentFixture</span> } <span class="keyword">from</span> <span class="string">'@angular/core/testing'</span>;
+<span class="keyword">import</span> { <span class="builtin">CounterComponent</span> } <span class="keyword">from</span> <span class="string">'./counter.component'</span>;
+
+<span class="func">describe</span>(<span class="string">'CounterComponent'</span>, () =&gt; {
+  <span class="keyword">let</span> <span class="prop">fixture</span>: <span class="builtin">ComponentFixture</span>&lt;<span class="builtin">CounterComponent</span>&gt;;
+
+  <span class="func">beforeEach</span>(() =&gt; {
+    <span class="builtin">TestBed</span>.<span class="func">configureTestingModule</span>({ imports: [ <span class="builtin">CounterComponent</span> ] });
+    <span class="prop">fixture</span> = <span class="builtin">TestBed</span>.<span class="func">createComponent</span>(<span class="builtin">CounterComponent</span>);
+    <span class="prop">fixture</span>.<span class="func">detectChanges</span>();
+  });
+
+  <span class="func">it</span>(<span class="string">'should increment count on click'</span>, () =&gt; {
+    <span class="keyword">const</span> <span class="prop">button</span> = <span class="prop">fixture</span>.<span class="prop">nativeElement</span>.<span class="func">querySelector</span>(<span class="string">'button'</span>);
+    <span class="prop">button</span>.<span class="func">click</span>();
+    <span class="prop">fixture</span>.<span class="func">detectChanges</span>();
+    <span class="func">expect</span>(<span class="prop">button</span>.<span class="prop">textContent</span>).<span class="func">toContain</span>(<span class="string">'Count: 1'</span>);
+  });
+});</code></pre>
+
+  <h3 id="d3-ssr">6. Angular SSR & Hydration (Server Rendering)</h3>
+  <p class="desc">Angular features native Server-Side Rendering (SSR). Components are compiled into structural HTML server-side before instantly hydrating into a fast client application.</p>
+  <pre><code><span class="comment">// App setup automatically provisions server bootstrap steps:</span>
+<span class="keyword">import</span> { <span class="builtin">bootstrapApplication</span> } <span class="keyword">from</span> <span class="string">'@angular/platform-browser'</span>;
+<span class="keyword">import</span> { <span class="prop">config</span> } <span class="keyword">from</span> <span class="string">'./app.config.server'</span>; <span class="comment">// includes provideServerRendering()</span>
+<span class="keyword">import</span> { <span class="builtin">AppComponent</span> } <span class="keyword">from</span> <span class="string">'./app.component'</span>;
+
+<span class="keyword">const</span> <span class="func">bootstrap</span> = () =&gt; <span class="func">bootstrapApplication</span>(<span class="builtin">AppComponent</span>, <span class="prop">config</span>);
+<span class="keyword">export</span> <span class="keyword">default</span> <span class="prop">bootstrap</span>;</code></pre>
+
+  <h3 id="d3-defer">7. Performance & Optimization (Deferrable Views)</h3>
+  <p class="desc">Deferrable Views (<code>@defer</code>) allow you to lazy-load massive components or layout nodes automatically only when specific triggers (like viewport visibility) are fulfilled.</p>
+  <pre><code>@<span class="builtin">Component</span>({
+  <span class="prop">selector</span>: <span class="string">'app-dashboard'</span>,
+  <span class="prop">template</span>: <span class="string">`
+    @defer (on viewport) {
+      &lt;app-heavy-charts /&gt;
+    } @placeholder {
+      &lt;div&gt;Charts will load when scrolled into view...&lt;/div>
+    }
+  `</span>
+})
+<span class="keyword">export</span> <span class="keyword">class</span> <span class="builtin">DashboardComponent</span> {}</code></pre>
+
+  <h2 id="end-result">🎯 End Result</h2>
+  <ul class="result">
+    <li>Understand Angular foundations (TypeScript templates, inputs/outputs, explicit component state, forms).</li>
+    <li>Master structural core architectures (Lifecycle implementations, Dependency Injection Services, Pipes, Directives, and RxJS reactive streams).</li>
+    <li>Apply clean architecture across enterprise tasks: core Angular Router paths, unified HTTP clients, fine-grained Signals tracking, automated tests, and viewport Deferrable Views.</li>
+    <li>Build confidently alongside your TypeScript knowledge to deliver typed, production-ready full stack systems.</li>
+  </ul>
+</main>
+</div>
+
+</body>
+</html>
