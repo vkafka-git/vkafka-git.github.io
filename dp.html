@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- Prism.js Dark Theme -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+
+<meta charset="UTF-8">
+<title>Tech Lead/Full Stack Developer</title>
+<style>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        counter-reset: question-counter;
+    }
+    h2 { color: #24292e; margin-top: 20px; border-bottom: 1px solid #eaecef; padding-bottom: 5px; }
+    h3 { color: #444; }
+    pre { background-color: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; font-family: Consolas, monospace; font-size: 85%; border: 1px solid #e1e4e8; }
+    details { counter-increment: question-counter; margin-bottom: 20px; }
+    summary {
+        font-size: 1.4em;
+        font-weight: bold;
+        color: #0078d4;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    summary::-webkit-details-marker { display: none; }
+    details summary::before {
+        content: counter(question-counter) ". ";
+        color: #0078d4;
+        font-weight: bold;
+        margin-right: 8px;
+    }
+</style>
+
+  <!-- Custom Overrides -->
+  <style>
+    /* Keywords (public, class, return, etc.) → Blue */
+    .token.keyword {
+      color: #4aa3ff; /* bright blue */
+    }
+
+    /* Strings → Green */
+    .token.string {
+      color: #6aff6a; /* green */
+    }
+
+    /* Numbers → Orange */
+    .token.number {
+      color: #ff9933; /* orange */
+    }
+
+    /* Default text → White */
+    code[class*="language-"], pre[class*="language-"] {
+      color: #ffffff; /* white */
+    }
+  </style>
+</head>
+<body>
+
+<details>
+  <summary>Difference: Creational vs Strategy vs Behavioral Patterns</summary>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 20px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th {
+      background-color: #0078d4; /* Solid blue header */
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-size: 1.1em;
+      border: thin solid #ccc;
+    }
+    td {
+      padding: 12px;
+      border: thin solid #ccc;
+      background-color: #fdfdfd;
+    }
+    tr:nth-child(even) td {
+      background-color: #f8f9fa;
+    }
+  </style>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th>Purpose</th>
+        <th>Problem Solved</th>
+        <th>When to Use</th>
+        <th>Quick Decision Guide</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Creational Patterns</b></td>
+        <td>Object creation mechanisms</td>
+        <td>Object creation is complex or tightly coupled to concrete classes</td>
+        <td>
+          - Need to decouple object creation from usage<br>
+          - Want flexibility in instantiation (e.g., different DB providers)<br>
+          - Enforce constraints (e.g., only one instance with Singleton)
+        </td>
+        <td>Is it about <b>creating objects</b>? → Creational</td>
+      </tr>
+      <tr>
+        <td><b>Strategy Pattern</b></td>
+        <td>Encapsulates interchangeable algorithms</td>
+        <td>Avoids hardcoding conditional logic (<code>if/else</code>, <code>switch</code>) for different behaviors</td>
+        <td>
+          - Need to switch algorithms dynamically<br>
+          - Want to encapsulate behavior so clients don’t care which one is used<br>
+          - Want easy extension (add new strategy without touching existing code)
+        </td>
+        <td>Is it about <b>choosing/swapping algorithms</b>? → Strategy</td>
+      </tr>
+      <tr>
+        <td><b>Behavioral Patterns</b></td>
+        <td>Object interaction and communication</td>
+        <td>Reduce tight coupling, manage responsibilities</td>
+        <td>
+          - Need to control communication flow (Mediator)<br>
+          - Event-driven notifications (Observer)<br>
+          - Encapsulate requests/actions (Command)<br>
+          - Define algorithm skeletons (Template Method)
+        </td>
+        <td>Is it about <b>communication or responsibilities</b>? → Behavioral</td>
+      </tr>
+    </tbody>
+  </table>
+</details>
+
+<details>
+  <summary>Design Patterns – Problems Solved</summary>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 20px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th {
+      background-color: #0078d4; /* Solid blue header */
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-size: 1.1em;
+      border: thin solid #ccc;
+    }
+    td {
+      padding: 12px;
+      border: thin solid #ccc;
+      background-color: #fdfdfd;
+    }
+    tr:nth-child(even) td {
+      background-color: #f8f9fa;
+    }
+  </style>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Pattern</th>
+        <th>Category</th>
+        <th>Problem Solved</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Creational -->
+      <tr>
+        <td>1</td>
+        <td>Factory Method</td>
+        <td>Creational</td>
+        <td>Decouples object creation from usage; avoids binding code to concrete classes.</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Abstract Factory</td>
+        <td>Creational</td>
+        <td>Creates families of related objects without specifying concrete classes.</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Builder</td>
+        <td>Creational</td>
+        <td>Handles construction of complex objects step by step, separating representation from creation.</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Singleton</td>
+        <td>Creational</td>
+        <td>Ensures only one instance of a class exists and provides global access.</td>
+      </tr>
+
+      <!-- Structural -->
+      <tr>
+        <td>5</td>
+        <td>Adapter</td>
+        <td>Structural</td>
+        <td>Allows incompatible interfaces to work together by converting one interface into another.</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Decorator</td>
+        <td>Structural</td>
+        <td>Adds responsibilities to objects dynamically without modifying their structure.</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>Composite</td>
+        <td>Structural</td>
+        <td>Treats individual objects and groups uniformly, enabling tree-like structures.</td>
+      </tr>
+
+      <!-- Behavioral -->
+      <tr>
+        <td>8</td>
+        <td>Strategy</td>
+        <td>Behavioral</td>
+        <td>Encapsulates interchangeable algorithms, avoiding hardcoded conditional logic.</td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td>Observer</td>
+        <td>Behavioral</td>
+        <td>Defines one-to-many dependency; notifies dependents automatically when state changes.</td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td>Command</td>
+        <td>Behavioral</td>
+        <td>Encapsulates requests as objects, enabling queuing, logging, and undo operations.</td>
+      </tr>
+      <tr>
+        <td>11</td>
+        <td>Mediator</td>
+        <td>Behavioral</td>
+        <td>Centralizes communication between components, reducing direct dependencies.</td>
+      </tr>
+      <tr>
+        <td>12</td>
+        <td>Template Method</td>
+        <td>Behavioral</td>
+        <td>Defines the skeleton of an algorithm, allowing subclasses to customize specific steps.</td>
+      </tr>
+    </tbody>
+  </table>
+</details>
+
+
+<details>
+<summary>Factory Method Pattern - (Income Tax Calculator)</summary>
+<p>
+<h2>Definition</h2>
+<p>Provides an interface for creating a single product object, but lets subclasses decide which concrete class to instantiate.</p>
+
+<h2>Description</h2>
+<p>Use Factory Method when you want to delegate the instantiation of <b>one type of object</b> to subclasses. It focuses on creating a single product at a time.</p>
+
+<h2>Real-Time Example: Income Tax Calculator</h2>
+<pre><code class="language-csharp">
+public interface IIncomeTaxCalculator {
+    decimal Calculate(decimal amount);
+}
+
+public class IndiaIncomeTax : IIncomeTaxCalculator {
+    public decimal Calculate(decimal amount) => amount * 0.30m;
+}
+
+public class USAIncomeTax : IIncomeTaxCalculator {
+    public decimal Calculate(decimal amount) => amount * 0.25m;
+}
+
+public abstract class TaxFactory {
+    public abstract IIncomeTaxCalculator CreateIncomeTax();
+}
+
+public class IndiaTaxFactory : TaxFactory {
+    public override IIncomeTaxCalculator CreateIncomeTax() => new IndiaIncomeTax();
+}
+
+public class USATaxFactory : TaxFactory {
+    public override IIncomeTaxCalculator CreateIncomeTax() => new USAIncomeTax();
+}
+
+// Client
+TaxFactory factory = new IndiaTaxFactory();
+var taxCalc = factory.CreateIncomeTax();
+Console.WriteLine(taxCalc.Calculate(1000)); // Output: 300
+</code></pre>
+</p>
+</details>
+
+<details>
+<summary>Abstract Factory Pattern - (Income Tax + Social Security)</summary>
+<p>
+<h2>Definition</h2>
+<p>Provides an interface for creating families of related or dependent objects without specifying their concrete classes.</p>
+
+<h2>Description</h2>
+<p>Use Abstract Factory when you need a set of related objects that must work together consistently. It focuses on creating <b>families of products</b>.</p>
+
+<h2>Real-Time Example: Tax Calculators (Income Tax + Social Security)</h2>
+<pre><code class="language-csharp">
+public interface IIncomeTaxCalculator { decimal Calculate(decimal amount); }
+public interface ISocialSecurityCalculator { decimal Calculate(decimal amount); }
+
+public class IndiaIncomeTax : IIncomeTaxCalculator {
+    public decimal Calculate(decimal amount) => amount * 0.30m;
+}
+public class IndiaSocialSecurity : ISocialSecurityCalculator {
+    public decimal Calculate(decimal amount) => amount * 0.12m;
+}
+
+public class USAIncomeTax : IIncomeTaxCalculator {
+    public decimal Calculate(decimal amount) => amount * 0.25m;
+}
+public class USASocialSecurity : ISocialSecurityCalculator {
+    public decimal Calculate(decimal amount) => amount * 0.062m;
+}
+
+public interface ITaxFactory {
+    IIncomeTaxCalculator CreateIncomeTax();
+    ISocialSecurityCalculator CreateSocialSecurity();
+}
+
+public class IndiaTaxFactory : ITaxFactory {
+    public IIncomeTaxCalculator CreateIncomeTax() => new IndiaIncomeTax();
+    public ISocialSecurityCalculator CreateSocialSecurity() => new IndiaSocialSecurity();
+}
+
+public class USATaxFactory : ITaxFactory {
+    public IIncomeTaxCalculator CreateIncomeTax() => new USAIncomeTax();
+    public ISocialSecurityCalculator CreateSocialSecurity() => new USASocialSecurity();
+}
+
+// Client
+ITaxFactory factory = new USATaxFactory();
+var incomeTax = factory.CreateIncomeTax();
+var socialSecurity = factory.CreateSocialSecurity();
+
+Console.WriteLine(incomeTax.Calculate(1000));       // 250
+Console.WriteLine(socialSecurity.Calculate(1000));  // 62
+</code></pre>
+</p>
+</details>
+
+<details>
+<summary>Builder Pattern - (Building an Order)</summary>
+<p>
+<h2>Definition</h2>
+<p>Separates the construction of a complex object from its representation, allowing the same construction process to create different representations.</p>
+
+<h2>Description</h2>
+<p>Use the Builder Pattern when you need to create complex objects step by step. It helps avoid telescoping constructors (constructors with too many parameters) and makes object creation more readable and flexible.</p>
+
+<h2>Real-Time Example: Building an Order</h2>
+<pre><code class="language-csharp">
+public class Order
+{
+    public List<string> Items { get; } = new List<string>();
+    public string Customer { get; set; }
+    public decimal Total { get; set; }
+}
+
+public class OrderBuilder
+{
+    private Order _order = new Order();
+
+    public OrderBuilder ForCustomer(string name)
+    {
+        _order.Customer = name;
+        return this;
+    }
+
+    public OrderBuilder AddItem(string item, decimal price)
+    {
+        _order.Items.Add(item);
+        _order.Total += price;
+        return this;
+    }
+
+    public Order Build() => _order;
+}
+
+// Client
+var order = new OrderBuilder()
+    .ForCustomer("Alice")
+    .AddItem("Laptop", 1000)
+    .AddItem("Mouse", 50)
+    .Build();
+
+Console.WriteLine($"{order.Customer} ordered {string.Join(", ", order.Items)}. Total: {order.Total}");
+</code></pre>
+
+<h2>Output</h2>
+<p><code>Alice ordered Laptop, Mouse. Total: 1050</code></p>
+
+<h2>Interview Insight</h2>
+<ul>
+  <li>Creating complex DTOs or domain objects with optional fields.</li>
+  <li>Constructing configuration objects step by step.</li>
+  <li>Test Data Builders in unit testing.</li>
+</ul>
+</p>
+</details>
+
+<details>
+<summary>Singleton Pattern - (Logger Service)</summary>
+<p>
+<h2>Definition</h2>
+<p>Ensures a class has only one instance and provides a global point of access to it.</p>
+
+<h2>Description</h2>
+<p>Use the Singleton Pattern when exactly one object is needed to coordinate actions across the system. It restricts instantiation of a class to a single object and provides a way to access that instance globally.</p>
+
+<h2>Real-Time Example: Logger Service</h2>
+<pre><code class="language-csharp">
+public sealed class Logger
+{
+    private static readonly Logger _instance = new Logger();
+
+    // Private constructor ensures no external instantiation
+    private Logger() { }
+
+    public static Logger Instance => _instance;
+
+    public void Log(string message)
+    {
+        Console.WriteLine($"[LOG]: {message}");
+    }
+}
+
+// Client
+class Program
+{
+    static void Main()
+    {
+        Logger.Instance.Log("Application started");
+        Logger.Instance.Log("Processing data...");
+        Logger.Instance.Log("Application finished");
+    }
+}
+</code></pre>
+
+<h2>Output</h2>
+<p><code>[LOG]: Application started<br>[LOG]: Processing data...<br>[LOG]: Application finished</code></p>
+
+<h2>Interview Insight</h2>
+<ul>
+  <li>Commonly used for logging, configuration settings, caching, or thread pools.</li>
+  <li>Ensures only one instance exists, avoiding conflicts or inconsistent state.</li>
+  <li>In C#, thread-safe singletons are often implemented using <code>static readonly</code> fields.</li>
+</ul>
+</p>
+</details>
+
+
+<details>
+  <summary>Adapter Design Pattern Example (Payment Gateway)</summary>
+  <div style="margin-top: 15px; font-family: sans-serif; line-height: 1.6;">
+
+    <p>Think of the <b>Adapter Design Pattern</b> like a physical <b>travel adapter</b>. If you travel with a US laptop to Europe, your plug won't fit into the wall outlet. The power is there, but the <i>interfaces</i> don't match. You use an adapter to translate your plug into the shape the wall expects.</p>
+    
+    <p>In software, the Adapter pattern lets two incompatible interfaces work together. This is incredibly common when integrating third-party SDKs into an existing codebase.</p>
+
+    <hr />
+
+    <h3>Scenario: E-Commerce Payment Processing</h3>
+    <p>Imagine your application processes payments using an internal interface (<code>ILocalPayment</code>). You want to integrate a third-party SDK (<b>Stripe</b>), but Stripe's SDK uses entirely different method names and data structures. Instead of rewriting your entire core application, you build an <b>Adapter</b>.</p>
+
+    <h3>1. The Existing System (What your app expects)</h3>
+    <p>This is the current target interface your application relies on.</p>
+    <pre><code class="language-csharp">// The 'Target' interface
+public interface ILocalPayment
+{
+    // Expects payment details as a string and amount as a double
+    void ProcessPayment(string accountDetails, double amount);
+}
+
+// Our existing internal payment processor
+public class LocalPaymentProcessor : ILocalPayment
+{
+    public void ProcessPayment(string accountDetails, double amount)
+    {
+        Console.WriteLine($"Processing local payment of ${amount} to account {accountDetails}.");
+    }
+}</code></pre>
+
+    <h3>2. The Third-Party Service (The Incompatible Class)</h3>
+    <p>This is the external Stripe SDK. It has the features you need, but its signatures are completely different.</p>
+    <pre><code class="language-csharp">// The 'Adaptee' class (Incompatible third-party SDK)
+public class StripePaymentSdk
+{
+    // It uses different parameter types and a different method name
+    public void MakeStripeTransaction(int customerId, double amountInUsd, string currencyToken)
+    {
+        Console.WriteLine($"Stripe successfully charged Customer #{customerId} {amountInUsd} {currencyToken}.");
+    }
+}</code></pre>
+
+    <h3>3. The Adapter (The Translator)</h3>
+    <p>This class implements your existing <code>ILocalPayment</code> interface, wraps the <code>StripePaymentSdk</code>, and handles the data translation internally.</p>
+    <pre><code class="language-csharp">// The 'Adapter' class
+public class StripeAdapter : ILocalPayment
+{
+    private readonly StripePaymentSdk _stripeSdk;
+
+    public StripeAdapter(StripePaymentSdk stripeSdk)
+    {
+        _stripeSdk = stripeSdk;
+    }
+
+    public void ProcessPayment(string accountDetails, double amount)
+    {
+        // 1. Translate the incoming data to what Stripe expects
+        // (Extracting the numeric ID from a string format like "Cust5542")
+        int stripeCustomerId = int.Parse(accountDetails.Replace("Cust", ""));
+        
+        // 2. Route the request to the incompatible Stripe method
+        _stripeSdk.MakeStripeTransaction(stripeCustomerId, amount, "USD");
+    }
+}</code></pre>
+
+    <h3>4. Client Code Execution</h3>
+    <p>The client application seamlessly interacts with both systems using the exact same interface code.</p>
+    <pre><code class="language-csharp">class Program
+{
+    static void Main()
+    {
+        // 1. Using our old, standard local payment system
+        ILocalPayment standardProcessor = new LocalPaymentProcessor();
+        standardProcessor.ProcessPayment("Account-9928", 150.00);
+
+        Console.WriteLine(new string('-', 40));
+
+        // 2. Using Stripe via the Adapter
+        // The core application code doesn't change; it still targets ILocalPayment!
+        StripePaymentSdk stripeSdk = new StripePaymentSdk();
+        ILocalPayment stripeAdapter = new StripeAdapter(stripeSdk);
+        
+        // The application passes standard local data, and the adapter handles the translation
+        stripeAdapter.ProcessPayment("Cust5542", 299.99);
+    }
+}</code></pre>
+
+    <hr />
+
+    <blockquote style="background: #f9f9f9; border-left: 10px solid #ccc; margin: 1.5em 10px; padding: 0.5em 10px;">
+        <b>Real .NET Ecosystem Example:</b> ADO.NET uses this pattern heavily. Classes like <code>SqlDataAdapter</code> act as adapters between physical database structures (SQL Server tables) and abstract memory objects (<code>DataSet</code> / <code>DataTable</code>) that your C# application interacts with.
+    </blockquote>
+
+  </div>
+</details>
+
+
+
+<details>
+  <summary>Decorator Design Pattern Example (Coffee Shop)</summary>
+  <div style="margin-top: 15px; font-family: sans-serif; line-height: 1.6;">
+
+    <p>Think of the <b>Decorator Design Pattern</b> like ordering a coffee. You start with a basic coffee (the base component). If you want milk, you wrap it with milk. If you want caramel, you wrap that milk-coffee with caramel. Each ingredient "decorates" the beverage, adding behavior and cost dynamically at runtime without creating a massive inheritance tree.</p>
+
+    <hr />
+
+    <h3>1. The Core Interface & Base Component</h3>
+    <p>First, we define what a <code>ICoffee</code> is, and create a concrete implementation for a simple black coffee.</p>
+    <pre><code class="language-csharp">// The 'Component' interface
+public interface ICoffee
+{
+    string GetDescription();
+    double GetCost();
+}
+
+// The 'ConcreteComponent' - the basic object we will decorate
+public class BlackCoffee : ICoffee
+{
+    public string GetDescription() => "Simple Black Coffee";
+    public double GetCost() => 2.00;
+}</code></pre>
+
+    <h3>2. The Decorator Base Class</h3>
+    <p>The decorator implements the same interface but also <b>holds a reference</b> to an <code>ICoffee</code> object. It delegates the work to that object while allowing subclasses to modify the result.</p>
+    <pre><code class="language-csharp">// The 'Decorator' abstract class
+public abstract class CoffeeDecorator : ICoffee
+{
+    protected readonly ICoffee _coffee;
+
+    protected CoffeeDecorator(ICoffee coffee)
+    {
+        _coffee = coffee;
+    }
+
+    public virtual string GetDescription() => _coffee.GetDescription();
+    public virtual double GetCost() => _coffee.GetCost();
+}</code></pre>
+
+    <h3>3. Concrete Decorators</h3>
+    <p>Now, we create specific ingredients (Milk and Caramel) that add their own descriptions and costs to the underlying coffee.</p>
+    <pre><code class="language-csharp">// Concrete Decorator A
+public class MilkDecorator : CoffeeDecorator
+{
+    public MilkDecorator(ICoffee coffee) : base(coffee) { }
+
+    public override string GetDescription() => $"{base.GetDescription()}, with Milk";
+    public override double GetCost() => base.GetCost() + 0.50;
+}
+
+// Concrete Decorator B
+public class CaramelDecorator : CoffeeDecorator
+{
+    public CaramelDecorator(ICoffee coffee) : base(coffee) { }
+
+    public override string GetDescription() => $"{base.GetDescription()}, with Caramel";
+    public override double GetCost() => base.GetCost() + 0.75;
+}</code></pre>
+
+    <h3>4. Putting It Together (The Runtime Wrapping)</h3>
+    <p>The beauty of this pattern is that you can stack these decorators in any order or combination at runtime.</p>
+    <pre><code class="language-csharp">class Program
+{
+    static void Main()
+    {
+        // 1. Order a plain black coffee
+        ICoffee myCoffee = new BlackCoffee();
+        Console.WriteLine($"{myCoffee.GetDescription()} -> ${myCoffee.GetCost():F2}");
+        // Output: Simple Black Coffee -> $2.00
+
+        // 2. Wrap it with Milk
+        myCoffee = new MilkDecorator(myCoffee);
+        Console.WriteLine($"{myCoffee.GetDescription()} -> ${myCoffee.GetCost():F2}");
+        // Output: Simple Black Coffee, with Milk -> $2.50
+
+        // 3. Wrap it again with Caramel
+        myCoffee = new CaramelDecorator(myCoffee);
+        Console.WriteLine($"{myCoffee.GetDescription()} -> ${myCoffee.GetCost():F2}");
+        // Output: Simple Black Coffee, with Milk, with Caramel -> $3.25
+    }
+}</code></pre>
+
+    <hr />
+
+    <blockquote style="background: #f9f9f9; border-left: 10px solid #ccc; margin: 1.5em 10px; padding: 0.5em 10px;">
+        <b>Real .NET Ecosystem Example:</b> You actually use this in C# all the time with file streams! <code>BufferedStream</code> and <code>CryptoStream</code> are decorators that wrap around a standard <code>FileStream</code> to add buffering or encryption capabilities dynamically.
+    </blockquote>
+
+  </div>
+</details>
+
+<details>
+  <summary>Composite Pattern Example (Shipping & Packaging - Logistics Domain )</summary>
+  <div style="margin-top: 15px; font-family: sans-serif; line-height: 1.6;">
+
+    <p>In supply chain and logistics systems, shipments are often nested. A large shipping container contains pallets, which contain boxes, which contain retail products. The <b>Composite Pattern</b> allows us to compute shipping metrics (like weight or price) uniformly for a single product or an entire multi-tiered freight shipment.</p>
+
+    <hr />
+
+    <h3>1. The Component Interface</h3>
+    <p>This defines the unified operation (<code>CalculateWeight()</code>) that both standalone products and shipping containers must implement.</p>
+    <pre><code class="language-csharp">// The 'Component'
+public interface IShippable
+{
+    string Name { get; }
+    double CalculateWeight(); // Returns weight in kilograms
+}</code></pre>
+
+    <h3>2. The Leaf Node (Individual Product)</h3>
+    <p>This represents the actual items being purchased. They have a fixed weight and cannot contain other items.</p>
+    <pre><code class="language-csharp">// The 'Leaf'
+public class Product : IShippable
+{
+    public string Name { get; }
+    private double _weight;
+
+    public Product(string name, double weight)
+    {
+        Name = name;
+        _weight = weight;
+    }
+
+    public double CalculateWeight() => _weight;
+}</code></pre>
+
+    <h3>3. The Composite Node (The Box / Container)</h3>
+    <p>This represents a container. It has its own structural weight (the empty box itself) plus the weight of any products or smaller boxes packed inside it.</p>
+    <pre><code class="language-csharp">// The 'Composite'
+public class ParcelBox : IShippable
+{
+    public string Name { get; }
+    private double _boxEmptyWeight;
+    private readonly List&lt;IShippable&gt; _contents = new List&lt;IShippable&gt;();
+
+    public ParcelBox(string name, double boxEmptyWeight)
+    {
+        Name = name;
+        _boxEmptyWeight = boxEmptyWeight;
+    }
+
+    public void Pack(IShippable item)
+    {
+        _contents.Add(item);
+    }
+
+    public void Unpack(IShippable item)
+    {
+        _contents.Remove(item);
+    }
+
+    // Recursively calculates total weight: Box Weight + Weight of everything inside
+    public double CalculateWeight()
+    {
+        double totalWeight = _boxEmptyWeight;
+        foreach (var item in _contents)
+        {
+            totalWeight += item.CalculateWeight();
+        }
+        return totalWeight;
+    }
+}</code></pre>
+
+    <h3>4. Client Code Execution</h3>
+    <p>The logistics application can measure the weight of the entire delivery manifest automatically.</p>
+    <pre><code class="language-csharp">class Program
+{
+    static void Main()
+    {
+        // 1. Individual items (Leafs)
+        IShippable laptop = new Product("Pro Laptop", 2.2);
+        IShippable mouse = new Product("Wireless Mouse", 0.15);
+        IShippable keyboard = new Product("Mechanical Keyboard", 0.9);
+        IShippable coffeeMug = new Product("Ceramic Mug", 0.4);
+
+        // 2. Pack tech accessories into a small inner box (Composite 1)
+        ParcelBox accessoriesBox = new ParcelBox("Accessories Box", 0.2); // Box weighs 0.2kg empty
+        accessoriesBox.Pack(mouse);
+        accessoriesBox.Pack(keyboard);
+
+        // 3. Pack the laptop, the accessories box, and a mug into the main shipping crate (Composite 2)
+        ParcelBox masterCrate = new ParcelBox("Master Shipping Crate", 1.5); // Crate weighs 1.5kg empty
+        masterCrate.Pack(laptop);
+        masterCrate.Pack(accessoriesBox); // Nested composite!
+        masterCrate.Pack(coffeeMug);
+
+        // 4. Uniform processing
+        Console.WriteLine($"--- Logistics Weight Manifest ---");
+        Console.WriteLine($"{laptop.Name} individual weight: {laptop.CalculateWeight()} kg");
+        Console.WriteLine($"{accessoriesBox.Name} total weight: {accessoriesBox.CalculateWeight()} kg");
+        
+        Console.WriteLine(new string('-', 40));
+        
+        // The manifest system handles the master container seamlessly
+        Console.WriteLine($"TOTAL SHIPMENT FREIGHT WEIGHT: {masterCrate.CalculateWeight()} kg");
+        // Calculation: 1.5 (Crate) + 2.2 (Laptop) + [0.2 (Box) + 0.15 (Mouse) + 0.9 (Keyboard)] + 0.4 (Mug) = 5.35 kg
+    }
+}</code></pre>
+
+  </div>
+</details>
+
+<details>
+  <summary>Strategy Pattern (Multi-Modal Transit - Transport Booking )</summary>
+  <div style="margin-top: 15px; font-family: sans-serif; line-height: 1.6;">
+
+    <p>When booking a trip, the core goal remains the same: get the user to their destination. However, the calculation logic for pricing and time changes dynamically based on the chosen vehicle type. Using the Strategy pattern, we can add new transit methods (like Scooters or Helicopters) later without changing the core booking engine.</p>
+
+    <hr />
+
+    <h3>1. The Strategy Interface</h3>
+    <p>This defines the common contract that every transportation algorithm must fulfill.</p>
+    <pre><code class="language-csharp">// The 'Strategy' interface
+public interface ITravelStrategy
+{
+    double CalculateFare(double distanceInKm);
+    int CalculateDurationMinutes(double distanceInKm);
+}</code></pre>
+
+    <h3>2. Concrete Strategies</h3>
+    <p>Each class encapsulates the specific rules, speeds, and base rates for that unique mode of transport.</p>
+    <pre><code class="language-csharp">// Concrete Strategy A: Cab (High price, dependent on traffic)
+public class CabStrategy : ITravelStrategy
+{
+    public double CalculateFare(double distance) => 5.00 + (distance * 1.50); // $5 base + $1.50/km
+    public int CalculateDurationMinutes(double distance) => (int)(distance * 3); // ~3 mins per km
+}
+
+// Concrete Strategy B: Bike (Low price, unaffected by traffic jams)
+public class BikeStrategy : ITravelStrategy
+{
+    public double CalculateFare(double distance) => 1.00 + (distance * 0.40); // $1 base + $0.40/km
+    public int CalculateDurationMinutes(double distance) => (int)(distance * 5); // ~5 mins per km
+}
+
+// Concrete Strategy C: Metro Train (Fixed pricing tiers, very fast)
+public class MetroStrategy : ITravelStrategy
+{
+    public double CalculateFare(double distance) => distance < 10 ? 2.50 : 4.50; // Flat tier pricing
+    public int CalculateDurationMinutes(double distance) => (int)(distance * 1.5) + 5; // Fast, but includes station waiting time
+}
+
+// Concrete Strategy D: Bus (Economy price, scheduled stops)
+public class BusStrategy : ITravelStrategy
+{
+    public double CalculateFare(double distance) => 2.00; // Flat fare regardless of distance
+    public int CalculateDurationMinutes(double distance) => (int)(distance * 4) + 10; // Slower due to routine stops
+}</code></pre>
+
+    <h3>3. The Context Class</h3>
+    <p>The <code>TripBookingEngine</code> manages the trip's metadata and utilizes the currently selected travel strategy to give the user dynamic updates.</p>
+    <pre><code class="language-csharp">// The 'Context'
+public class TripBookingEngine
+{
+    private readonly double _distanceInKm;
+    private ITravelStrategy _travelStrategy;
+
+    public TripBookingEngine(double distanceInKm)
+    {
+        _distanceInKm = distanceInKm;
+    }
+
+    // Change strategy at runtime when the user clicks a different vehicle icon
+    public void SetTravelMode(ITravelStrategy travelStrategy)
+    {
+        _travelStrategy = travelStrategy;
+    }
+
+    public void DisplayTripQuote()
+    {
+        if (_travelStrategy == null)
+        {
+            throw new InvalidOperationException("Please select a mode of transport.");
+        }
+
+        double fare = _travelStrategy.CalculateFare(_distanceInKm);
+        int duration = _travelStrategy.CalculateDurationMinutes(_distanceInKm);
+
+        Console.WriteLine($"Mode: {_travelStrategy.GetType().Name.Replace("Strategy", "")}");
+        Console.WriteLine($"Est. Travel Time: {duration} mins");
+        Console.WriteLine($"Total Cost: ${fare:F2}");
+    }
+}</code></pre>
+
+    <h3>4. Client Code Execution</h3>
+    <p>Simulating a user switching tabs on a mobile app to compare different options for a 12-kilometer journey.</p>
+    <pre><code class="language-csharp">class Program
+{
+    static void Main()
+    {
+        double distanceToDestination = 12.0; // 12 km trip
+        
+        // Initialize booking engine for the route
+        TripBookingEngine bookingApp = new TripBookingEngine(distanceToDestination);
+
+        Console.WriteLine($"--- Route Options for a {distanceToDestination}km Trip ---\n");
+
+        // 1. User checks Cab option
+        bookingApp.SetTravelMode(new CabStrategy());
+        bookingApp.DisplayTripQuote();
+        Console.WriteLine(new string('-', 35));
+
+        // 2. User checks Metro Train option
+        bookingApp.SetTravelMode(new MetroStrategy());
+        bookingApp.DisplayTripQuote();
+        Console.WriteLine(new string('-', 35));
+
+        // 3. User checks economic Bus option
+        bookingApp.SetTravelMode(new BusStrategy());
+        bookingApp.DisplayTripQuote();
+        Console.WriteLine(new string('-', 35));
+        
+        // 4. User checks a Bike option
+        bookingApp.SetTravelMode(new BikeStrategy());
+        bookingApp.DisplayTripQuote();
+    }
+}</code></pre>
+
+  </div>
+</details>
+
+<details>
+  <summary>Observer Pattern Example (Back-in-Stock Reminder - E-Commerce)</summary>
+  <div style="margin-top: 15px; font-family: sans-serif; line-height: 1.6;">
+
+    <p>When a popular item sells out, customers want to be alerted the moment inventory returns. By using the <b>Observer Pattern</b>, the product object keeps a list of customer emails. When a restock occurs, it loops through that list to send alerts, then clears the list since the event has passed.</p>
+
+    <hr />
+
+    <h3>1. The Observer Interface</h3>
+    <p>This defines the interface for the subscribers waiting for the stock alert.</p>
+    <pre><code class="language-csharp">// The 'Observer' interface
+public interface ICustomerObserver
+{
+    string Email { get; }
+    void Update(string productName);
+}</code></pre>
+
+    <h3>2. The Concrete Observer (Customer)</h3>
+    <p>Each customer instance tracks their email and defines how they want to handle the alert notification.</p>
+    <pre><code class="language-csharp">// Concrete Observer
+public class Customer : ICustomerObserver
+{
+    public string Name { get; }
+    public string Email { get; }
+
+    public Customer(string name, string email)
+    {
+        Name = name;
+        Email = email;
+    }
+
+    public void Update(string productName)
+    {
+        Console.WriteLine($"[Email Sent to {Email}]: Hi {Name}! '{productName}' is back in stock! Order now before it sells out again.");
+    }
+}</code></pre>
+
+    <h3>3. The Subject (The Product)</h3>
+    <p>The product class maintains its current stock level and an internal list of waiting customers.</p>
+    <pre><code class="language-csharp">// The 'Subject'
+public class Product
+{
+    public string Name { get; }
+    private int _stockLevel = 0;
+    private readonly List&lt;ICustomerObserver&gt; _waitingCustomers = new List&lt;ICustomerObserver&gt;();
+
+    public Product(string name)
+    {
+        Name = name;
+    }
+
+    // Equivalent to clicking the "Notify Me When Available" button
+    public void RegisterForRestockAlert(ICustomerObserver customer)
+    {
+        if (!_waitingCustomers.Contains(customer))
+        {
+            _waitingCustomers.Add(customer);
+            Console.WriteLine($"System: {customer.Email} subscribed to alerts for '{Name}'.");
+        }
+    }
+
+    public void RemoveRestockAlert(ICustomerObserver customer)
+    {
+        _waitingCustomers.Remove(customer);
+    }
+
+    // Restock method that updates inventory and triggers notifications if items become available
+    public void Restock(int newInventoryCount)
+    {
+        _stockLevel += newInventoryCount;
+        Console.WriteLine($"\nLogistics: '{Name}' has been restocked with {newInventoryCount} units. Total Stock: {_stockLevel}");
+
+        if (_stockLevel &gt; 0)
+        {
+            NotifyWaitingCustomers();
+        }
+    }
+
+    // Broadcast notifications to all observers on the list
+    private void NotifyWaitingCustomers()
+    {
+        Console.WriteLine($"System: Pushing alerts to all {_waitingCustomers.Count} subscribers...\n");
+        
+        // Loop backwards or copy list if observers will unsubscribe immediately upon notification
+        var subscribers = new List&lt;ICustomerObserver&gt;(_waitingCustomers);
+        foreach (var customer in subscribers)
+        {
+            customer.Update(Name);
+            _waitingCustomers.Remove(customer); // Remove them since they've been notified
+        }
+    }
+}</code></pre>
+
+    <h3>4. Client Code Execution</h3>
+    <p>Simulating multiple users joining a waitlist for a sold-out next-gen gaming console, followed by a warehouse shipment delivery.</p>
+    <pre><code class="language-csharp">class Program
+{
+    static void Main()
+    {
+        // 1. Create a highly demanded, out-of-stock product
+        Product playstation = new Product("PlayStation 5 Pro");
+
+        // 2. Create customer profiles
+        ICustomerObserver customer1 = new Customer("Alice", "alice@email.com");
+        ICustomerObserver customer2 = new Customer("Bob", "bob@example.com");
+        ICustomerObserver customer3 = new Customer("Charlie", "charlie@gmail.com");
+
+        Console.WriteLine("--- Users Sign Up For In-Stock Alerts ---");
+        // 3. Customers sign up via the e-commerce UI
+        playstation.RegisterForRestockAlert(customer1);
+        playstation.RegisterForRestockAlert(customer2);
+        playstation.RegisterForRestockAlert(customer3);
+
+        Console.WriteLine("\n-----------------------------------------");
+
+        // 4. Time passes... a shipment arrives at the fulfillment center
+        // This automatically triggers the alerts to fire
+        playstation.Restock(15);
+        
+        Console.WriteLine("\n-----------------------------------------");
+        
+        // 5. A late customer signs up after the reset
+        ICustomerObserver customer4 = new Customer("Diana", "diana@outlook.com");
+        playstation.RegisterForRestockAlert(customer4);
+    }
+}</code></pre>
+
+  </div>
+</details>
+
+<details>
+<summary>Command Pattern with Queue (Education Example)</summary>
+<p>
+<h2>Definition</h2>
+<p>Encapsulates a request as an object, allowing it to be queued, logged, or executed later. Useful for asynchronous processing in systems like education portals.</p>
+
+<h2>Description</h2>
+<p>In an education system, students submit assignments online. Each submission is encapsulated as a command and placed into a queue. The system processes these commands in order, ensuring fairness and reliability.</p>
+
+<h2>Real-Time Example: Students Submitting Assignments</h2>
+<pre><code class="language-csharp">
+// Command interface
+public interface ICommand
+{
+    void Execute();
+}
+
+// Concrete command: Submit Assignment
+public class SubmitAssignmentCommand : ICommand
+{
+    private string _studentName;
+    private string _assignment;
+
+    public SubmitAssignmentCommand(string studentName, string assignment)
+    {
+        _studentName = studentName;
+        _assignment = assignment;
+    }
+
+    public void Execute()
+    {
+        Console.WriteLine($"{_studentName} submitted {_assignment}");
+    }
+}
+
+// Queue (Invoker)
+public class AssignmentQueue
+{
+    private Queue<ICommand> _commands = new Queue<ICommand>();
+
+    public void Enqueue(ICommand command)
+    {
+        _commands.Enqueue(command);
+        Console.WriteLine("Assignment queued.");
+    }
+
+    public void ProcessAll()
+    {
+        Console.WriteLine("\nProcessing assignments in order...");
+        while (_commands.Count > 0)
+        {
+            var cmd = _commands.Dequeue();
+            cmd.Execute();
+        }
+    }
+}
+
+// Client
+class Program
+{
+    static void Main()
+    {
+        AssignmentQueue queue = new AssignmentQueue();
+
+        // Students submit assignments asynchronously
+        queue.Enqueue(new SubmitAssignmentCommand("Alice", "Math Homework"));
+        queue.Enqueue(new SubmitAssignmentCommand("Bob", "Science Project"));
+        queue.Enqueue(new SubmitAssignmentCommand("Charlie", "History Essay"));
+
+        // Later, the system processes them in order
+        queue.ProcessAll();
+    }
+}
+</code></pre>
+
+<h2>Output</h2>
+<p><code>
+Assignment queued.<br>
+Assignment queued.<br>
+Assignment queued.<br><br>
+Processing assignments in order...<br>
+Alice submitted Math Homework<br>
+Bob submitted Science Project<br>
+Charlie submitted History Essay
+</code></p>
+
+<h2>Interview Insight</h2>
+<ul>
+  <li>Queue ensures assignments are processed in the order they were submitted.</li>
+  <li>Command encapsulates each submission, making it reusable and easy to log.</li>
+  <li>In real systems, this pattern maps to message queues like Azure Service Bus, RabbitMQ, or Kafka.</li>
+</ul>
+</p>
+</details>
+
+
+
+<details>
+  <summary>Mediator Pattern Example (Classroom Chat Room)</summary>
+  <div style="margin-top: 15px; font-family: sans-serif; line-height: 1.6;">
+
+    <h3>Definition</h3>
+    <p>The <b>Mediator Design Pattern</b> defines an object that encapsulates how a set of objects interact. This pattern promotes loose coupling by keeping objects from referring to each other explicitly, allowing their interactions to be modified independently.</p>
+
+    <h3>How this Classroom Chat Fits the Pattern</h3>
+    <ul>
+      <li><b>The Mediator (<code>IChatRoomMediator</code>):</b> The communication contract that defines how users register with a room and send messages.</li>
+      <li><b>The Concrete Mediator (<code>ClassroomChatServer</code>):</b> The central chat server hub. It maintains a dictionary list of all connected students and teachers, managing the routing rules of who receives what text message.</li>
+      <li><b>The Colleagues (<code>User</code>):</b> The human participants (Students or Teachers). They only know their own name and their central chat mediator. They never hold references to their classmates' objects.</li>
+    </ul>
+
+    <hr />
+
+    <h3>1. The Mediator Interface</h3>
+    <p>This defines the methods required to manage participants and broadcast communications.</p>
+    <pre><code class="language-csharp">// The 'Mediator' interface
+public interface IChatRoomMediator
+{
+    void RegisterUser(User user);
+    void SendMessage(string message, User sender);
+}</code></pre>
+
+    <h3>2. The Base Colleague Component</h3>
+    <p>This represents a abstract participant in the school portal chat system.</p>
+    <pre><code class="language-csharp">// The 'Colleague' abstract base
+public abstract class User
+{
+    protected IChatRoomMediator _chatMediator;
+    public string Name { get; }
+
+    public User(IChatRoomMediator chatMediator, string name)
+    {
+        _chatMediator = chatMediator;
+        Name = name;
+    }
+
+    public abstract void Receive(string from, string message);
+}</code></pre>
+
+    <h3>3. Concrete Colleague Components</h3>
+    <p>These represent the real roles in the system. Notice that sending a message doesn't target a specific person; it is simply passed up to the mediator engine.</p>
+    <pre><code class="language-csharp">// Concrete Colleague A: Student Participant
+public class StudentUser : User
+{
+    public StudentUser(IChatRoomMediator mediator, string name) : base(mediator, name) { }
+
+    public void Send(string message)
+    {
+        Console.WriteLine($"\n[UI Action] Student '{Name}' types: \"{message}\"");
+        _chatMediator.SendMessage(message, this); // Delegate to mediator
+    }
+
+    public override void Receive(string from, string message)
+    {
+        Console.WriteLine($"[{Name}'s Screen] Chat from {from}: {message}");
+    }
+}
+
+// Concrete Colleague B: Teacher Participant
+public class TeacherUser : User
+{
+    public TeacherUser(IChatRoomMediator mediator, string name) : base(mediator, name) { }
+
+    public void Send(string message)
+    {
+        Console.WriteLine($"\n[UI Action] Teacher **{Name}** announces: \"{message}\"");
+        _chatMediator.SendMessage(message, this); // Delegate to mediator
+    }
+
+    public override void Receive(string from, string message)
+    {
+        Console.WriteLine($"[Teacher {Name}'s Screen] Chat from {from}: {message}");
+    }
+}</code></pre>
+
+    <h3>4. The Concrete Mediator (The Chat Server)</h3>
+    <p>This central point holds the master list of active connections and dynamically loops through them to broadcast text updates.</p>
+    <pre><code class="language-csharp">// The 'Concrete Mediator'
+public class ClassroomChatServer : IChatRoomMediator
+{
+    private readonly List&lt;User&gt; _connectedUsers = new List&lt;User&gt;();
+
+    public void RegisterUser(User user)
+    {
+        if (!_connectedUsers.Contains(user))
+        {
+            _connectedUsers.Add(user);
+            Console.WriteLine($"System Log: '{user.Name}' joined the live classroom chat.");
+        }
+    }
+
+    // Central distribution: When someone sends a message, loop and update everyone else
+    public void SendMessage(string message, User sender)
+    {
+        foreach (var user in _connectedUsers)
+        {
+            // Don't send the message back to the person who typed it!
+            if (user != sender)
+            {
+                user.Receive(sender.Name, message);
+            }
+        }
+    }
+}</code></pre>
+
+    <h3>5. Client Code Execution</h3>
+    <p>Simulating a teacher starting an online lecture session and interacting with students inside a unified chat channel.</p>
+    <pre><code class="language-csharp">class Program
+{
+    static void Main()
+    {
+        // 1. Initialize the central chat room server routing infrastructure (Mediator)
+        ClassroomChatServer cs101ChatServer = new ClassroomChatServer();
+
+        // 2. Create users and hook them into our mediator network
+        User professor = new TeacherUser(cs101ChatServer, "Dr. Einstein");
+        User student1 = new StudentUser(cs101ChatServer, "Alice");
+        User student2 = new StudentUser(cs101ChatServer, "Bob");
+
+        // 3. Register users to the central server list
+        Console.WriteLine("--- Classroom Chatroom Initializing ---");
+        cs101ChatServer.RegisterUser(professor);
+        cs101ChatServer.RegisterUser(student1);
+        cs101ChatServer.RegisterUser(student2);
+        Console.WriteLine(new string('-', 45));
+
+        // 4. Simulate sending messages
+        // Notice how clean the interaction remains. Subsystem objects remain fully blind to each other.
+        professor.Send("Welcome to class, everyone! Please take out your assignments.");
+        
+        student1.Send("Is the homework due at midnight or noon today?");
+        
+        student2.Send("I think it is due at midnight, Alice.");
+    }
+}</code></pre>
+
+  </div>
+</details>
+
+<details>
+<summary>Template Method Pattern - (Online Exam Process)</summary>
+<p>
+<h2>Definition</h2>
+<p>Defines the skeleton of an algorithm in a base class, deferring some steps to subclasses. Template Method lets subclasses redefine certain steps without changing the overall algorithm’s structure.</p>
+
+<h2>Description</h2>
+<p>Use the Template Method Pattern when you want to enforce a fixed sequence of steps in an algorithm, but allow subclasses to customize specific parts. It promotes code reuse and consistency across variations of the process.</p>
+
+<h2>Real-Time Example: Online Exam Process</h2>
+<pre><code class="language-csharp">
+// Abstract class (Template)
+public abstract class OnlineExam
+{
+    // Template method
+    public void ConductExam()
+    {
+        Login();
+        StartExam();
+        EvaluateAnswers();
+        ShowResult();
+    }
+
+    protected abstract void Login();
+    protected abstract void StartExam();
+    protected abstract void EvaluateAnswers();
+
+    // Common step
+    protected void ShowResult()
+    {
+        Console.WriteLine("Result displayed to student.");
+    }
+}
+
+// Concrete classes
+public class MathExam : OnlineExam
+{
+    protected override void Login()
+    {
+        Console.WriteLine("Math student logged in.");
+    }
+
+    protected override void StartExam()
+    {
+        Console.WriteLine("Math exam started.");
+    }
+
+    protected override void EvaluateAnswers()
+    {
+        Console.WriteLine("Math answers evaluated.");
+    }
+}
+
+public class ScienceExam : OnlineExam
+{
+    protected override void Login()
+    {
+        Console.WriteLine("Science student logged in.");
+    }
+
+    protected override void StartExam()
+    {
+        Console.WriteLine("Science exam started.");
+    }
+
+    protected override void EvaluateAnswers()
+    {
+        Console.WriteLine("Science answers evaluated.");
+    }
+}
+
+// Client
+class Program
+{
+    static void Main()
+    {
+        OnlineExam mathExam = new MathExam();
+        mathExam.ConductExam();
+
+        Console.WriteLine();
+
+        OnlineExam scienceExam = new ScienceExam();
+        scienceExam.ConductExam();
+    }
+}
+</code></pre>
+
+<h2>Output</h2>
+<p><code>
+Math student logged in.<br>
+Math exam started.<br>
+Math answers evaluated.<br>
+Result displayed to student.<br><br>
+Science student logged in.<br>
+Science exam started.<br>
+Science answers evaluated.<br>
+Result displayed to student.
+</code></p>
+
+<h2>Interview Insight</h2>
+<ul>
+  <li>Template Method enforces a fixed algorithm structure while allowing customization of steps.</li>
+  <li>Useful in education systems (exam workflows), document generation, or data processing pipelines.</li>
+  <li>Promotes code reuse and consistency across different implementations.</li>
+</ul>
+</p>
+</details>
+
+<details>
+  <summary>CQRS Design Pattern with MediatR</summary>
+
+  <h2>Definition</h2>
+  <p>
+    <b>CQRS (Command Query Responsibility Segregation)</b> is an architectural pattern that separates 
+    <b>read operations (queries)</b> from <b>write operations (commands)</b>.
+  </p>
+  <ul>
+    <li><b>Command side</b> → Handles state changes (create, update, delete).</li>
+    <li><b>Query side</b> → Optimized for reading data.</li>
+  </ul>
+  <p><b>Benefits:</b> Scalability, flexibility (different models for reads vs writes), and clear separation of concerns.</p>
+
+  <h2>MediatR and IMediator</h2>
+  <p>
+    <code>IMediator</code> is an interface provided by the <b>MediatR</b> NuGet package. 
+    It is not part of your own code — you install it and register it in dependency injection.
+  </p>
+  <ol>
+    <li>Install NuGet packages:
+      <pre><code>dotnet add package MediatR
+dotnet add package MediatR.Extensions.Microsoft.DependencyInjection</code></pre>
+    </li>
+    <li>Register MediatR in <code>Program.cs</code>:
+      <pre><code class="language-csharp">builder.Services.AddMediatR(cfg => 
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));</code></pre>
+    </li>
+    <li>Inject into your controller:
+      <pre><code class="language-csharp">private readonly IMediator _mediator;
+public StudentsController(IMediator mediator)
+{
+    _mediator = mediator;
+}</code></pre>
+    </li>
+  </ol>
+  <p>
+    The <code>IMediator</code> interface provides methods like <code>Send()</code> and <code>Publish()</code> 
+    to dispatch commands, queries, and notifications to their handlers.
+  </p>
+
+  <h2>Code Example (C# with MediatR)</h2>
+  <pre><code class="language-csharp">
+// Command: Create a new student
+public record CreateStudentCommand(string Name, int Age) : IRequest<StudentResult>;
+
+// Command Handler
+public class CreateStudentHandler : IRequestHandler<CreateStudentCommand, StudentResult>
+{
+    public Task<StudentResult> Handle(CreateStudentCommand cmd, CancellationToken ct)
+    {
+        var student = new Student { Id = Guid.NewGuid(), Name = cmd.Name, Age = cmd.Age };
+        // Save to DB (write side)
+        return Task.FromResult(new StudentResult(student.Id, "Created"));
+    }
+}
+
+// Query: Get student by Id
+public record GetStudentQuery(Guid Id) : IRequest<Student>;
+
+// Query Handler
+public class GetStudentHandler : IRequestHandler<GetStudentQuery, Student>
+{
+    public Task<Student> Handle(GetStudentQuery query, CancellationToken ct)
+    {
+        // Fetch from DB (read side)
+        return Task.FromResult(new Student { Id = query.Id, Name = "Alice", Age = 20 });
+    }
+}
+
+// Controller
+[ApiController]
+[Route("api/students")]
+public class StudentsController : ControllerBase
+{
+    private readonly IMediator _mediator;
+    public StudentsController(IMediator mediator) => _mediator = mediator;
+
+    [HttpPost]
+    public async Task<IActionResult> Create(CreateStudentCommand cmd)
+    {
+        var result = await _mediator.Send(cmd);
+        return Ok(result);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get(Guid id)
+    {
+        var student = await _mediator.Send(new GetStudentQuery(id));
+        return Ok(student);
+    }
+}
+
+// Result DTO
+public record StudentResult(Guid Id, string Status);
+public class Student { public Guid Id { get; set; } public string Name { get; set; } public int Age { get; set; } }
+  </code></pre>
+
+  <h2>Takeaway</h2>
+  <ul>
+    <li><b>Commands</b> → Change system state (writes).</li>
+    <li><b>Queries</b> → Retrieve data (reads).</li>
+    <li><b>MediatR</b> → Decouples controllers from handlers using <code>IMediator</code>.</li>
+  </ul>
+</details>
+
+</body>
+</html>
