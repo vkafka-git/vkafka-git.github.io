@@ -991,5 +991,288 @@ FROM CashLedger;</pre>
             To optimize this path, attach the hint <code>OPTION (RECOMPILE)</code> at the base of the statement, forcing the engine to review the actual runtime row footprint of the variable during compilation. This guides the engine to choose a much more efficient Hash Match or Merge join plan. Alternatively, refactor the variable into a standard temporary table (<code>#temp</code>).
         </div>
     </div>
+<h2>🟢 Foundational Concepts</h2>
+        
+        <div class="question-block">
+            <div class="question-text">Q1. Explain the differences and physical rules between a Primary Key, Unique Key, and Foreign Key.</div>
+            <div class="answer-text">
+                <ul>
+                    <li><strong>Primary Key (PK):</strong> Uniquely identifies each record in a table. It strictly prohibits <code>NULL</code> values and automatically establishes a <strong>Clustered Index</strong> on the target column(s) by default. There can only be exactly one PK per table.</li>
+                    <li><strong>Unique Key (UK):</strong> Enforces uniqueness constraints across non-primary columns. Unlike a PK, a Unique Key <strong>allows a single <code>NULL</code> value</strong> (in SQL Server context; other RDBMS engines allow multiple NULLs). It constructs a <strong>Non-Clustered Index</strong> by default, and tables sustain multiple Unique Keys.</li>
+                    <li><strong>Foreign Key (FK):</strong> Defines a referential integrity relationship mapping a child table column to a parent table PK or UK column. It prevents orphan records. It does <em>not</em> index columns automatically; leads must index FK columns manually to bypass lock cascades and slow join lookups.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q2. Deep Dive: Explain INNER JOIN, LEFT JOIN, RIGHT JOIN, and FULL JOIN behaviors.</div>
+            <div class="answer-text">
+                <ul>
+                    <li><strong>INNER JOIN:</strong> Evaluates and extracts intersecting matching rows from both tables matching the explicit join predicate. Unmatched rows are omitted.</li>
+                    <li><strong>LEFT (OUTER) JOIN:</strong> Returns all records residing in the left table, along with matching rows found in the right table. If no predicate match occurs, the right-side properties populate as <code>NULL</code>.</li>
+                    <li><strong>RIGHT (OUTER) JOIN:</strong> Reverses Left Join logic, preserving all records from the right table and appending matches from the left. (Tech Leads prefer converting these to <code>LEFT JOIN</code> for unified visual flow).</li>
+                    <li><strong>FULL (OUTER) JOIN:</strong> Combines Left and Right join mechanics. It retains all records from both entities, outputting <code>NULL</code> parameters wherever a conditional match is completely missing on either side.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q3. Write a standard SQL query to identify duplicate records in a table based on specific columns.</div>
+            <div class="answer-text">
+                To isolate duplicate entries across specific attributes (e.g., <code>Email</code> and <code>CompanyId</code>), leverage the <code>GROUP BY</code> clause alongside a <code>HAVING COUNT(*) > 1</code> constraint:
+<pre>SELECT Email, CompanyId, COUNT(*) as OccurrenceCount
+FROM Users
+GROUP BY Email, CompanyId
+HAVING COUNT(*) > 1;</pre>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q4. Explain the interaction rules between GROUP BY and aggregate functions.</div>
+            <div class="answer-text">
+                Aggregate functions (like <code>SUM()</code>, <code>AVG()</code>, <code>COUNT()</code>) compress raw row datasets down into individual calculated summary fields. The <code>GROUP BY</code> clause establishes the logical boundaries for these calculations. A strict syntax rule applies: any non-aggregated column projected within the <code>SELECT</code> block <strong>must</strong> be explicitly declared inside the <code>GROUP BY</code> expression.
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q5. Compare CHAR vs. VARCHAR from a physical storage perspective.</div>
+            <div class="answer-text">
+                <ul>
+                    <li><strong>CHAR(N):</strong> Allocates static, fixed-length physical disk storage bytes equal to <code>N</code>. If the string data is smaller than <code>N</code>, the engine space-pads the remaining boundaries. Ideal for unchanging structural strings (e.g., Currency codes like 'USD', Status keys like 'ACT') to avoid variable-length tracking overhead.</li>
+                    <li><strong>VARCHAR(N):</strong> Allocates variable-length physical storage scaling down to the actual characters written, adding a 2-byte structural prefix tracking the length parameter. It saves storage footprints on volatile fields (e.g., Names, Emails) but can introduce row migration overhead if updates heavily expand the data footprint later.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q6. Explain NULL handling logic and the implications of Three-Valued Logic in relational querying.</div>
+            <div class="answer-text">
+                SQL implements <strong>Three-Valued Logic</strong>: conditions can evaluate to <code>TRUE</code>, <code>FALSE</code>, or <code>UNKNOWN</code>. A <code>NULL</code> represents an unassigned marker denoting the missing absence of data, rather than a value. Consequently, direct evaluations (e.g., <code>Column = NULL</code>) fail, outputting <code>UNKNOWN</code>. Developers must use explicit unary operators: <code>IS NULL</code> or <code>IS NOT NULL</code>.
+            </div>
+        </div>
+
+        <h2>🟡 Intermediate Performance & Real-World</h2>
+
+        <div class="question-block">
+            <div class="question-text">Q7. What is a Covering Index, and how does it optimize high-throughput queries?</div>
+            <div class="answer-text">
+                A covering index is a non-clustered index containing all data columns requested by a targeted query execution path (satisfying <code>SELECT</code>, <code>WHERE</code>, and <code>JOIN</code> operations). By appending non-key payload elements using the <code>INCLUDE</code> clause, the engine can fetch all required parameters directly from the leaf nodes of the B-Tree index, bypassing the need for an expensive secondary Key Lookup into the underlying table pages.
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q8. Write a query using standard window functions to fetch the Nth highest salary from an Employees table.</div>
+            <div class="answer-text">
+                Using <code>DENSE_RANK()</code> is the most robust strategy because it properly handles duplicate salary inputs without skipping ranks:
+<pre>WITH RankedSalaries AS (
+    SELECT Salary,
+           DENSE_RANK() OVER (ORDER BY Salary DESC) as RankOrder
+    FROM Employees
+)
+SELECT DISTINCT Salary 
+FROM RankedSalaries 
+WHERE RankOrder = @N;</pre>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q9. Explain Horizontal Table Partitioning in SQL Server and its core optimization mechanics.</div>
+            <div class="answer-text">
+                Table Partitioning maps a single large table object across independent physical storage allocations (Filegroups) bound to a designated column value (the <strong>Partition Key</strong>, such as <code>TransactionDate</code>). It utilizes a <strong>Partition Function</strong> to establish range thresholds and a <strong>Partition Scheme</strong> to map boundaries to storage. This setup accelerates execution via <strong>Partition Elimination</strong> (the query engine skips unneeded storage chunks completely) and permits fast index archives using <code>ALTER TABLE ... SWITCH</code> steps.
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q10. Contrast OLTP and OLAP schema design choices from an architectural perspective.</div>
+            <div class="answer-text">
+                <ul>
+                    <li><strong>OLTP (Online Transaction Processing):</strong> Designed for highly transactional, concurrent read/write patterns. Uses normalized schemas (typically <strong>3NF</strong>) to reduce data duplication, protect data integrity, and ensure thin, fast update transactions.</li>
+                    <li><strong>OLAP (Online Analytical Processing):</strong> Designed for heavy, complex reporting aggregation queries. Uses denormalized schemas (like **Star or Snowflake** layouts) with centralized Fact tables surrounded by wide, flattened Dimension tables to reduce join overhead and optimize scan rates.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q11. How do you implement robust, high-performance audit logging inside SQL Server?</div>
+            <div class="answer-text">
+                <ul>
+                    <li><strong>SQL Server Audit:</strong> A native feature driven by Extended Events architecture. It captures granular database or server actions (e.g., tracing ad-hoc table <code>SELECT</code> paths), writing logs asynchronously to secure binary files or OS Event logs.</li>
+                    <li><strong>Temporal Tables:</strong> System-versioned tables that automatically maintain a history table shadow track. Modifying or removing rows triggers the engine to transparently write old historical profiles into the history table alongside validity time ranges, allowing point-in-time state checks via <code>FOR SYSTEM_TIME AS OF</code> statements.</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>🔴 Advanced Architectural & Problem-Solving</h2>
+
+        <div class="question-block">
+            <div class="question-text">Q12. How would you design a database schema for a high-concurrency ride-sharing application like Uber at massive scale?</div>
+            <div class="answer-text">
+                Isolate rapidly changing telemetry updates from highly transactional lookup tables. Store static core records (<code>Users</code>, <code>Drivers</code>, <code>Vehicles</code>, <code>Rides</code>) within normalized tables using spatial indices on the <code>GEOGRAPHY</code> data type to optimize localized matching routines via distance functions (e.g., <code>.STDistance()</code>). 
+                To scale hyper-frequent driver GPS updates, route transient coordinates away from the primary ACID RDBMS. Instead, stream location data to high-speed in-memory key-value databases (such as Redis Geospatial) and commit data back to SQL Server only when critical ride states transition (e.g., <code>Requested</code>, <code>Completed</code>).
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q13. What architectural strategies do you apply to ensure query stability over an Orders table containing 200M+ rows?</div>
+            <div class="answer-text">
+                Implement horizontal range partitioning across a date boundary (e.g., monthly). Align all non-clustered indices to the partitioning scheme to ensure partition-isolated index maintenance tasks can run concurrently without locking global datasets. Apply <code>PAGE</code> data compression to reduce memory buffer pool consumption and decrease read I/O pressure. Finally, use partition switching routines to move historical data blocks into cold archive storage schemas.
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q14. Explain the operational and design differences between Fact and Dimension tables in data warehousing.</div>
+            <div class="answer-text">
+                <ul>
+                    <li><strong>Fact Tables:</strong> Represent central transaction event data points. They store quantitative metrics (e.g., <code>Revenue</code>, <code>Quantity</code>) along with foreign keys linking out to surrounding dimension data. They are structurally narrow, vertical tables holding millions of rows.</li>
+                    <li><strong>Dimension Tables:</strong> Hold the descriptive context, attributes, and textual filters surrounding a business process (e.g., <code>CustomerName</code>, <code>ProductCategory</code>, <code>StoreLocation</code>). They are structurally wide, denormalized tables optimized for reporting lookup paths.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q15. Compare the physical storage mechanics and lookups of Heap Tables against Clustered Tables.</div>
+            <div class="answer-text">
+                <ul>
+                    <li><strong>Heap Table:</strong> Lacks a designated clustered index. Rows are placed without physical sorting order constraints into raw data pages. Finding records requires running a full table scan or referencing a non-clustered index that points directly to a physical Row Identifier (RID: file, page, slot number).</li>
+                    <li><strong>Clustered Table:</strong> Data rows are physically ordered and stored sorted along the criteria mapping the Clustered Index Key. Non-clustered index records point directly to the Clustered Key value instead of physical addresses, keeping lookups stable even when data pages split or reorganize.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q16. How do you implement soft deletes at scale, and what are the performance pitfalls and solutions?</div>
+            <div class="answer-text">
+                Soft deletes introduce an indicator flag column (e.g., <code>IsDeleted BIT</code>) to mark logical row removal without executing a destructive physical delete command. 
+                <br><strong>Pitfalls:</strong> Queries must constantly append <code>WHERE IsDeleted = 0</code> predicates, which can compromise the effectiveness of traditional composite indexes and complicate unique constraints.
+                <br><strong>Solution:</strong> Build a <strong>Filtered Index</strong> explicitly covering active items:
+<pre>CREATE UNIQUE NONCLUSTERED INDEX UX_Users_ActiveEmail
+ON Users(Email)
+WHERE IsDeleted = 0;</pre>
+                Abstract the filtering abstraction away from application code layers by wrapping tables inside database Views integrated with <code>INSTEAD OF DELETE</code> triggers to process the logic transparently.
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q17. Explain Change Data Capture (CDC) mechanics and its architectural use cases.</div>
+            <div class="answer-text">
+                CDC asynchronously reads and parses the database transaction log to track all DML mutations (<code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>) executed against targeted tables. A log-scraping engine extracts these transactions and populates system tracking tables with row states without introducing locking overhead or performance degradation to active application writes. It is highly effective for driving real-time ETL pipelines, feeding event streams (e.g., Kafka via Debezium), and maintaining external search clusters (e.g., Elasticsearch).
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q18. Contrast Database Replication against Log Shipping configurations for business continuity.</div>
+            <div class="answer-text">
+                <ul>
+                    <li><strong>Transactional Replication:</strong> Operates at the individual database object level (tables, views). A distribution agent reads changes from the primary transaction log and replays those standalone DML commands onto a secondary subscriber database. The secondary target remains fully online and accessible for read-heavy offloading workloads.</li>
+                    <li><strong>Log Shipping:</strong> Operates at the global file backup tier. Automated jobs generate scheduled transaction log backup files at the primary node, transfer them across the network, and restore them sequentially onto a standby instance. The secondary node is offline or restricted to read-only connectivity during restoration loops.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q19. How do you ensure reliable data consistency across independent microservices databases without using 2-Phase Commit (2PC)?</div>
+            <div class="answer-text">
+                Avoid distributed 2-Phase Commits because their blocking locking protocols degrade system availability. Instead, leverage the <strong>Saga Pattern</strong> alongside the **Transactional Outbox Pattern**. 
+                The Saga orchestration splits distributed steps into local database transactions that release local locks immediately. If a downstream stage fails, compensating transactions are triggered to execute reverse actions. The Outbox pattern ensures that database mutations and outbound event logs are saved together atomically within a single local database transaction before broadcasting to a message broker.
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q20. Explain the CQRS (Command Query Responsibility Segregation) pattern at the database tier.</div>
+            <div class="answer-text">
+                CQRS segregates the database mutation path (Commands: updates, deletes, inserts) from the data retrieval path (Queries: read paths). The write database is highly normalized to minimize transaction locking footprints and ensure strict data entry validation rules. The read database uses a denormalized layout (or a read-optimized storage engine) designed for rapid querying performance. Data synchronizes asynchronously from the write path to the read path via transaction log scraping or event pub/sub lines, accepting eventual consistency to optimize read and write scaling.
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q21. What are the multi-tenant database design architectures for SaaS environments, and how do you evaluate them?</div>
+            <div class="answer-text">
+                <ol>
+                    <li><strong>Database Per Tenant (Isolated):</strong> Separate physical instances for each customer. Delivers strong isolation and simplifies custom backups, but incurs high infrastructure overhead and maintenance complexity.</li>
+                    <li><strong>Shared Database, Separate Schemas:</strong> Shared database container but tenants occupy segregated logical schemas (e.g., <code>TenantA.Orders</code>). Offers a balance of resource sharing and database separation.</li>
+                    <li><strong>Shared Database, Shared Schema (Colocated):</strong> All tenants reside in the same data tables, isolated logically by a grouping attribute (e.g., <code>TenantId</code>). Provides maximum tenant density and low hosting costs, but requires strict enforcement (such as **Row-Level Security**) to prevent cross-tenant data leaks.</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q22. Compare Horizontal Scaling vs. Vertical Scaling database modern capabilities.</div>
+            <div class="answer-text">
+                <ul>
+                    <li><strong>Vertical Scaling (Scale-Up):</strong> Adding more hardware capabilities (CPU cores, RAM capacity, NVMe storage IOPS) to a single existing database host. It requires zero application refactoring, but is constrained by physical hardware cost curves and keeps a single point of failure (SPOF).</li>
+                    <li><strong>Horizontal Scaling (Scale-Out):</strong> Spreading workloads across multiple independent compute endpoints by utilizing read-replicas, read/write nodes, or sharding managers. It supports virtually limitless scalability, but introduces architectural complexity regarding network routing and distributed data synchronization.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q23. How do you secure sensitive data (PII) at rest and in use within SQL Server to meet compliance standards?</div>
+            <div class="answer-text">
+                <ul>
+                    <li><strong>Transparent Data Encryption (TDE):</strong> Protects data at rest by encrypting the physical database pages, log structures, and system backup files on disk. The engine decrypts data transparently as it loads into server memory, protecting against physical storage theft.</li>
+                    <li><strong>Always Encrypted:</strong> Protects data in transit and in use. Cryptographic keys stay on the client driver side. Column encryption occurs <em>prior</em> to transmitting data over the network, ensuring sensitive attributes remain encrypted within the database memory buffer pool, protecting against compromised administrative users.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q24. Explain Row-Level Security (RLS) architecture and its underlying execution flow.</div>
+            <div class="answer-text">
+                Row-Level Security enforces data visibility constraints on data rows based on the execution attributes of the querying user session. It relies on an inline table-valued function containing security predicate validations (e.g., <code>WHERE SalesRegion = SESSION_USER</code>). This logic is bound to the target table via a **Security Policy**. The engine transparently inserts this predicate filter directly into incoming queries, preventing data leaks across security boundaries.
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q25. Contrast High Availability (HA) against Disaster Recovery (DR) enterprise options inside SQL Server.</div>
+            <div class="answer-text">
+                <ul>
+                    <li><strong>Always On Availability Groups (HA Focus):</strong> Provides database-level redundancy across local server cluster infrastructure. By using <strong>Synchronous Commit</strong> data streaming, it guarantees zero data loss (RPO = 0) and triggers automatic connection string failovers if the primary server host experiences an outage.</li>
+                    <li><strong>Distributed Availability Groups (DR Focus):</strong> Connects distinct, independent availability groups across separate geographical data centers. It utilizes <strong>Asynchronous Commit</strong> to avoid injecting network latency into active application transactions, ensuring a warm standby destination is ready if an entire region goes offline.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q26. What are the optimization and execution differences between Temp Tables and Table Variables?</div>
+            <div class="answer-text">
+                <ul>
+                    <li><strong>Temp Tables (#TempTable):</strong> Instantiated within <code>tempdb</code> storage. They look and act like standard tables, maintaining full column distribution statistics, supporting custom index creation, and participating in transaction rollbacks. Best for large data operations (thousands of rows) requiring complex joins.</li>
+                    <li><strong>Table Variables (@TableVariable):</strong> Exist inside memory configurations but can spill to <code>tempdb</code>. They lack column statistics, leading the optimizer to assume a baseline cardinality of exactly 1 row (which can cause poor execution plans on large datasets). They do not participate in transactional rollbacks, making them ideal for short-lived lookup buffers.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q27. How do you design and execute a large-scale batch insert operation efficiently to prevent system resource starvation?</div>
+            <div class="answer-text">
+                Avoid running long, monolithic row-by-row transactions that can overflow the transaction log and cause lock escalation. Use bulk copy mechanisms (such as the <code>SqlBulkCopy</code> utility) configured for <strong>Minimal Logging</strong> to stream data pages directly to storage. If executing standard DML statements, process the data in controlled batches (e.g., 5,000 to 10,000 rows per loop cycle) and drop or disable non-clustered indexes prior to execution, rebuilding them once the data load concludes.
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q28. What are Query Hints, and what is your philosophy as a Tech Lead regarding their use?</div>
+            <div class="answer-text">
+                Query hints (such as <code>FORCESEEK</code>, <code>NOLOCK</code>, <code>OPTIMIZE FOR</code>) override the query optimizer's default execution plan decisions. As a Tech Lead, my philosophy is that query hints should be treated as a **last resort**. Forcing specific join patterns or index use can lead to performance degradation over time as data distributions evolve. Prioritize optimizing query predicates, refactoring non-SARGable logic, updating database statistics, or adjusting index coverage before locking in a query hint.
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q29. What core metrics and system tools do you check to evaluate SQL Server production instance performance bottlenecks?</div>
+            <div class="answer-text">
+                Analyze system performance across two main vectors:
+                <ul>
+                    <li><strong>Wait Statistics (sys.dm_os_wait_stats):</strong> Identify what query threads are waiting for during execution blocks. Focus on indicators like <code>PAGEIOLATCH_*</code> (disk storage bottlenecks), <code>CXPACKET</code> (parallel scheduling overhead from missing indexes), and <code>LCK_M_*</code> (concurrency blocking).</li>
+                    <li><strong>Performance Counters:</strong> Monitor the <strong>Buffer Cache Hit Ratio</strong> (percentage of page reads pulled directly from memory cache vs disk; should hover $>95\%$) and **Page Life Expectancy (PLE)** to spot internal memory pressure constraints.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-text">Q30. Explain the schema layout required to build an Event Sourcing model at the storage tier.</div>
+            <div class="answer-text">
+                An Event Sourcing architecture mandates a strictly append-only database layout. Tables record individual historical changes as immutable event snapshots rather than modifying existing row columns. The schema requires an <code>EventId</code> (Primary Key), <code>AggregateId</code> (the tracking entity key, e.g., <code>OrderId</code>), <code>Version</code> (a sequential counter used to enforce optimistic concurrency validation checks), <code>EventType</code> (e.g., <code>OrderCreated</code>), <code>Timestamp</code>, and a <code>Payload</code> column (typically storing the complete context as a native JSON object). To optimize read performance over long event logs, pair this setup with a periodic snapshotting mechanism to store flattened entity checkpoints.
+            </div>
+        </div>
+    
 </body>
 </html>
