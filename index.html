@@ -6790,79 +6790,173 @@ shows maturity in system design thinking.
   <summary>Handling Distributed Transactions</summary>
   
 
-<h2>1. What Are Distributed Transactions?</h2>
-<p>
-Distributed transactions occur when a single logical transaction spans across 
-<b>multiple services, databases, or message queues</b>. Ensuring atomicity, consistency, 
-isolation, and durability (ACID) across distributed boundaries is challenging due to 
-network failures, latency, and partial failures.
-</p>
 
-<h2>2. Approaches to Handle Distributed Transactions</h2>
+    <h1>Distributed Transactions</h1>
+    <p>When you move from a monolithic architecture to microservices, a single business action often needs to update multiple independent databases. In a monolith, this is easy—the database handles it via local transactions (ACID). But in a distributed system, ensuring that either <em>all</em> services update their databases or <em>none</em> do is a massive challenge.</p>
+    
+    <blockquote>
+        A <strong>Distributed Transaction</strong> is a set of operations that spans across two or more independent databases, applications, or network nodes, which must be executed with the guarantee of data consistency.
+    </blockquote>
 
-<h3>🔄 Two-Phase Commit (2PC)</h3>
-<p>
-- Coordinator asks all participants to <b>prepare</b> (phase 1).<br/>
-- If all agree, coordinator sends <b>commit</b> (phase 2).<br/>
-- Guarantees atomicity but can block resources and reduce availability.<br/>
-</p>
+    <hr>
 
-<h3>⚡ Saga Pattern</h3>
-<p>
-- Breaks a transaction into a series of <b>local transactions</b>.<br/>
-- Each step has a <b>compensating action</b> to undo changes if later steps fail.<br/>
-- Works well in microservices and event-driven architectures.<br/>
-</p>
+    <section>
+        <h2>1. Two-Phase Commit (2PC)</h2>
+        <p>The Two-Phase Commit (2PC) protocol is a <strong>synchronous, blocking</strong> protocol that ensures all participating databases either commit or abort a transaction together. It relies on a central coordinator component.</p>
+        
+        <h3>Phase 1: Prepare Phase (Voting)</h3>
+        <ul>
+            <li>The <strong>Coordinator</strong> sends a <code>Prepare</code> message to all participating services (Cohorts).</li>
+            <li>Each participant executes the transaction locally up to the point of committing, locks the necessary database rows, and writes to its undo/redo logs.</li>
+            <li>If successful, the participant replies with a <strong>VOTE_COMMIT</strong>. If it fails (e.g., due to a constraint violation or a lock timeout), it replies with a <strong>VOTE_ABORT</strong>.</li>
+        </ul>
 
-<h3>📨 Eventual Consistency</h3>
-<p>
-- Accepts that data may be temporarily inconsistent.<br/>
-- Relies on <b>asynchronous messaging</b> and retries to converge to consistency.<br/>
-- Common in AP systems under CAP theorem.<br/>
-</p>
+        <h3>Phase 2: Commit Phase (Execution)</h3>
+        <ul>
+            <li><strong>If all participants voted to commit:</strong> The coordinator sends a <code>Global Commit</code> command. The participants make the changes permanent, release their locks, and reply with an acknowledgment.</li>
+            <li><strong>If any participant voted to abort (or timed out):</strong> The coordinator sends a <code>Global Abort</code> command. All participants roll back their local changes using the undo logs and release their locks.</li>
+        </ul>
 
-<h3>🛠️ Idempotency</h3>
-<p>
-- Ensure operations can be retried safely without side effects.<br/>
-- Critical for distributed systems where retries are common.<br/>
-</p>
+        <pre>[Coordinator] --------(1. Prepare)--------> [Service A] & [Service B]
+[Coordinator] <-----(2. Vote Commit)------ [Service A] & [Service B]
 
-<h2>3. Example: Saga Pattern in .NET</h2>
-<pre><code class="csharp">
-// Order Service publishes event
-await _bus.Publish(new OrderCreatedEvent(orderId));
+[Coordinator] --------(3. Global Commit)---> [Service A] & [Service B]</pre>
 
-// Payment Service consumes event
-public async Task Handle(OrderCreatedEvent evt)
-{
-    var success = await _paymentGateway.ChargeAsync(evt.OrderId);
-    if (!success)
-        await _bus.Publish(new PaymentFailedEvent(evt.OrderId));
-}
+        <h3>The Catch: Why it's rarely used in microservices</h3>
+        <ul>
+            <li><strong>Blocking Nature:</strong> Participants hold database locks from the start of Phase 1 until they receive the final decision in Phase 2. If the coordinator crashes mid-way, participants are left in limbo, holding locks indefinitely, which can paralyze the system.</li>
+            <li><strong>Performance Bottleneck:</strong> It is highly synchronous. The slowest database or network lag dictates the entire transaction speed.</li>
+            <li><strong>CAP Theorem:</strong> 2PC prioritizes <strong>Consistency</strong> over <strong>Availability</strong>.</li>
+        </ul>
+    </section>
 
-// Compensation (cancel order if payment fails)
-public async Task Handle(PaymentFailedEvent evt)
-{
-    await _orderRepository.CancelOrder(evt.OrderId);
-}
-</code></pre>
+    <hr>
 
-<h2>4. Best Practices</h2>
-<p>
-- Prefer <b>Saga pattern</b> over 2PC in microservices.<br/>
-- Use <b>message queues</b> (Kafka, RabbitMQ, Azure Service Bus) for orchestration.<br/>
-- Implement <b>idempotent operations</b> to handle retries.<br/>
-- Monitor transactions with <b>distributed tracing</b> (Jaeger, Zipkin).<br/>
-- Align design with <b>business requirements</b> (strong consistency vs eventual consistency).<br/>
-</p>
+    <section>
+        <h2>2. The Saga Pattern</h2>
+        <p>Because 2PC doesn't scale well across microservices, the <strong>Saga Pattern</strong> is the preferred modern alternative. Instead of using global technical locks, a Saga breaks a distributed transaction into a sequence of <strong>local transactions</strong>.</p>
+        <p>Each service performs its own local transaction and publishes an event. If a step fails, the Saga executes <strong>Compensating Transactions</strong> backward to undo the changes made by the previous steps (e.g., if step 3 fails, it runs compensating actions for step 2 and step 1).</p>
+        <p>There are two primary ways to implement a Saga: <strong>Orchestration</strong> and <strong>Choreography</strong>.</p>
+    </section>
 
-<h2>5. Interview Insight</h2>
-<p>
-In interviews, emphasize that distributed transactions are about <b>trade-offs between consistency and availability</b>. 
-Highlight knowledge of <b>2PC vs Saga</b>, explain why Saga is preferred in microservices, and mention techniques like 
-<b>idempotency, compensating transactions, and eventual consistency</b>. Demonstrating awareness of <b>tools and frameworks</b> 
-(e.g., Dapr workflows, Orkes, Kafka) shows practical expertise in designing resilient distributed systems.
-</p>
+    <hr>
+
+    <section>
+        <h2>A. Saga Orchestration (Centralized Control)</h2>
+        <p>In an orchestrated Saga, a centralized service—the <strong>Orchestrator</strong> (or Saga Manager)—acts as the brain. It tells each participant exactly what local transaction to execute and when.</p>
+        
+        <h3>How it works (Example: E-commerce Order)</h3>
+        <ol>
+            <li>The <strong>Order Service</strong> creates a pending order and kicks off the <strong>Order Orchestrator</strong>.</li>
+            <li>The Orchestrator sends a command to the <strong>Payment Service</strong>: <em>"Deduct Money"</em>.</li>
+            <li>Payment Service succeeds and replies to the Orchestrator: <em>"Money Deducted"</em>.</li>
+            <li>The Orchestrator sends a command to the <strong>Inventory Service</strong>: <em>"Reserve Items"</em>.</li>
+            <li>If Inventory fails (out of stock), it replies: <em>"Inventory Failed"</em>.</li>
+            <li>The Orchestrator initiates rollback by sending a compensating command to the <strong>Payment Service</strong>: <em>"Refund Money"</em>.</li>
+        </ol>
+
+        <div class="pro-con">
+            <div>
+                <strong>Pros:</strong>
+                <ul>
+                    <li><strong>Centralized Logic:</strong> It’s easy to see the entire workflow and state of the transaction in one place.</li>
+                    <li><strong>Low Coupling:</strong> Participants only know about the orchestrator; they don’t need to know about each other.</li>
+                    <li><strong>Easy Debugging:</strong> Step-by-step execution tracking makes troubleshooting much simpler.</li>
+                </ul>
+            </div>
+            <div>
+                <strong>Cons:</strong>
+                <ul>
+                    <li><strong>Single Point of Failure/Bottleneck:</strong> If the orchestrator goes down, the business process stalls.</li>
+                    <li><strong>Over-centralization:</strong> There's a risk of turning the orchestrator into a monolithic "god object" that holds all the business logic, reducing services to simple anemic data stores.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>B. Saga Choreography (Decentralized Event-Driven)</h2>
+        <p>In a choreographed Saga, there is no central controller. Instead, participants interact implicitly by publishing and reacting to events via a message broker (like Kafka or RabbitMQ). Each service knows what to do next by listening to the events emitted by other services.</p>
+        
+        <h3>How it works (Same E-commerce Example)</h3>
+        <ol>
+            <li><strong>Order Service</strong> creates an order and publishes an event: <code>Order_Created</code>.</li>
+            <li><strong>Payment Service</strong> listens for <code>Order_Created</code>, processes the payment, and emits: <code>Payment_Successful</code>.</li>
+            <li><strong>Inventory Service</strong> listens for <code>Payment_Successful</code>, checks stock, realizes it's empty, and emits: <code>Inventory_Failed</code>.</li>
+            <li><strong>Payment Service</strong> listens for <code>Inventory_Failed</code> and triggers its local compensation: <em>"Refund Money"</em>, then emits <code>Payment_Refunded</code>.</li>
+            <li><strong>Order Service</strong> listens for <code>Payment_Refunded</code> and updates the order status to <code>Cancelled</code>.</li>
+        </ol>
+
+        <div class="pro-con">
+            <div>
+                <strong>Pros:</strong>
+                <ul>
+                    <li><strong>High Decoupling:</strong> Services don't even know other services exist; they only interact with the event stream.</li>
+                    <li><strong>No Single Point of Failure:</strong> Highly distributed, responsive, and natural for event-driven architectures.</li>
+                    <li><strong>Performance:</strong> Exceptional throughput because processing is entirely asynchronous.</li>
+                </ul>
+            </div>
+            <div>
+                <strong>Cons:</strong>
+                <ul>
+                    <li><strong>High Complexity:</strong> It is difficult to track which service is currently processing what, making the overall business flow hard to visualize.</li>
+                    <li><strong>Cyclic Dependency Risk:</strong> Without careful design, services can easily end up waiting on events from each other in a circular loop.</li>
+                    <li><strong>Difficult Testing/Debugging:</strong> Simulating a failure across a chain of multiple asynchronous event-handlers requires complex integration testing setups.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>Direct Comparison</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Two-Phase Commit (2PC)</th>
+                    <th>Saga Orchestration</th>
+                    <th>Saga Choreography</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Type</strong></td>
+                    <td>Synchronous & Blocking</td>
+                    <td>Asynchronous & Non-blocking</td>
+                    <td>Asynchronous & Non-blocking</td>
+                </tr>
+                <tr>
+                    <td><strong>Consistency</strong></td>
+                    <td>Strong Consistency (ACID)</td>
+                    <td>Eventual Consistency (BASE)</td>
+                    <td>Eventual Consistency (BASE)</td>
+                </tr>
+                <tr>
+                    <td><strong>Control</strong></td>
+                    <td>Central Coordinator</td>
+                    <td>Central Orchestrator</td>
+                    <td>Decentralized (Events)</td>
+                </tr>
+                <tr>
+                    <td><strong>Data Isolation</strong></td>
+                    <td>High (Locks database rows)</td>
+                    <td>Low (Changes visible immediately)</td>
+                    <td>Low (Changes visible immediately)</td>
+                </tr>
+                <tr>
+                    <td><strong>Best Used For</strong></td>
+                    <td>Critical financial ledgers, monolithic DBs</td>
+                    <td>Complex workflows with many steps</td>
+                    <td>Simple, highly scalable event-driven flows</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
 </details>
 <details>
   <summary>Designing for Resiliency in Cloud Applications</summary>
