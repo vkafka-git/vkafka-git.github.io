@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tech Lead/Full Stack Developer - LINQ Joins Guide</title>
+
+<!-- Prism.js Dark Theme -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+
+<style>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        counter-reset: question-counter;
+    }
+    h1 { color: #24292e; }
+    pre { background-color: #2d2d2d; padding: 16px; border-radius: 6px; overflow: auto; font-family: Consolas, monospace; font-size: 90%; border: 1px solid #444; }
+    details { counter-increment: question-counter; margin-bottom: 20px; }
+    summary {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #0078d4;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    summary::-webkit-details-marker { display: none; }
+    details summary::before {
+        content: counter(question-counter) ". ";
+        color: #0078d4;
+        font-weight: bold;
+        margin-right: 8px;
+    }
+    .tip {
+        background: #eafaf1;
+        padding: 10px;
+        border-left: 4px solid #27ae60;
+        margin: 10px 0;
+    }
+</style>
+
+<!-- Custom Overrides for Prism -->
+<style>
+    .token.keyword { color: #4aa3ff; }   /* Blue */
+    .token.string { color: #6aff6a; }    /* Green */
+    .token.number { color: #ff9933; }    /* Orange */
+    code[class*="language-"], pre[class*="language-"] { color: #ffffff; } /* White */
+</style>
+<style>
+  .output {
+    background: #f6f8fa;   /* light gray background */
+    color: #24292e;        /* dark text */
+    padding: 10px;
+    border-radius: 6px;
+    font-family: Consolas, monospace;
+    font-size: 90%;
+    border: 1px solid #ddd;
+    white-space: pre;       /* preserve line breaks */
+  }
+</style>
+
+</head>
+<body>
+
+<h1>LINQ Joins, Grouping, and Aggregation Guide</h1>
+
+<details>
+  <summary>Mental Map</summary>
+  <div style="background:#f6f8fa; padding:15px; border-left:4px solid #0078d4;">
+    <h2>🧠 Mental Map</h2>
+    <p><strong>Question:</strong> What is the logical order of operations when writing complex LINQ queries involving multiple tables and calculations?</p>
+    <ol>
+        <li><strong>Join</strong> → Combine related collections (like Employees + Departments).</li>
+        <li><strong>GroupBy</strong> → Organize the combined data into buckets (e.g., by Department).</li>
+        <li><strong>Aggregate</strong> → Apply calculations inside each group (<code>Sum</code>, <code>Average</code>, <code>Count</code>).</li>
+        <li><strong>Select</strong> → Shape the final result into the form you want (e.g., Department + AverageSalary).</li>
+    </ol>
+    <p><em>Shortcut mental model:</em> <code>Join → GroupBy → Aggregate → Select</code></p>
+  </div>
+</details>
+
+<details>
+  <summary>Sample Data Setup (Employees, Departments, Locations, Customers, Orders)</summary>
+  <p><strong>Question:</strong> What sample data are we using for the LINQ examples, including Customers and Orders?</p>
+  <p><strong>Answer:</strong> Below are simple C# collections for Employees, Departments, Locations, Customers, and Orders.</p>
+
+  <pre><code class="language-csharp">
+// Employee class
+public class Employee
+{
+    public int EmployeeId { get; set; }
+    public string Name { get; set; }
+    public int? DepartmentId { get; set; }
+    public decimal Salary { get; set; }
+}
+
+// Department class
+public class Department
+{
+    public int DepartmentId { get; set; }
+    public string DepartmentName { get; set; }
+    public int LocationId { get; set; }
+}
+
+// Location class
+public class Location
+{
+    public int LocationId { get; set; }
+    public string LocationName { get; set; }
+}
+
+// Customer class
+public class Customer
+{
+    public int CustomerId { get; set; }
+    public string CustomerName { get; set; }
+}
+
+// Order class
+public class Order
+{
+    public int OrderId { get; set; }
+    public int CustomerId { get; set; }
+    public decimal Amount { get; set; }
+}
+
+// Sample Data
+var employees = new List&lt;Employee&gt;
+{
+    new Employee { EmployeeId = 1, Name = "Alice", DepartmentId = 1, Salary = 60000 },
+    new Employee { EmployeeId = 2, Name = "Bob", DepartmentId = 2, Salary = 75000 },
+    new Employee { EmployeeId = 3, Name = "Charlie", DepartmentId = 1, Salary = 50000 },
+    new Employee { EmployeeId = 4, Name = "David", DepartmentId = null, Salary = 40000 },
+    new Employee { EmployeeId = 5, Name = "Eva", DepartmentId = 3, Salary = 90000 },
+    new Employee { EmployeeId = 6, Name = "Frank", DepartmentId = 2, Salary = 120000 }
+};
+
+var departments = new List&lt;Department&gt;
+{
+    new Department { DepartmentId = 1, DepartmentName = "HR", LocationId = 1 },
+    new Department { DepartmentId = 2, DepartmentName = "IT", LocationId = 2 },
+    new Department { DepartmentId = 3, DepartmentName = "Finance", LocationId = 1 }
+};
+
+var locations = new List&lt;Location&gt;
+{
+    new Location { LocationId = 1, LocationName = "New York" },
+    new Location { LocationId = 2, LocationName = "London" }
+};
+
+var customers = new List&lt;Customer&gt;
+{
+    new Customer { CustomerId = 1, CustomerName = "Alice" },
+    new Customer { CustomerId = 2, CustomerName = "Bob" },
+    new Customer { CustomerId = 3, CustomerName = "Charlie" }
+};
+
+var orders = new List&lt;Order&gt;
+{
+    new Order { OrderId = 1, CustomerId = 1, Amount = 250 },
+    new Order { OrderId = 2, CustomerId = 2, Amount = 400 },
+    new Order { OrderId = 3, CustomerId = 1, Amount = 150 },
+    new Order { OrderId = 4, CustomerId = 3, Amount = 300 }
+};
+  </code></pre>
+
+  <div class="tip">Tip: Keeping Customers in a separate table makes joins cleaner and avoids duplication of customer names in Orders.</div>
+</details>
+
+<details>
+  <summary>Number of employees in each department - Inner Join Example</summary>
+  <p><strong>Question:</strong> How can we find the number of employees in each department using LINQ (Employees + Departments)?</p>
+  <p><strong>What this does:</strong> Joins Employees with Departments, groups by department name, and counts how many employees are in each department.</p>
+  <pre><code class="language-csharp">
+var result = employees
+    .Join(departments,
+          e => e.DepartmentId,
+          d => d.DepartmentId,
+          (e, d) => new { e.Name, d.DepartmentName })
+    .GroupBy(x => x.DepartmentName)
+    .Select(g => new { Department = g.Key, Count = g.Count() });
+  </code></pre>
+  <div class="tip">Tip: LINQ <code>Join</code> is always an INNER JOIN by default.</div>
+</details>
+
+<details>
+  <summary>Left Join Example</summary>
+  <p><strong>Question:</strong> How can we list all employees along with their department names, ensuring employees without a department are still included?</p>
+  <p><strong>What this does:</strong> Ensures all employees are listed, even if they don’t belong to any department. Missing departments show as "No Department".</p>
+  <pre><code class="language-csharp">
+var leftJoin = from e in employees
+               join d in departments
+               on e.DepartmentId equals d.DepartmentId into deptGroup
+               from d in deptGroup.DefaultIfEmpty()
+               select new 
+               { 
+                   EmployeeName = e.Name, 
+                   DepartmentName = d?.DepartmentName ?? "No Department" 
+               };
+  </code></pre>
+  <div class="tip">Tip: Use <code>GroupJoin + DefaultIfEmpty()</code> to simulate a LEFT JOIN in LINQ.</div>
+</details>
+
+<details>
+  <summary>Calculate the average salary per department - Three Table Join Example</summary>
+  <p><strong>Question:</strong> How can we calculate the average salary per department per location using Employees, Departments, and Locations tables?</p>
+  <p><strong>What this does:</strong> Joins Employees → Departments → Locations, then groups by department and location, and calculates the average salary per group.</p>
+  <pre><code class="language-csharp">
+var avgSalaryPerDeptLocation = employees
+    .Join(departments,
+          e => e.DepartmentId,
+          d => d.DepartmentId,
+          (e, d) => new { e.Salary, d.DepartmentName, d.LocationId })
+    .Join(locations,
+          ed => ed.LocationId,
+          l => l.LocationId,
+          (ed, l) => new { ed.Salary, ed.DepartmentName, l.LocationName })
+    .GroupBy(x => new { x.DepartmentName, x.LocationName })
+    .Select(g => new
+    {
+        Department = g.Key.DepartmentName,
+        Location = g.Key.LocationName,
+        AverageSalary = g.Average(x => x.Salary)
+    });
+  </code></pre>
+  <div class="tip">Tip: For multiple tables, chain multiple <code>Join</code> calls before grouping and aggregating.</div>
+</details>
+
+<details>
+  <summary>Method Syntax vs Query Syntax</summary>
+  <p><strong>Question:</strong> How can the same join between Employees and Departments be written in both LINQ method syntax and query syntax?</p>
+  <p><strong>What this shows:</strong> The same join written in two styles — method syntax (fluent chaining) and query syntax (SQL-like). Both produce identical results.</p>
+  <pre><code class="language-csharp">
+// Method Syntax
+var result = employees.Join(departments,
+    e => e.DepartmentId,
+    d => d.DepartmentId,
+    (e, d) => new { e.Name, d.DepartmentName });
+
+// Query Syntax
+var result = from e in employees
+             join d in departments
+             on e.DepartmentId equals d.DepartmentId
+             select new { e.Name, d.DepartmentName };
+  </code></pre>
+  <div class="tip">Tip: Both styles compile to the same thing. Method syntax is more common in production code, while query syntax feels closer to SQL.</div>
+</details>
+
+<details>
+  <summary>5th Highest Salary Example</summary>
+  <p><strong>Question:</strong> How can we find the 5th highest salary of any employee using LINQ with method syntax?</p>
+  <p><strong>What this does:</strong> Orders the employees by salary in descending order, skips the top 4, and selects the next one — which is the 5th highest salary.</p>
+  <pre><code class="language-csharp">
+var fifthHighestSalary = employees
+    .OrderByDescending(e => e.Salary)   // sort salaries high → low
+    .Select(e => e.Salary)              // project salary only
+    .Distinct()                         // remove duplicates
+    .Skip(4)                            // skip top 4 salaries
+    .FirstOrDefault();                  // take the 5th highest
+
+Console.WriteLine($"5th Highest Salary: {fifthHighestSalary}");
+  </code></pre>
+  <div class="tip">Tip: Use <code>Skip(N-1)</code> with <code>FirstOrDefault()</code> to get the Nth highest salary. Add <code>Distinct()</code> if you want to ignore duplicate salaries.</div>
+</details>
+
+<details>
+  <summary>Highest Salary Example</summary>
+  <p><strong>Question:</strong> How can we find the highest salary of any employee using LINQ?</p>
+  <p><strong>What this does:</strong> Orders employees by salary descending and selects the first one — the highest salary.</p>
+  <pre><code class="language-csharp">
+var highestSalary = employees
+    .OrderByDescending(e => e.Salary)
+    .Select(e => e.Salary)
+    .FirstOrDefault();
+
+Console.WriteLine($"Highest Salary: {highestSalary}");
+  </code></pre>
+  <div class="tip">Tip: Use <code>OrderByDescending()</code> with <code>FirstOrDefault()</code> to get the maximum value.</div>
+</details>
+
+<details>
+  <summary>Nth Highest Salary Example</summary>
+  <p><strong>Question:</strong> How can we find the Nth highest salary (e.g., 5th highest) using LINQ?</p>
+  <p><strong>What this does:</strong> Sorts salaries descending, skips the top N-1, and takes the next one.</p>
+  <pre><code class="language-csharp">
+int n = 5;
+var nthHighestSalary = employees
+    .OrderByDescending(e => e.Salary)
+    .Select(e => e.Salary)
+    .Distinct()
+    .Skip(n - 1)
+    .FirstOrDefault();
+
+Console.WriteLine($"{n}th Highest Salary: {nthHighestSalary}");
+  </code></pre>
+  <div class="tip">Tip: Add <code>Distinct()</code> if you want to ignore duplicate salaries.</div>
+</details>
+
+<details>
+  <summary>Employees Without Department Example</summary>
+  <p><strong>Question:</strong> How can we list employees who do not belong to any department?</p>
+  <p><strong>What this does:</strong> Performs a LEFT JOIN between Employees and Departments, then filters where department is null.</p>
+  <pre><code class="language-csharp">
+var employeesWithoutDept = from e in employees
+                           join d in departments
+                           on e.DepartmentId equals d.DepartmentId into deptGroup
+                           from d in deptGroup.DefaultIfEmpty()
+                           where d == null
+                           select e;
+
+foreach (var emp in employeesWithoutDept)
+{
+    Console.WriteLine(emp.Name);
+}
+  </code></pre>
+  <div class="tip">Tip: Use <code>DefaultIfEmpty()</code> to simulate LEFT JOIN and check for nulls.</div>
+</details>
+
+<details>
+  <summary>Find Duplicates in a List Example</summary>
+  <p><strong>Question:</strong> How can we find duplicate elements in a list using LINQ?</p>
+  <p><strong>What this does:</strong> Groups elements by value and selects those with count greater than 1.</p>
+  <pre><code class="language-csharp">
+var numbers = new List<int> { 1, 2, 3, 2, 4, 5, 1 };
+
+var duplicates = numbers
+    .GroupBy(n => n)
+    .Where(g => g.Count() > 1)
+    .Select(g => g.Key);
+
+foreach (var dup in duplicates)
+{
+    Console.WriteLine($"Duplicate: {dup}");
+}
+  </code></pre>
+  <div class="tip">Tip: <code>GroupBy()</code> + <code>Count()</code> is the easiest way to detect duplicates.</div>
+</details>
+
+<details>
+  <summary>Employees Count Per Department Example</summary>
+  <p><strong>Question:</strong> How can we count how many employees are in each department using LINQ?</p>
+  <p><strong>What this does:</strong> Joins Employees with Departments, groups by department, and counts employees in each group.</p>
+  <pre><code class="language-csharp">
+var empCountPerDept = employees
+    .Join(departments,
+          e => e.DepartmentId,
+          d => d.DepartmentId,
+          (e, d) => new { e.Name, d.DepartmentName })
+    .GroupBy(x => x.DepartmentName)
+    .Select(g => new { Department = g.Key, Count = g.Count() });
+
+foreach (var item in empCountPerDept)
+{
+    Console.WriteLine($"{item.Department}: {item.Count}");
+}
+  </code></pre>
+  <div class="tip">Tip: Use <code>GroupBy()</code> with <code>Count()</code> to get totals per group.</div>
+</details>
+
+<details>
+  <summary>Employees with Salary Greater than Average</summary>
+  <p><strong>Question:</strong> How can we find employees whose salary is greater than the average salary using LINQ?</p>
+  <p><strong>What this does:</strong> Calculates the average salary of all employees, then filters employees whose salary is above that average.</p>
+  <pre><code class="language-csharp">
+var avgSalary = employees.Average(e => e.Salary);
+
+var aboveAverageEmployees = employees
+    .Where(e => e.Salary > avgSalary)
+    .Select(e => new { e.Name, e.Salary });
+
+foreach (var emp in aboveAverageEmployees)
+{
+    Console.WriteLine($"{emp.Name} - {emp.Salary}");
+}
+  </code></pre>
+  <div class="tip">Tip: Use <code>Average()</code> first, then filter with <code>Where()</code>.</div>
+</details>
+
+<details>
+  <summary>Top 3 Earning Employees</summary>
+  <p><strong>Question:</strong> How can we get the top 3 earning employees using LINQ?</p>
+  <p><strong>What this does:</strong> Sorts employees by salary descending and takes the first 3.</p>
+  <pre><code class="language-csharp">
+var top3Employees = employees
+    .OrderByDescending(e => e.Salary)
+    .Take(3)
+    .Select(e => new { e.Name, e.Salary });
+
+foreach (var emp in top3Employees)
+{
+    Console.WriteLine($"{emp.Name} - {emp.Salary}");
+}
+  </code></pre>
+  <div class="tip">Tip: Use <code>Take(N)</code> after sorting to get the top N records.</div>
+</details>
+<style>
+  .output {
+    background: #f6f8fa;   /* light gray background */
+    color: #24292e;        /* dark text */
+    padding: 10px;
+    border-radius: 6px;
+    font-family: Consolas, monospace;
+    font-size: 90%;
+    border: 1px solid #ddd;
+    white-space: pre;       /* preserve line breaks */
+  }
+</style>
+
+<details>
+  <summary>GroupJoin Example</summary>
+  <p><strong>Question:</strong> How can we use <code>GroupJoin</code> to list each department with its employees?</p>
+  <pre><code class="language-csharp">
+var deptWithEmployees = departments
+    .GroupJoin(employees,
+               d => d.DepartmentId,
+               e => e.DepartmentId,
+               (d, empGroup) => new 
+               { 
+                   Department = d.DepartmentName, 
+                   Employees = empGroup.Select(e => e.Name) 
+               });
+
+foreach (var item in deptWithEmployees)
+{
+    Console.WriteLine($"{item.Department}: {string.Join(", ", item.Employees)}");
+}
+  </code></pre>
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+HR: Alice, Charlie
+IT: Bob, Frank
+Finance: Eva
+  </div>
+</details>
+
+<details>
+  <summary>Zip Example</summary>
+  <p><strong>Question:</strong> How can we use <code>Zip</code> to combine two sequences element‑by‑element?</p>
+  <pre><code class="language-csharp">
+var names = new[] { "Alice", "Bob", "Charlie" };
+var salaries = new[] { 60000, 75000, 50000 };
+
+var combined = names.Zip(salaries, (n, s) => $"{n} earns {s}");
+
+foreach (var item in combined)
+{
+    Console.WriteLine(item);
+}
+  </code></pre>
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+Alice earns 60000
+Bob earns 75000
+Charlie earns 50000
+  </div>
+</details>
+
+<details>
+  <summary>Aggregate Example</summary>
+  <p><strong>Question:</strong> How can we use <code>Aggregate</code> to calculate a custom result (like concatenating employee names)?</p>
+  <pre><code class="language-csharp">
+var allNames = employees
+    .Select(e => e.Name)
+    .Aggregate((acc, name) => acc + ", " + name);
+
+Console.WriteLine($"Employees: {allNames}");
+  </code></pre>
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+Employees: Alice, Bob, Charlie, David, Eva, Frank
+  </div>
+</details>
+
+<details>
+  <summary>SelectMany Example</summary>
+  <p><strong>Question:</strong> How can we use <code>SelectMany</code> to flatten nested collections?</p>
+  <pre><code class="language-csharp">
+// Extended Employee with Skills
+public class EmployeeWithSkills
+{
+    public string Name { get; set; }
+    public List&lt;string&gt; Skills { get; set; }
+}
+
+var employeesWithSkills = new List&lt;EmployeeWithSkills&gt;
+{
+    new EmployeeWithSkills { Name = "Alice", Skills = new List&lt;string&gt; { "C#", "SQL" } },
+    new EmployeeWithSkills { Name = "Bob", Skills = new List&lt;string&gt; { "Java", "React" } }
+};
+
+var flattened = employeesWithSkills
+    .SelectMany(e => e.Skills, (e, skill) => new { e.Name, Skill = skill });
+
+foreach (var item in flattened)
+{
+    Console.WriteLine($"{item.Name} - {item.Skill}");
+}
+  </code></pre>
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+Alice - C#
+Alice - SQL
+Bob - Java
+Bob - React
+  </div>
+</details>
+
+<details>
+  <summary>Global Exception Handling Middleware</summary>
+  <p><strong>Question:</strong> How can we implement a simple global exception handling middleware in ASP.NET Core?</p>
+  <pre><code class="language-csharp">
+public class ExceptionHandlingMiddleware
+{
+    private readonly RequestDelegate _next;
+
+    public ExceptionHandlingMiddleware(RequestDelegate next)
+    {
+        _next = next;
+    }
+
+    public async Task Invoke(HttpContext context)
+    {
+        try
+        {
+            await _next(context);
+        }
+        catch (Exception ex)
+        {
+            context.Response.StatusCode = 500;
+            await context.Response.WriteAsync($"Error: {ex.Message}");
+        }
+    }
+}
+
+// Register in Program.cs
+app.UseMiddleware&lt;ExceptionHandlingMiddleware&gt;();
+  </code></pre>
+  <div class="tip">Tip: This middleware catches unhandled exceptions and returns a 500 response.</div>
+</details>
+
+<details>
+  <summary>Simple Dependency Injection Example</summary>
+  <p><strong>Question:</strong> How can we demonstrate dependency injection with a service interface and implementation?</p>
+  <pre><code class="language-csharp">
+// Service interface
+public interface IMessageService
+{
+    string GetMessage();
+}
+
+// Implementation
+public class HelloMessageService : IMessageService
+{
+    public string GetMessage() => "Hello from DI!";
+}
+
+// Controller using DI
+public class HomeController : Controller
+{
+    private readonly IMessageService _messageService;
+
+    public HomeController(IMessageService messageService)
+    {
+        _messageService = messageService;
+    }
+
+    public IActionResult Index()
+    {
+        return Content(_messageService.GetMessage());
+    }
+}
+
+// Register in Program.cs
+builder.Services.AddScoped&lt;IMessageService, HelloMessageService&gt;();
+  </code></pre>
+  <div class="tip">Tip: ASP.NET Core’s built‑in DI container resolves <code>IMessageService</code> automatically.</div>
+</details>
+
+<details>
+  <summary>Thread-Safe Singleton Example</summary>
+  <p><strong>Question:</strong> How can we implement a thread‑safe Singleton in C#?</p>
+  <pre><code class="language-csharp">
+public sealed class Logger
+{
+    private static readonly Lazy&lt;Logger&gt; _instance =
+        new Lazy&lt;Logger&gt;(() =&gt; new Logger());
+
+    private Logger() { }
+
+    public static Logger Instance =&gt; _instance.Value;
+
+    public void Log(string message)
+    {
+        Console.WriteLine($"{DateTime.Now}: {message}");
+    }
+}
+
+// Usage
+Logger.Instance.Log("Application started");
+Logger.Instance.Log("Processing data...");
+  </code></pre>
+  <div class="tip">Tip: <code>Lazy&lt;T&gt;</code> ensures thread‑safe, lazy initialization of the Singleton.</div>
+</details>
+<details>
+  <summary>Repository Pattern with Dependency Injection (GetAll)</summary>
+  <p><strong>Question:</strong> How can we implement a simple repository with DI that only exposes <code>GetAll()</code>?</p>
+
+  <pre><code class="language-csharp">
+// Entity
+public class Employee
+{
+    public int EmployeeId { get; set; }
+    public string Name { get; set; }
+}
+
+// Repository interface
+public interface IEmployeeRepository
+{
+    IEnumerable&lt;Employee&gt; GetAll();
+}
+
+// Repository implementation
+public class EmployeeRepository : IEmployeeRepository
+{
+    private readonly List&lt;Employee&gt; _employees = new()
+    {
+        new Employee { EmployeeId = 1, Name = "Alice" },
+        new Employee { EmployeeId = 2, Name = "Bob" }
+    };
+
+    public IEnumerable&lt;Employee&gt; GetAll() =&gt; _employees;
+}
+
+// Service using repository
+public class EmployeeService
+{
+    private readonly IEmployeeRepository _repository;
+
+    public EmployeeService(IEmployeeRepository repository)
+    {
+        _repository = repository;
+    }
+
+    public IEnumerable&lt;Employee&gt; GetEmployees() =&gt; _repository.GetAll();
+}
+
+// Register in Program.cs
+builder.Services.AddScoped&lt;IEmployeeRepository, EmployeeRepository&gt;();
+builder.Services.AddScoped&lt;EmployeeService&gt;();
+
+// Usage in Controller
+public class HomeController : Controller
+{
+    private readonly EmployeeService _service;
+
+    public HomeController(EmployeeService service)
+    {
+        _service = service;
+    }
+
+    public IActionResult Index()
+    {
+        var employees = _service.GetEmployees();
+        return Ok(employees);
+    }
+}
+  </code></pre>
+
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+[{"EmployeeId":1,"Name":"Alice"},{"EmployeeId":2,"Name":"Bob"}]
+  </div>
+
+  <div class="tip">Tip: Keep repositories minimal — exposing only <code>GetAll()</code> here makes it easy to demonstrate DI without extra complexity.</div>
+</details>
+
+<details>
+  <summary>Async/Await with HttpClient</summary>
+  <p><strong>Question:</strong> How can we use <code>async/await</code> with <code>HttpClient</code> to fetch data without blocking threads?</p>
+
+  <pre><code class="language-csharp">
+using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+
+public class Program
+{
+    private static readonly HttpClient _httpClient = new HttpClient();
+
+    public static async Task Main(string[] args)
+    {
+        string url = "https://jsonplaceholder.typicode.com/posts/1";
+
+        // Async call with await
+        string result = await FetchDataAsync(url);
+
+        Console.WriteLine("Response:");
+        Console.WriteLine(result);
+    }
+
+    public static async Task&lt;string&gt; FetchDataAsync(string url)
+    {
+        HttpResponseMessage response = await _httpClient.GetAsync(url);
+
+        response.EnsureSuccessStatusCode(); // throws if not 2xx
+
+        string content = await response.Content.ReadAsStringAsync();
+        return content;
+    }
+}
+  </code></pre>
+
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+Response:
+{
+  "userId": 1,
+  "id": 1,
+  "title": "sunt aut facere repellat provident occaecati...",
+  "body": "quia et suscipit..."
+}
+  </div>
+
+  <div class="tip">Tip: <code>await</code> frees the thread while waiting for the HTTP response, improving scalability in web apps.</div>
+</details>
+<details>
+  <summary>Generic Class Example (UtilityName)</summary>
+  <p><strong>Question:</strong> How can we create a generic utility class that works with any type?</p>
+
+  <pre><code class="language-csharp">
+// Generic utility class
+public class DataStore&lt;T&gt;
+{
+    private readonly List&lt;T&gt; _items = new();
+
+    public void Add(T item)
+    {
+        _items.Add(item);
+    }
+
+    public IEnumerable&lt;T&gt; GetAll()
+    {
+        return _items;
+    }
+}
+
+// Usage
+var intStore = new DataStore&lt;int&gt;();
+intStore.Add(10);
+intStore.Add(20);
+
+var stringStore = new DataStore&lt;string&gt;();
+stringStore.Add("Alice");
+stringStore.Add("Bob");
+
+Console.WriteLine(string.Join(", ", intStore.GetAll()));    // 10, 20
+Console.WriteLine(string.Join(", ", stringStore.GetAll())); // Alice, Bob
+  </code></pre>
+
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+10, 20
+Alice, Bob
+  </div>
+
+  <div class="tip">Tip: Naming it <code>DataStore&lt;T&gt;</code> makes it clear this is a reusable container, not tied to persistence or repositories.</div>
+</details>
+
+<details>
+  <summary>Generic Method Example</summary>
+  <p><strong>Question:</strong> How can we create a generic method that works with different types?</p>
+
+  <pre><code class="language-csharp">
+// Generic method
+public static class Utilities
+{
+    public static void PrintTwice&lt;T&gt;(T value)
+    {
+        Console.WriteLine(value);
+        Console.WriteLine(value);
+    }
+}
+
+// Usage
+Utilities.PrintTwice&lt;int&gt;(42);
+Utilities.PrintTwice&lt;string&gt;("Hello");
+Utilities.PrintTwice(DateTime.Now); // type inferred automatically
+  </code></pre>
+
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+42
+42
+Hello
+Hello
+07/02/2026 13:17:00
+07/02/2026 13:17:00
+  </div>
+
+  <div class="tip">Tip: Generic methods can infer type arguments automatically, making them flexible and concise.</div>
+</details>
+
+<details>
+  <summary>Extension Methods Example</summary>
+  <p><strong>Question:</strong> How can we create and use an extension method to add functionality to an existing type?</p>
+
+  <pre><code class="language-csharp">
+// Extension method must be in a static class
+public static class StringExtensions
+{
+    // Another example: capitalize first letter
+    public static string CapitalizeFirst(this string value)
+    {
+        return char.ToUpper(value[0]) + value.Substring(1);
+    }
+}
+
+// Usage
+class Program
+{
+    static void Main()
+    {
+        string name = "alice";
+        Console.WriteLine(name.CapitalizeFirst()); // Alice
+    }
+}
+  </code></pre>
+
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+Alice
+  </div>
+
+  <div class="tip">Tip: Extension methods let you "extend" existing types (like <code>string</code>) with new methods, while keeping your code clean and reusable.</div>
+</details>
+
+</body>
+</html>
