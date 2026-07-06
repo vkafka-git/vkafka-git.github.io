@@ -5,6 +5,8 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+ <!-- SQL language component -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
 
 <meta charset="UTF-8">
 <title>Tech Lead/Full Stack Developer</title>
@@ -130,38 +132,79 @@
       <tr>
         <td>3</td>
         <td>WHERE vs HAVING</td>
-        <td><b>WHERE</b>: Filters rows before grouping.<br><b>HAVING</b>: Filters groups after aggregation.</td>
+        <td><pre><code class="language-sql">
+-- WHERE filters rows before grouping
+SELECT name, salary
+FROM employees
+WHERE salary > 50000;
+</code></pre>
+
+<pre><code class="language-sql">
+-- HAVING filters groups after aggregation
+SELECT dept_id, AVG(salary) AS avg_salary
+FROM employees
+GROUP BY dept_id
+HAVING AVG(salary) > 60000;
+</code></pre>
+</td>
       </tr>
       <tr>
         <td>4</td>
         <td>INNER JOIN vs LEFT JOIN vs FULL JOIN</td>
         <td>
-          <b>INNER JOIN</b>: Matching rows only.<br>
-          <b>LEFT JOIN</b>: All rows from left + matches.<br>
-          <b>FULL JOIN</b>: All rows from both sides.
+			INNER JOIN – Matching rows only
+			  <pre><code class="language-sql">
+SELECT e.name, d.dept_name
+FROM employees e
+INNER JOIN departments d
+ON e.dept_id = d.id;
+			  </code></pre>
+			
+
+LEFT JOIN – All rows from left + matches
+			  <pre><code class="language-sql">
+SELECT e.name, d.dept_name
+FROM employees e
+LEFT JOIN departments d
+ON e.dept_id = d.id;
+			  </code></pre>
+			FULL JOIN – All rows from both sides
+			  <pre><code class="language-sql">
+SELECT e.name, d.dept_name
+FROM employees e
+FULL OUTER JOIN departments d
+ON e.dept_id = d.id;
+			  </code></pre>
+			
+
         </td>
       </tr>
       <tr>
         <td>5</td>
         <td>Second Highest Salary Query</td>
         <td>
-          <code>
-            SELECT MAX(salary)<br>
-            FROM employees<br>
-            WHERE salary &lt; (SELECT MAX(salary) FROM employees);
-          </code>
+ <pre><code class="language-sql">
+WITH SalaryRank AS (
+    SELECT salary,
+           DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
+    FROM employees
+)
+SELECT salary
+FROM SalaryRank
+WHERE rnk = 2;
+    </code></pre>
         </td>
       </tr>
       <tr>
         <td>6</td>
         <td>Find Duplicate Records</td>
         <td>
-          <code>
-            SELECT column_name, COUNT(*)<br>
-            FROM table_name<br>
-            GROUP BY column_name<br>
-            HAVING COUNT(*) &gt; 1;
-          </code>
+           <pre><code class="language-sql">
+SELECT column_name, COUNT(*)
+FROM table_name
+GROUP BY column_name
+HAVING COUNT(*) &gt; 1;
+          </pre></code>
         </td>
       </tr>
       <tr>
