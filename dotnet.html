@@ -7619,6 +7619,70 @@ staffPolicy.PrintPolicy();
   </code></pre>
 
 </details>
-			
+
+
+<details>
+  <summary>Sealed Class Example (InternEmployee with Stipend)</summary>
+
+  <h2>🔹 Sealed Employee Example</h2>
+  <pre><code class="language-csharp">
+public abstract class Employee
+{
+    public int Id { get; private set; }
+    public string Name { get; private set; }
+
+    protected Employee(int id, string name)
+    {
+        Id = id;
+        Name = name;
+    }
+
+    public abstract decimal CalculateSalary();
+
+    public void ShowDetails()
+    {
+        Console.WriteLine($"Employee ID: {Id}, Name: {Name}");
+    }
+}
+
+// Sealed subclass: can be instantiated but cannot be inherited further
+public sealed class InternEmployee : Employee
+{
+    private decimal stipend;
+
+    public InternEmployee(int id, string name, decimal stipend)
+        : base(id, name)
+    {
+        this.stipend = stipend;
+    }
+
+    public override decimal CalculateSalary()
+    {
+        return stipend; // interns always get a fixed stipend
+    }
+}
+
+// Usage
+Employee intern = new InternEmployee(301, "David", 12000);
+intern.ShowDetails();
+Console.WriteLine($"Salary: {intern.CalculateSalary()}");
+
+// ❌ Error if you try:
+// public class SummerIntern : InternEmployee { } 
+// => Compile-time error: cannot inherit from sealed class
+  </code></pre>
+
+  <h2>🔹 When to Use a Sealed Class</h2>
+  <ul>
+    <li><b>Lock hierarchy:</b> Prevent further inheritance when the class is complete and should not be extended.</li>
+    <li><b>Security:</b> Avoid subclasses overriding sensitive logic (e.g., payroll, authentication).</li>
+    <li><b>Performance:</b> JIT compiler can optimize sealed classes since no overrides are possible.</li>
+    <li><b>Design clarity:</b> Communicate that the class is final — e.g., <code>InternEmployee</code> always has a fixed stipend, no variations allowed.</li>
+  </ul>
+
+  <p><b>Interview one-liner:</b> 
+  “A sealed class can be instantiated but not inherited. Use it when the class is complete, stable, or should not be extended further.”</p>
+</details>
+
 </body>
 </html>
