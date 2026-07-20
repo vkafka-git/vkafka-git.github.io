@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <title>Tech Lead/Full stack developer</title>
+	   <!-- Prism CSS theme -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <!-- Prism core -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <!-- SQL language component -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
 	<style>
 	    body {
 	        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -7475,5 +7482,143 @@ Mention <b>correlation IDs, log levels, and security practices</b> as critical d
 Demonstrating awareness of <b>trade-offs</b> (e.g., storage cost vs retention, verbosity vs performance) shows maturity in designing robust logging systems.
 </p>
 </details>
+
+
+<details>
+  <summary>Abstract Class Interview Q&A and Employee Examples</summary>
+
+  <h2>🔹 Interview Questions & Answers on Abstract Classes</h2>
+  <ul>
+    <li><b>What is an abstract class in C#?</b><br>
+        A class declared with the <code>abstract</code> keyword that cannot be instantiated directly and may contain both abstract (unimplemented) and concrete (implemented) members.</li>
+    <li><b>Can you create an instance of an abstract class? Why not?</b><br>
+        No, because abstract classes are incomplete by design — they leave some methods unimplemented.</li>
+    <li><b>Can an abstract class have a constructor? What is its use?</b><br>
+        Yes. It allows initialization of common state for derived classes.</li>
+    <li><b>When should you use an abstract class instead of an interface?</b><br>
+        When you want to provide shared state or default implementation along with abstract members. Interfaces are for pure contracts.</li>
+    <li><b>Why would you declare a method as abstract?</b><br>
+        To enforce that subclasses must provide their own implementation.</li>
+    <li><b>Can abstract classes have static methods or properties?</b><br>
+        Yes, static members are allowed because they don’t depend on instantiation.</li>
+    <li><b>Can abstract methods be static?</b><br>
+        No, because static methods cannot be overridden.</li>
+    <li><b>Can an abstract class implement an interface?</b><br>
+        Yes, but if it doesn’t implement all members, it must remain abstract.</li>
+    <li><b>Difference between abstract class and sealed class?</b><br>
+        Abstract → cannot be instantiated, but can be inherited.<br>
+        Sealed → can be instantiated, but cannot be inherited.</li>
+    <li><b>What happens if a subclass doesn’t implement all abstract methods?</b><br>
+        The subclass itself must be declared abstract.</li>
+  </ul>
+
+  <hr>
+
+  <h2>🔹 Example 1: Employee Salary Calculation</h2>
+  <pre><code class="language-csharp">
+public abstract class Employee
+{
+    public string Name { get; private set; }
+    public int Id { get; private set; }
+
+    protected Employee(int id, string name)
+    {
+        Id = id;
+        Name = name;
+    }
+
+    public abstract decimal CalculateSalary();
+
+    public void ShowDetails()
+    {
+        Console.WriteLine($"Employee ID: {Id}, Name: {Name}");
+    }
+}
+
+public class FullTimeEmployee : Employee
+{
+    private decimal monthlySalary;
+
+    public FullTimeEmployee(int id, string name, decimal monthlySalary)
+        : base(id, name)
+    {
+        this.monthlySalary = monthlySalary;
+    }
+
+    public override decimal CalculateSalary()
+    {
+        return monthlySalary;
+    }
+}
+
+public class ContractEmployee : Employee
+{
+    private decimal hourlyRate;
+    private int hoursWorked;
+
+    public ContractEmployee(int id, string name, decimal hourlyRate, int hoursWorked)
+        : base(id, name)
+    {
+        this.hourlyRate = hourlyRate;
+        this.hoursWorked = hoursWorked;
+    }
+
+    public override decimal CalculateSalary()
+    {
+        return hourlyRate * hoursWorked;
+    }
+}
+
+// Usage
+Employee emp1 = new FullTimeEmployee(101, "Alice", 50000);
+Employee emp2 = new ContractEmployee(102, "Bob", 800, 120);
+
+emp1.ShowDetails();
+Console.WriteLine($"Salary: {emp1.CalculateSalary()}");
+
+emp2.ShowDetails();
+Console.WriteLine($"Salary: {emp2.CalculateSalary()}");
+ </code> </pre>
+
+  <hr>
+
+  <h2>🔹 Example 2: Employee Leave Policy</h2>
+  <pre><code class="language-csharp">
+public abstract class LeavePolicy
+{
+    public abstract int GetAnnualLeaveDays();
+
+    public void PrintPolicy()
+    {
+        Console.WriteLine($"Annual Leave Days: {GetAnnualLeaveDays()}");
+    }
+}
+
+public class ManagerLeavePolicy : LeavePolicy
+{
+    public override int GetAnnualLeaveDays()
+    {
+        return 30; // Managers get 30 days
+    }
+}
+
+public class StaffLeavePolicy : LeavePolicy
+{
+    public override int GetAnnualLeaveDays()
+    {
+        return 20; // Staff get 20 days
+    }
+}
+
+// Usage
+LeavePolicy managerPolicy = new ManagerLeavePolicy();
+managerPolicy.PrintPolicy();
+
+LeavePolicy staffPolicy = new StaffLeavePolicy();
+staffPolicy.PrintPolicy();
+  </code></pre>
+
+</details>
+			
 </body>
 </html>
