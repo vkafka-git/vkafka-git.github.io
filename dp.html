@@ -1474,6 +1474,99 @@ public class Student { public Guid Id { get; set; } public string Name { get; se
     <li><b>MediatR</b> → Decouples controllers from handlers using <code>IMediator</code>.</li>
   </ul>
 </details>
+<details>
+  <summary>Design Patterns and Problems Solved</summary>
+  <table border="1" cellpadding="6" cellspacing="0">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Pattern</th>
+        <th>Category</th>
+        <th>Problem Solved</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Factory Method</td>
+        <td>Creational</td>
+        <td>Decouples object creation from client code; lets subclasses decide which class to instantiate.</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Abstract Factory</td>
+        <td>Creational</td>
+        <td>Creates families of related objects without binding client code to concrete classes.</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Builder</td>
+        <td>Creational</td>
+        <td>Separates construction of complex objects from representation; builds step by step.</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Singleton</td>
+        <td>Creational</td>
+        <td>Ensures only one instance of a class exists and provides global access.</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Adapter</td>
+        <td>Structural</td>
+        <td>Bridges incompatible interfaces so they can work together.</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Decorator</td>
+        <td>Structural</td>
+        <td>Dynamically adds responsibilities/behavior to objects without altering their structure.</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>Composite</td>
+        <td>Structural</td>
+        <td>Treats individual objects and groups uniformly; supports tree-like hierarchies.</td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td>Strategy</td>
+        <td>Behavioral</td>
+        <td>Encapsulates interchangeable algorithms; avoids hardcoded conditional logic.</td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td>Observer</td>
+        <td>Behavioral</td>
+        <td>Defines one-to-many dependency; notifies dependents automatically when state changes.</td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td>Command</td>
+        <td>Behavioral</td>
+        <td>Encapsulates requests as objects; supports queuing, logging, undo/redo.</td>
+      </tr>
+      <tr>
+        <td>11</td>
+        <td>Mediator</td>
+        <td>Behavioral</td>
+        <td>Centralizes communication between components; reduces direct dependencies.</td>
+      </tr>
+      <tr>
+        <td>12</td>
+        <td>Template Method</td>
+        <td>Behavioral</td>
+        <td>Defines skeleton of an algorithm; lets subclasses override specific steps.</td>
+      </tr>
+      <tr>
+        <td>13</td>
+        <td>CQRS</td>
+        <td>Architectural</td>
+        <td>Separates read (query) and write (command) models; improves scalability, performance, and clarity in complex systems.</td>
+      </tr>
+    </tbody>
+  </table>
+</details>
 
 </body>
 </html>
