@@ -66,113 +66,141 @@
 <body>
 
 <details>
-  <summary>Difference: Creational vs Strategy vs Behavioral Patterns</summary>
-  <style>
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin: 20px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    th {
-      background-color: #0078d4; /* Solid blue header */
-      color: white;
-      padding: 12px;
-      text-align: left;
-      font-size: 1.1em;
-      border: thin solid #ccc;
-    }
-    td {
-      padding: 12px;
-      border: thin solid #ccc;
-      background-color: #fdfdfd;
-    }
-    tr:nth-child(even) td {
-      background-color: #f8f9fa;
-    }
-  </style>
-
-  <table>
-    <thead>
+  <summary>Design Pattern Categories (C#/.NET)</summary>
+  <table style="border-collapse: collapse; width: 100%; border: 1px solid #ccc; border-radius: 8px;">
+    <thead style="background-color: #4CAF50; color: white;">
       <tr>
-        <th>Category</th>
-        <th>Purpose</th>
-        <th>Problem Solved</th>
-        <th>When to Use</th>
-        <th>Quick Decision Guide</th>
+        <th style="padding: 8px; border: 1px solid #ccc;">Category</th>
+        <th style="padding: 8px; border: 1px solid #ccc;">Focus Area</th>
+        <th style="padding: 8px; border: 1px solid #ccc;">Common Patterns</th>
+        <th style="padding: 8px; border: 1px solid #ccc;">Purpose</th>
+        <th style="padding: 8px; border: 1px solid #ccc;">.NET Example</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><b>Creational Patterns</b></td>
-        <td>Object creation mechanisms</td>
-        <td>Object creation is complex or tightly coupled to concrete classes</td>
-        <td>
-          - Need to decouple object creation from usage<br>
-          - Want flexibility in instantiation (e.g., different DB providers)<br>
-          - Enforce constraints (e.g., only one instance with Singleton)
-        </td>
-        <td>Is it about <b>creating objects</b>? → Creational</td>
+        <td style="padding: 8px; border: 1px solid #ccc;"><b>Creational</b></td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Object Creation</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Singleton, Factory, Builder, Prototype</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Control instantiation, improve flexibility</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">DbProviderFactory, StringBuilder</td>
       </tr>
       <tr>
-        <td><b>Strategy Pattern</b></td>
-        <td>Encapsulates interchangeable algorithms</td>
-        <td>Avoids hardcoding conditional logic (<code>if/else</code>, <code>switch</code>) for different behaviors</td>
-        <td>
-          - Need to switch algorithms dynamically<br>
-          - Want to encapsulate behavior so clients don’t care which one is used<br>
-          - Want easy extension (add new strategy without touching existing code)
-        </td>
-        <td>Is it about <b>choosing/swapping algorithms</b>? → Strategy</td>
+        <td style="padding: 8px; border: 1px solid #ccc;"><b>Structural</b></td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Object Composition</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Adapter, Decorator, Facade, Proxy, Composite</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Simplify structure, extend functionality</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">ASP.NET Middleware, UI Controls</td>
       </tr>
       <tr>
-        <td><b>Behavioral Patterns</b></td>
-        <td>Object interaction and communication</td>
-        <td>Reduce tight coupling, manage responsibilities</td>
-        <td>
-          - Need to control communication flow (Mediator)<br>
-          - Event-driven notifications (Observer)<br>
-          - Encapsulate requests/actions (Command)<br>
-          - Define algorithm skeletons (Template Method)
-        </td>
-        <td>Is it about <b>communication or responsibilities</b>? → Behavioral</td>
+        <td style="padding: 8px; border: 1px solid #ccc;"><b>Behavioral</b></td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Object Communication</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Strategy, Observer, Command, State, Mediator</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Manage communication, runtime behavior changes</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Events/Delegates, MediatR (CQRS)</td>
       </tr>
     </tbody>
   </table>
 </details>
 
 <details>
-  <summary>Design Patterns – Problems Solved</summary>
-  <style>
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin: 20px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    th {
-      background-color: #0078d4; /* Solid blue header */
-      color: white;
-      padding: 12px;
-      text-align: left;
-      font-size: 1.1em;
-      border: thin solid #ccc;
-    }
-    td {
-      padding: 12px;
-      border: thin solid #ccc;
-      background-color: #fdfdfd;
-    }
-    tr:nth-child(even) td {
-      background-color: #f8f9fa;
-    }
-  </style>
+  <summary>Design Patterns with Problem Solved</summary>
+  <table style="border-collapse: collapse; width: 100%; border: 2px solid black;">
+    <thead style="background-color: #4CAF50; color: white;">
+      <tr>
+        <th style="border: 2px solid black; padding: 8px;">Pattern</th>
+        <th style="border: 2px solid black; padding: 8px;">Category</th>
+        <th style="border: 2px solid black; padding: 8px;">Definition</th>
+        <th style="border: 2px solid black; padding: 8px;">Problem Solved</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Factory Method</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Creational</td>
+        <td style="border: 1px solid black; padding: 8px;">Lets subclasses decide which object to create.</td>
+        <td style="border: 1px solid black; padding: 8px;">Removes hardcoded object creation logic.</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Abstract Factory</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Creational</td>
+        <td style="border: 1px solid black; padding: 8px;">Creates families of related objects together.</td>
+        <td style="border: 1px solid black; padding: 8px;">Ensures consistency across related objects (e.g., UI themes).</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Builder</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Creational</td>
+        <td style="border: 1px solid black; padding: 8px;">Builds complex objects step by step.</td>
+        <td style="border: 1px solid black; padding: 8px;">Simplifies construction of complex objects with many parts.</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Singleton</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Creational</td>
+        <td style="border: 1px solid black; padding: 8px;">Ensures only one instance exists globally.</td>
+        <td style="border: 1px solid black; padding: 8px;">Prevents multiple conflicting instances (e.g., config manager).</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Adapter</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Structural</td>
+        <td style="border: 1px solid black; padding: 8px;">Makes incompatible interfaces work together.</td>
+        <td style="border: 1px solid black; padding: 8px;">Integrates legacy or third‑party code without rewriting.</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Decorator</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Structural</td>
+        <td style="border: 1px solid black; padding: 8px;">Adds extra features without changing the original class.</td>
+        <td style="border: 1px solid black; padding: 8px;">Extends functionality dynamically at runtime.</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Composite</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Structural</td>
+        <td style="border: 1px solid black; padding: 8px;">Treats groups and single objects the same way.</td>
+        <td style="border: 1px solid black; padding: 8px;">Handles hierarchies uniformly (e.g., UI trees).</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Strategy</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Behavioral</td>
+        <td style="border: 1px solid black; padding: 8px;">Switches between different algorithms easily.</td>
+        <td style="border: 1px solid black; padding: 8px;">Avoids hardcoded conditional logic for algorithms.</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Observer</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Behavioral</td>
+        <td style="border: 1px solid black; padding: 8px;">Notifies subscribers when something changes.</td>
+        <td style="border: 1px solid black; padding: 8px;">Keeps dependent objects updated automatically.</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Command</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Behavioral</td>
+        <td style="border: 1px solid black; padding: 8px;">Wraps a request as an object.</td>
+        <td style="border: 1px solid black; padding: 8px;">Supports undo/redo and request queuing.</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Mediator</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Behavioral</td>
+        <td style="border: 1px solid black; padding: 8px;">Centralizes communication between components.</td>
+        <td style="border: 1px solid black; padding: 8px;">Reduces direct coupling between classes.</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Template Method</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Behavioral</td>
+        <td style="border: 1px solid black; padding: 8px;">Defines a skeleton algorithm with customizable steps.</td>
+        <td style="border: 1px solid black; padding: 8px;">Ensures consistent process while allowing variation.</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>CQRS</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Architectural</td>
+        <td style="border: 1px solid black; padding: 8px;">Separates read and write models.</td>
+        <td style="border: 1px solid black; padding: 8px;">Improves scalability and clarity in data handling.</td>
+      </tr>
+    </tbody>
+  </table>
+</details>
 
-  <table>
+
+<details>
+  <summary>Design Patterns and Problems Solved</summary>
+  <table border="1" cellpadding="6" cellspacing="0">
     <thead>
       <tr>
         <th>#</th>
@@ -182,24 +210,23 @@
       </tr>
     </thead>
     <tbody>
-      <!-- Creational -->
       <tr>
         <td>1</td>
         <td>Factory Method</td>
         <td>Creational</td>
-        <td>Decouples object creation from usage; avoids binding code to concrete classes.</td>
+        <td>Decouples object creation from client code; lets subclasses decide which class to instantiate.</td>
       </tr>
       <tr>
         <td>2</td>
         <td>Abstract Factory</td>
         <td>Creational</td>
-        <td>Creates families of related objects without specifying concrete classes.</td>
+        <td>Creates families of related objects without binding client code to concrete classes.</td>
       </tr>
       <tr>
         <td>3</td>
         <td>Builder</td>
         <td>Creational</td>
-        <td>Handles construction of complex objects step by step, separating representation from creation.</td>
+        <td>Separates construction of complex objects from representation; builds step by step.</td>
       </tr>
       <tr>
         <td>4</td>
@@ -207,33 +234,29 @@
         <td>Creational</td>
         <td>Ensures only one instance of a class exists and provides global access.</td>
       </tr>
-
-      <!-- Structural -->
       <tr>
         <td>5</td>
         <td>Adapter</td>
         <td>Structural</td>
-        <td>Allows incompatible interfaces to work together by converting one interface into another.</td>
+        <td>Bridges incompatible interfaces so they can work together.</td>
       </tr>
       <tr>
         <td>6</td>
         <td>Decorator</td>
         <td>Structural</td>
-        <td>Adds responsibilities to objects dynamically without modifying their structure.</td>
+        <td>Dynamically adds responsibilities/behavior to objects without altering their structure.</td>
       </tr>
       <tr>
         <td>7</td>
         <td>Composite</td>
         <td>Structural</td>
-        <td>Treats individual objects and groups uniformly, enabling tree-like structures.</td>
+        <td>Treats individual objects and groups uniformly; supports tree-like hierarchies.</td>
       </tr>
-
-      <!-- Behavioral -->
       <tr>
         <td>8</td>
         <td>Strategy</td>
         <td>Behavioral</td>
-        <td>Encapsulates interchangeable algorithms, avoiding hardcoded conditional logic.</td>
+        <td>Encapsulates interchangeable algorithms; avoids hardcoded conditional logic.</td>
       </tr>
       <tr>
         <td>9</td>
@@ -245,19 +268,25 @@
         <td>10</td>
         <td>Command</td>
         <td>Behavioral</td>
-        <td>Encapsulates requests as objects, enabling queuing, logging, and undo operations.</td>
+        <td>Encapsulates requests as objects; supports queuing, logging, undo/redo.</td>
       </tr>
       <tr>
         <td>11</td>
         <td>Mediator</td>
         <td>Behavioral</td>
-        <td>Centralizes communication between components, reducing direct dependencies.</td>
+        <td>Centralizes communication between components; reduces direct dependencies.</td>
       </tr>
       <tr>
         <td>12</td>
         <td>Template Method</td>
         <td>Behavioral</td>
-        <td>Defines the skeleton of an algorithm, allowing subclasses to customize specific steps.</td>
+        <td>Defines skeleton of an algorithm; lets subclasses override specific steps.</td>
+      </tr>
+      <tr>
+        <td>13</td>
+        <td>CQRS</td>
+        <td>Architectural</td>
+        <td>Separates read (query) and write (command) models; improves scalability, performance, and clarity in complex systems.</td>
       </tr>
     </tbody>
   </table>
@@ -372,45 +401,55 @@ Console.WriteLine(socialSecurity.Calculate(1000));  // 62
 
 <h2>Real-Time Example: Building an Order</h2>
 <pre><code class="language-csharp">
-public class Order
+// Product
+public class Burger
 {
-    public List<string> Items { get; } = new List<string>();
-    public string Customer { get; set; }
-    public decimal Total { get; set; }
+    public string Bun { get; set; }
+    public string Patty { get; set; }
+    public string Sauce { get; set; }
+
+    public override string ToString() => $"{Bun} Burger with {Patty} and {Sauce}";
 }
 
-public class OrderBuilder
+// Builder
+public class BurgerBuilder
 {
-    private Order _order = new Order();
+    private Burger _burger = new Burger();
 
-    public OrderBuilder ForCustomer(string name)
+    public BurgerBuilder WithBun(string bun)
     {
-        _order.Customer = name;
+        _burger.Bun = bun;
         return this;
     }
 
-    public OrderBuilder AddItem(string item, decimal price)
+    public BurgerBuilder WithPatty(string patty)
     {
-        _order.Items.Add(item);
-        _order.Total += price;
+        _burger.Patty = patty;
         return this;
     }
 
-    public Order Build() => _order;
+    public BurgerBuilder WithSauce(string sauce)
+    {
+        _burger.Sauce = sauce;
+        return this;
+    }
+
+    public Burger Build() => _burger;
 }
 
 // Client
-var order = new OrderBuilder()
-    .ForCustomer("Alice")
-    .AddItem("Laptop", 1000)
-    .AddItem("Mouse", 50)
+var burger = new BurgerBuilder()
+    .WithBun("Sesame")
+    .WithPatty("Chicken")
+    .WithSauce("Mayo")
     .Build();
 
-Console.WriteLine($"{order.Customer} ordered {string.Join(", ", order.Items)}. Total: {order.Total}");
+Console.WriteLine(burger);
+
 </code></pre>
 
 <h2>Output</h2>
-<p><code>Alice ordered Laptop, Mouse. Total: 1050</code></p>
+<p><code>Sesame Burger with Chicken and Mayo</code></p>
 
 <h2>Interview Insight</h2>
 <ul>
@@ -1473,99 +1512,6 @@ public class Student { public Guid Id { get; set; } public string Name { get; se
     <li><b>Queries</b> → Retrieve data (reads).</li>
     <li><b>MediatR</b> → Decouples controllers from handlers using <code>IMediator</code>.</li>
   </ul>
-</details>
-<details>
-  <summary>Design Patterns and Problems Solved</summary>
-  <table border="1" cellpadding="6" cellspacing="0">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Pattern</th>
-        <th>Category</th>
-        <th>Problem Solved</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>1</td>
-        <td>Factory Method</td>
-        <td>Creational</td>
-        <td>Decouples object creation from client code; lets subclasses decide which class to instantiate.</td>
-      </tr>
-      <tr>
-        <td>2</td>
-        <td>Abstract Factory</td>
-        <td>Creational</td>
-        <td>Creates families of related objects without binding client code to concrete classes.</td>
-      </tr>
-      <tr>
-        <td>3</td>
-        <td>Builder</td>
-        <td>Creational</td>
-        <td>Separates construction of complex objects from representation; builds step by step.</td>
-      </tr>
-      <tr>
-        <td>4</td>
-        <td>Singleton</td>
-        <td>Creational</td>
-        <td>Ensures only one instance of a class exists and provides global access.</td>
-      </tr>
-      <tr>
-        <td>5</td>
-        <td>Adapter</td>
-        <td>Structural</td>
-        <td>Bridges incompatible interfaces so they can work together.</td>
-      </tr>
-      <tr>
-        <td>6</td>
-        <td>Decorator</td>
-        <td>Structural</td>
-        <td>Dynamically adds responsibilities/behavior to objects without altering their structure.</td>
-      </tr>
-      <tr>
-        <td>7</td>
-        <td>Composite</td>
-        <td>Structural</td>
-        <td>Treats individual objects and groups uniformly; supports tree-like hierarchies.</td>
-      </tr>
-      <tr>
-        <td>8</td>
-        <td>Strategy</td>
-        <td>Behavioral</td>
-        <td>Encapsulates interchangeable algorithms; avoids hardcoded conditional logic.</td>
-      </tr>
-      <tr>
-        <td>9</td>
-        <td>Observer</td>
-        <td>Behavioral</td>
-        <td>Defines one-to-many dependency; notifies dependents automatically when state changes.</td>
-      </tr>
-      <tr>
-        <td>10</td>
-        <td>Command</td>
-        <td>Behavioral</td>
-        <td>Encapsulates requests as objects; supports queuing, logging, undo/redo.</td>
-      </tr>
-      <tr>
-        <td>11</td>
-        <td>Mediator</td>
-        <td>Behavioral</td>
-        <td>Centralizes communication between components; reduces direct dependencies.</td>
-      </tr>
-      <tr>
-        <td>12</td>
-        <td>Template Method</td>
-        <td>Behavioral</td>
-        <td>Defines skeleton of an algorithm; lets subclasses override specific steps.</td>
-      </tr>
-      <tr>
-        <td>13</td>
-        <td>CQRS</td>
-        <td>Architectural</td>
-        <td>Separates read (query) and write (command) models; improves scalability, performance, and clarity in complex systems.</td>
-      </tr>
-    </tbody>
-  </table>
 </details>
 
 </body>
