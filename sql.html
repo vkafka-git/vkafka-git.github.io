@@ -628,5 +628,37 @@ HAVING COUNT(*) > 1;
   </div>
 </details>
 
+ <details>
+  <summary>SQL with CTE: Employee and Manager</summary>
+  <div>
+    <pre><code class="language-sql">
+WITH EmployeeManager AS (
+    SELECT e.Id AS EmployeeId,
+           e.Name AS EmployeeName,
+           e.ManagerId,
+           m.Name AS ManagerName
+    FROM Employees e
+    LEFT JOIN Employees m
+           ON e.ManagerId = m.Id
+)
+SELECT EmployeeName, ManagerName
+FROM EmployeeManager;
+  </code> </pre>
+
+    <p><strong>Output:</strong></p>
+    <table border="1" cellpadding="5" cellspacing="0">
+      <tr>
+        <th>Employee</th>
+        <th>Manager</th>
+      </tr>
+      <tr><td>Alice</td><td>NULL</td></tr>
+      <tr><td>Bob</td><td>Alice</td></tr>
+      <tr><td>Carol</td><td>Alice</td></tr>
+      <tr><td>David</td><td>Bob</td></tr>
+      <tr><td>Eve</td><td>Bob</td></tr>
+    </table>
+  </div>
+</details>
+
 </body>
 </html>
