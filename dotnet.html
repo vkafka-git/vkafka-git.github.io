@@ -5,11 +5,14 @@
 <title>Tech Lead/Full stack developer</title>
 	   <!-- Prism CSS theme -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+
   <!-- Prism core -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <!-- SQL language component -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+  
 	<style>
 	    body {
 	        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -24,8 +27,8 @@
 	    h2 { color: #24292e; margin-top: 30px; border-bottom: 1px solid #eaecef; padding-bottom: 5px; }
 	    h3 { color: #444; }
 	    hr { border: 0; height: 1px; background: #eaecef; margin: 20px 0; }
-	    code { background-color: #f6f8fa; padding: 2px 5px; border-radius: 3px; font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 85%; }
-	    pre { background-color: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 85%; border: 1px solid #e1e4e8; }
+	    
+	    
 	    blockquote { margin: 20px 0; padding: 0 1em; color: #6a737d; border-left: 0.25em solid #ffe58f; background-color: #fffbe6; padding: 10px 15px; border-radius: 0 4px 4px 0; }
 	    blockquote strong { color: #b78103; }
 	    table { border-collapse: collapse; width: 100%; margin: 20px 0; }
@@ -59,7 +62,43 @@
 	        margin-right: 8px;
 	    }
 	</style>
+<style>
+        /* Dark background container to match VS Code */
+        pre[class*="language-"] {
+            background-color: #1e1e1e !important;
+            color: #d4d4d4 !important;
+            padding: 1rem;
+            border-radius: 6px;
+        }
 
+        /* Blue: Keywords & Control Statements (public, static, void, class, return) */
+        .token.keyword, 
+        .token.class-name.keyword {
+            color: #569cd6 !important;
+        }
+
+        /* Green / Teal: Classes, Structs, Interfaces, & Types (Program, Console, String) */
+        .token.class-name, 
+        .token.type-definition,
+        .token.builtin {
+            color: #4ec9b0 !important;
+        }
+
+        /* Strings (Orange/Brown or Light Green) */
+        .token.string {
+            color: #ce9178 !important;
+        }
+
+        /* Comments (Muted Green) */
+        .token.comment {
+            color: #6a9955 !important;
+        }
+
+        /* Methods / Functions (Yellow) */
+        .token.function {
+            color: #dcdcaa !important;
+        }
+    </style>
 </head>
 <body>
 
@@ -83,7 +122,7 @@ This enables non-blocking I/O and allows servers to handle thousands of concurre
 <h2>2. Real-World Example: Web API Calling External Services</h2>
 
 <h3>Without Async/Await (Blocking)</h3>
-<pre>
+<pre><code class="language-csharp">
 public ProductResponse GetProduct(int id)
 {
     var details = productService.GetDetails(id);   // blocks thread
@@ -91,13 +130,13 @@ public ProductResponse GetProduct(int id)
 
     return new ProductResponse(details, price);
 }
-</pre>
+</code></pre>
 <p>
 Each call blocks a thread until the service responds. Under heavy load, threads get exhausted, leading to poor scalability.
 </p>
 
 <h3>With Async/Await (Non-Blocking)</h3>
-<pre>
+<pre><code class="language-csharp">
 public async Task&lt;ProductResponse&gt; GetProductAsync(int id)
 {
     var detailsTask = productService.GetDetailsAsync(id);
@@ -106,7 +145,7 @@ public async Task&lt;ProductResponse&gt; GetProductAsync(int id)
     await Task.WhenAll(detailsTask, priceTask);
 
     return new ProductResponse(detailsTask.Result, priceTask.Result);
-}
+}</code>
 </pre>
 <p>
 Here, both service calls start concurrently. <code>await Task.WhenAll</code> frees the thread while waiting. When both tasks finish, the state machine resumes execution and combines results.
@@ -137,26 +176,27 @@ Here, both service calls start concurrently. <code>await Task.WhenAll</code> fre
 <p>
 EF Core assumes conflicts are rare and doesn’t lock rows upfront. A property (often <code>RowVersion</code> or <code>[Timestamp]</code>) is marked as a concurrency token. When saving, EF Core includes this token in the <code>WHERE</code> clause of <code>UPDATE</code>/<code>DELETE</code>. If the token has changed (another user updated the row), the update fails, triggering a <code>DbUpdateConcurrencyException</code>.
 </p>
-<pre>
+<pre><code class="language-csharp">
 public class Person
 {
     public int PersonId { get; set; }
     public string FirstName { get; set; }
     [Timestamp]
     public byte[] Version { get; set; } // concurrency token
-}
+}</code>
 </pre>
-<pre>
+<pre><code class="language-csharp">
 UPDATE [People]
 SET [FirstName] = @p0
 WHERE [PersonId] = @p1 AND [Version] = @p2;
+</code>
 </pre>
 
 <h2>2. Handling Concurrency Conflicts</h2>
 <p>
 You catch <code>DbUpdateConcurrencyException</code> and decide whether to retry, merge, or discard changes.
 </p>
-<pre>
+<pre><code class="language-csharp">
 try
 {
     await context.SaveChangesAsync();
@@ -170,7 +210,7 @@ catch (DbUpdateConcurrencyException ex)
     }
     await context.SaveChangesAsync();
 }
-</pre>
+</code></pre>
 
 <h2>3. Pessimistic Concurrency (Locking)</h2>
 <p>
@@ -210,7 +250,7 @@ When marked with <code>[Timestamp]</code>, EF Core includes the property in the 
 <p>
 Yes, you add a property in your entity class to represent the column.
 </p>
-<pre>
+<pre><code class="language-csharp">
 public class Person
 {
     public int PersonId { get; set; }
@@ -219,6 +259,7 @@ public class Person
     [Timestamp] // Marks as concurrency token
     public byte[] RowVersion { get; set; }
 }
+</code>
 </pre>
 
 <h2>4. How It Is Populated</h2>
@@ -245,11 +286,12 @@ public class Person
 <p>
 Eager loading retrieves related data <b>immediately</b when the main entity is queried. It uses the <code>Include()</code> method to specify related entities.
 </p>
-<pre>
+<pre><code class="language-csharp">
 var orders = context.Orders
     .Include(o => o.Customer)
     .Include(o => o.Items)
     .ToList();
+	</code>
 </pre>
 <p>
 <b>Pros:</b> Reduces round-trips to the database, good for scenarios where related data is always needed.<br>
@@ -260,9 +302,10 @@ var orders = context.Orders
 <p>
 Lazy loading retrieves related data <b>only when it is accessed</b in code. EF Core supports lazy loading via proxies or manual navigation property access.
 </p>
-<pre>
+<pre><code class="language-csharp">
 var order = context.Orders.First();
 var customer = order.Customer; // triggers a query only when accessed
+</code>
 </pre>
 <p>
 <b>Pros:</b> Loads data only when needed, reducing initial query cost.<br>
@@ -273,11 +316,12 @@ var customer = order.Customer; // triggers a query only when accessed
 <p>
 Explicit loading retrieves related data <b>on demand</b using the <code>Entry()</code> API. It gives full control over when related entities are loaded.
 </p>
-<pre>
+<pre><code class="language-csharp">
 var order = context.Orders.First();
 context.Entry(order)
        .Collection(o => o.Items)
        .Load();
+</code>
 </pre>
 <p>
 <b>Pros:</b> Fine-grained control, avoids unnecessary data loading.<br>
@@ -299,13 +343,14 @@ context.Entry(order)
 <p>
 A <code>Task</code> represents an asynchronous operation. It is part of the Task Parallel Library (TPL) and is typically used with <code>async/await</code>. Tasks can run on thread pool threads and are optimized for managing asynchronous workflows.
 </p>
-<pre>
+<pre><code class="language-csharp">
 // Example: Task with async/await
 public async Task<int> GetDataAsync()
 {
     await Task.Delay(1000); // non-blocking wait
     return 42;
 }
+</code>
 </pre>
 <p>
 <b>Pros:</b> Integrates with async/await, supports continuations, cancellation, and exception handling.<br>
@@ -316,7 +361,7 @@ public async Task<int> GetDataAsync()
 <p>
 A <code>ValueTask</code> is a lightweight alternative to <code>Task</code>. It avoids allocations when the result is already available synchronously. It can represent either a completed result or a pending asynchronous operation.
 </p>
-<pre>
+<pre><code class="language-csharp">
 // Example: ValueTask
 public ValueTask<int> GetCachedDataAsync(bool fromCache)
 {
@@ -325,6 +370,7 @@ public ValueTask<int> GetCachedDataAsync(bool fromCache)
     else
         return new ValueTask<int>(Task.Run(() => 42));
 }
+</code>
 </pre>
 <p>
 <b>Pros:</b> Reduces allocations when results are often available synchronously.<br>
@@ -335,13 +381,14 @@ public ValueTask<int> GetCachedDataAsync(bool fromCache)
 <p>
 A <code>Thread</code> represents a physical OS thread. It is lower-level than <code>Task</code> and <code>ValueTask</code>. Threads are expensive to create and manage, and they block system resources while running.
 </p>
-<pre>
+<pre><code class="language-csharp">
 // Example: Thread
 var thread = new Thread(() =>
 {
     Console.WriteLine("Running on a new thread");
 });
 thread.Start();
+</code>
 </pre>
 <p>
 <b>Pros:</b> Full control over execution, suitable for long-running or dedicated operations.<br>
@@ -555,7 +602,7 @@ thread.Start();
   <li>Makes unit testing easier (repositories can be mocked).</li>
   <li>Centralizes query logic for consistency.</li>
 </ul>
-<pre>
+<pre><code class="language-csharp">
 public interface ICustomerRepository
 {
     Customer GetById(int id);
@@ -574,6 +621,7 @@ public class CustomerRepository : ICustomerRepository
     public void Add(Customer customer) => _context.Customers.Add(customer);
     public void Remove(Customer customer) => _context.Customers.Remove(customer);
 }
+</code>
 </pre>
 
 <h2>Unit of Work Pattern</h2>
@@ -586,7 +634,7 @@ public class CustomerRepository : ICustomerRepository
   <li>Provides a single <code>Commit()</code> or <code>SaveChanges()</code> method to persist changes.</li>
   <li>Reduces the risk of partial updates.</li>
 </ul>
-<pre>
+<pre><code class="language-csharp">
 public interface IUnitOfWork : IDisposable
 {
     ICustomerRepository Customers { get; }
@@ -610,6 +658,7 @@ public class UnitOfWork : IUnitOfWork
     public int Complete() => _context.SaveChanges();
     public void Dispose() => _context.Dispose();
 }
+</code>
 </pre>
 
 <h2>Key Differences</h2>
@@ -656,9 +705,10 @@ public class UnitOfWork : IUnitOfWork
 <b>Deferred:</b> Yes, filters are applied when iterated.<br/>
 <b>Use Case:</b> Iterate/filter already-loaded collections.
 </p>
-<pre>
+<pre><code class="language-csharp">
 IEnumerable&lt;Product&gt; products = context.Products.ToList();
 var activeProducts = products.Where(p => p.IsActive); // filtering in memory
+</code>
 </pre>
 <p>
 👉 Loads all products first, then filters locally. Good for small datasets.
@@ -670,9 +720,10 @@ var activeProducts = products.Where(p => p.IsActive); // filtering in memory
 <b>Deferred:</b> Yes, query built and executed on DB.<br/>
 <b>Use Case:</b> Query large datasets efficiently.
 </p>
-<pre>
+<pre><code class="language-csharp">
 IQueryable&lt;Product&gt; products = context.Products;
 var activeProducts = products.Where(p => p.IsActive).ToList();
+</code>
 </pre>
 <p>
 👉 <code>Where</code> is translated into SQL (<code>SELECT * FROM Products WHERE IsActive = 1</code>). Efficient for large datasets.
@@ -684,12 +735,13 @@ var activeProducts = products.Where(p => p.IsActive).ToList();
 <b>Deferred:</b> No, data already loaded.<br/>
 <b>Use Case:</b> Store/manipulate concrete data.
 </p>
-<pre>
+<pre><code class="language-csharp">
 List&lt;Product&gt; products = new List&lt;Product&gt;
 {
     new Product { Id = 1, Name = "Laptop" },
     new Product { Id = 2, Name = "Phone" }
 };
+</code>
 </pre>
 <p>
 👉 A concrete collection in memory. You can add/remove items directly.
@@ -764,7 +816,7 @@ ASP.NET Core has a built-in DI container that manages object lifetimes and resol
 </ul>
 
 <h2>4. Example</h2>
-<pre>
+<pre><code class="language-csharp">
 // Register services in Program.cs
 builder.Services.AddSingleton&lt;ILoggingService, LoggingService&gt;();
 builder.Services.AddScoped&lt;IRepository, Repository&gt;();
@@ -789,7 +841,7 @@ public class OrdersController : Controller
         return Ok();
     }
 }
-</pre>
+</code></pre>
 
 <h2>5. Benefits</h2>
 <ul>
@@ -830,7 +882,7 @@ Middleware are components in ASP.NET Core that process HTTP requests and respons
 <p>
 Middleware is registered in <code>Program.cs</code> or <code>Startup.cs</code> using the <code>app.Use...</code> methods.
 </p>
-<pre>
+<pre><code class="language-csharp">
 // Example pipeline setup in Program.cs
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -845,10 +897,10 @@ app.UseEndpoints(endpoints =>
 });
 
 app.Run();
-</pre>
+</code></pre>
 
 <h2>4. Custom Middleware Example</h2>
-<pre>
+<pre><code class="language-csharp">
 public class LoggingMiddleware
 {
     private readonly RequestDelegate _next;
@@ -868,7 +920,7 @@ public class LoggingMiddleware
 
 // Register custom middleware
 app.UseMiddleware&lt;LoggingMiddleware&gt;();
-</pre>
+</code></pre>
 
 <h2>5. Common Middleware Components</h2>
 <ul>
@@ -904,7 +956,7 @@ This prevents application crashes and improves reliability, security, and user e
 </ul>
 
 <h2>3. Using Built-in Middleware</h2>
-<pre>
+<pre><code class="language-csharp">
 // Program.cs
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -916,10 +968,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.Run();
-</pre>
+</code></pre>
 
 <h2>4. Custom Middleware Example</h2>
-<pre>
+<pre><code class="language-csharp">
 public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
@@ -951,10 +1003,10 @@ public class GlobalExceptionMiddleware
 
 // Register custom middleware
 app.UseMiddleware&lt;GlobalExceptionMiddleware&gt;();
-</pre>
+</code></pre>
 
 <h2>5. Exception Filters (MVC/Web API)</h2>
-<pre>
+<pre><code class="language-csharp">
 public class GlobalExceptionFilter : IExceptionFilter
 {
     private readonly ILogger&lt;GlobalExceptionFilter&gt; _logger;
@@ -979,7 +1031,7 @@ services.AddControllers(options =>
 {
     options.Filters.Add&lt;GlobalExceptionFilter&gt;();
 });
-</pre>
+</code></pre>
 
 <h2>6. Best Practices</h2>
 <ul>
@@ -1004,7 +1056,7 @@ For APIs, exception filters provide fine-grained control. Always emphasize loggi
 <b>Lifetime:</b> A new instance is created every time it is requested.<br/>
 <b>Use Case:</b> Lightweight, stateless services where creating a new object is inexpensive.
 </p>
-<pre>
+<pre><code class="language-csharp">
 // Registration
 builder.Services.AddTransient&lt;IMailService, MailService&gt;();
 
@@ -1017,14 +1069,14 @@ public class NotificationController : Controller
         _mailService = mailService; // new instance each time
     }
 }
-</pre>
+</code></pre>
 
 <h2>2. AddScoped</h2>
 <p>
 <b>Lifetime:</b> One instance per request (scope). Within a single HTTP request, the same instance is reused.<br/>
 <b>Use Case:</b> Services that should maintain state during a request but not across requests.
 </p>
-<pre>
+<pre><code class="language-csharp">
 // Registration
 builder.Services.AddScoped&lt;IOrderService, OrderService&gt;();
 
@@ -1037,14 +1089,14 @@ public class OrdersController : Controller
         _orderService = orderService; // same instance within one request
     }
 }
-</pre>
+</code></pre>
 
 <h2>3. AddSingleton</h2>
 <p>
 <b>Lifetime:</b> A single instance is created and shared across the entire application lifetime.<br/>
 <b>Use Case:</b> Services that are expensive to create or need to maintain global state (e.g., caching, configuration).
 </p>
-<pre>
+<pre><code class="language-csharp">
 // Registration
 builder.Services.AddSingleton&lt;ICacheService, MemoryCacheService&gt;();
 
@@ -1057,7 +1109,7 @@ public class ProductsController : Controller
         _cacheService = cacheService; // same instance for all requests
     }
 }
-</pre>
+</code></pre>
 
 <h2>4. Comparison Table</h2>
 <table border="1" cellpadding="5" cellspacing="0">
@@ -1118,7 +1170,7 @@ It consists of three parts: <b>Header</b> (algorithm, type), <b>Payload</b> (cla
 </ul>
 
 <h2>3. Implementation Steps</h2>
-<pre>
+<pre><code class="language-csharp">
 // Step 1: Add NuGet package
 dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
 
@@ -1165,10 +1217,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
-</pre>
+</code></pre>
 
 <h2>4. Creating JWT Tokens</h2>
-<pre>
+<pre><code class="language-csharp">
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
@@ -1200,7 +1252,7 @@ public class JwtService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
-</pre>
+</code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -1243,7 +1295,7 @@ They track changes in your entity classes and generate code to update the databa
 </ol>
 
 <h2>4. Commands</h2>
-<pre>
+<pre><code class="language-csharp">
 // Add a new migration
 dotnet ef migrations add InitialCreate
 
@@ -1255,10 +1307,10 @@ dotnet ef migrations remove
 
 // Rollback to a specific migration
 dotnet ef database update MigrationName
-</pre>
+</code></pre>
 
 <h2>5. Migration File Example</h2>
-<pre>
+<pre><code class="language-csharp">
 public partial class InitialCreate : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
@@ -1282,7 +1334,7 @@ public partial class InitialCreate : Migration
         migrationBuilder.DropTable(name: "Customers");
     }
 }
-</pre>
+</code></pre>
 
 <h2>6. Best Practices</h2>
 <ul>
@@ -1308,7 +1360,7 @@ In interviews, emphasize the workflow (<i>add → update → rollback</i>), life
 <p>
 Indexes are critical for query performance. Ensure that frequently queried columns have appropriate indexes. Use composite indexes for multi-column filters and consider filtered indexes for subsets of data.
 </p>
-<pre>
+<pre><code class="language-csharp">
 // Good: Uses index
 var posts1 = await context.Posts
     .Where(p => p.Title.StartsWith("A"))
@@ -1318,28 +1370,28 @@ var posts1 = await context.Posts
 var posts2 = await context.Posts
     .Where(p => p.Title.EndsWith("A"))
     .ToListAsync();
-</pre>
+</code></pre>
 
 <h2>2. Project Only Needed Properties</h2>
 <p>
 Avoid fetching entire entities when only a subset of columns is required. Use <code>Select()</code> to project specific fields.
 </p>
-<pre>
+<pre><code class="language-csharp">
 var customers = await context.Customers
     .Select(c => new { c.Id, c.Name })
     .ToListAsync();
-</pre>
+</code></pre>
 
 <h2>3. Limit Result Set Size</h2>
 <p>
 Use <code>Take()</code>, <code>Skip()</code>, and filtering to avoid loading large datasets unnecessarily.
 </p>
-<pre>
+<pre><code class="language-csharp">
 var top10Orders = await context.Orders
     .OrderByDescending(o => o.Date)
     .Take(10)
     .ToListAsync();
-</pre>
+</code></pre>
 
 <h2>4. Efficient Loading Strategies</h2>
 <ul>
@@ -1352,20 +1404,20 @@ var top10Orders = await context.Orders
 <p>
 Pre-compile queries that run frequently to reduce overhead of query translation.
 </p>
-<pre>
+<pre><code class="language-csharp">
 static readonly Func<MyContext, int, Task<Customer>> GetCustomerById =
     EF.CompileAsyncQuery((MyContext ctx, int id) =>
         ctx.Customers.FirstOrDefault(c => c.Id == id));
-</pre>
+</code></pre>
 
 <h2>6. DbContext Pooling</h2>
 <p>
 Use <code>AddDbContextPool</code> to reuse DbContext instances and reduce setup overhead in high-throughput applications.
 </p>
-<pre>
+<pre><code class="language-csharp">
 builder.Services.AddDbContextPool<MyContext>(
     options => options.UseSqlServer(connectionString));
-</pre>
+</code></pre>
 
 <h2>7. Pagination & Batching</h2>
 <p>
@@ -1401,7 +1453,7 @@ This allows LINQ to build query expressions and delay execution until needed.
 </ul>
 
 <h2>3. Example of Deferred Execution</h2>
-<pre>
+<pre><code class="language-csharp">
 List&lt;int&gt; numbers = new List&lt;int&gt; { 1, 2, 3, 4, 5 };
 
 // LINQ query defined but not executed yet
@@ -1415,7 +1467,7 @@ foreach (var n in query)
 {
     Console.WriteLine(n);
 }
-</pre>
+</code></pre>
 <p>
 👉 Output will be <code>3, 4, 5, 6</code> because the query executes at iteration time, after the list was modified.
 </p>
@@ -1424,9 +1476,9 @@ foreach (var n in query)
 <p>
 If you want to force execution immediately, you can use methods like <code>ToList()</code>, <code>ToArray()</code>, or <code>Count()</code>.
 </p>
-<pre>
+<pre><code class="language-csharp">
 var result = numbers.Where(n =&gt; n &gt; 2).ToList(); // executes immediately
-</pre>
+</code></pre>
 
 <h2>5. Benefits of Deferred Execution</h2>
 <ul>
@@ -1475,7 +1527,7 @@ In REST APIs, this ensures that repeated requests (due to retries, network issue
 </ul>
 
 <h2>4. Example: Idempotent Order Creation</h2>
-<pre>
+<pre><code class="language-csharp">
 // Client sends POST with Idempotency-Key
 POST /orders
 Headers: Idempotency-Key: abc123
@@ -1488,7 +1540,7 @@ Headers: Idempotency-Key: abc123
 
 // Server checks if Idempotency-Key already processed
 // If yes, return same response without creating duplicate
-</pre>
+</code></pre>
 
 <h2>5. Benefits</h2>
 <ul>
@@ -1527,7 +1579,7 @@ It prevents breaking changes that could disrupt client applications and guarante
 </ul>
 
 <h2>3. Example: Adding a New Field</h2>
-<pre>
+<pre><code class="language-csharp">
 // Old response
 {
   "orderId": "ORD001",
@@ -1540,19 +1592,19 @@ It prevents breaking changes that could disrupt client applications and guarante
   "status": "Pending",
   "estimatedDelivery": "2026-06-15" // new optional field
 }
-</pre>
+</code></pre>
 <p>
 👉 Older clients ignore <code>estimatedDelivery</code>, while newer clients can use it.
 </p>
 
 <h2>4. Example: API Versioning</h2>
-<pre>
+<pre><code class="language-csharp">
 // Version 1
 GET /api/v1/orders/ORD001
 
 // Version 2 (new fields, improved response)
 GET /api/v2/orders/ORD001
-</pre>
+</code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -1590,7 +1642,7 @@ It allows developers to evolve APIs without disrupting consumers and provides a 
 <p>
 ASP.NET Core provides the <b>Microsoft.AspNetCore.Mvc.Versioning</b> package to manage API versions easily.
 </p>
-<pre>
+<pre><code class="language-csharp">
 // Step 1: Install NuGet package
 dotnet add package Microsoft.AspNetCore.Mvc.Versioning
 
@@ -1618,7 +1670,7 @@ public class OrdersV2Controller : ControllerBase
     [HttpGet]
     public IActionResult Get() => Ok("Orders from V2 with new fields");
 }
-</pre>
+</code></pre>
 
 <h2>4. Best Practices</h2>
 <ul>
@@ -1662,7 +1714,7 @@ It uses WebSockets (when available) and falls back to other techniques (like Ser
 </ol>
 
 <h2>4. Example: Server-Side Hub</h2>
-<pre>
+<pre><code class="language-csharp">
 using Microsoft.AspNetCore.SignalR;
 
 public class ChatHub : Hub
@@ -1672,20 +1724,20 @@ public class ChatHub : Hub
         await Clients.All.SendAsync("ReceiveMessage", user, message);
     }
 }
-</pre>
+</code></pre>
 
 <h2>5. Configure in Program.cs</h2>
-<pre>
+<pre><code class="language-csharp">
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSignalR();
 
 var app = builder.Build();
 app.MapHub&lt;ChatHub&gt;("/chatHub");
 app.Run();
-</pre>
+</code></pre>
 
 <h2>6. Example: JavaScript Client</h2>
-<pre>
+<pre><code class="language-csharp">
 // Install client library: npm install @microsoft/signalr
 
 const connection = new signalR.HubConnectionBuilder()
@@ -1699,7 +1751,7 @@ connection.on("ReceiveMessage", (user, message) => {
 connection.start().then(() => {
     connection.invoke("SendMessage", "Alice", "Hello World!");
 });
-</pre>
+</code></pre>
 
 <h2>7. Features of SignalR</h2>
 <ul>
@@ -1842,7 +1894,7 @@ It is essential in dynamic environments (like Kubernetes or cloud platforms) whe
 </ul>
 
 <h2>4. Implementation Example: Using Consul</h2>
-<pre>
+<pre><code class="language-csharp">
 // Register service with Consul (JSON definition)
 {
   "ID": "orders-service-1",
@@ -1857,10 +1909,10 @@ It is essential in dynamic environments (like Kubernetes or cloud platforms) whe
 
 // Client queries Consul for "orders-service"
 // Consul returns available instances with health status
-</pre>
+</code></pre>
 
 <h2>5. Implementation Example: Kubernetes</h2>
-<pre>
+<pre><code class="language-csharp">
 // Define a service in Kubernetes
 apiVersion: v1
 kind: Service
@@ -1875,7 +1927,7 @@ spec:
       targetPort: 5000
 
 // Clients can access via DNS: orders-service.default.svc.cluster.local
-</pre>
+</code></pre>
 
 <h2>6. Best Practices</h2>
 <ul>
@@ -1918,7 +1970,7 @@ It monitors calls to external services and "opens" the circuit if failures excee
 </ul>
 
 <h2>4. Example in .NET with Polly</h2>
-<pre>
+<pre><code class="language-csharp">
 using Polly;
 using Polly.CircuitBreaker;
 
@@ -1942,7 +1994,7 @@ catch (BrokenCircuitException)
 {
     Console.WriteLine("Circuit is open. Failing fast.");
 }
-</pre>
+</code></pre>
 
 <h2>5. Business Scenario Example</h2>
 <p>
@@ -1994,7 +2046,7 @@ In microservices, logs are spread across multiple services running on different 
 </ul>
 
 <h2>4. Example: Using Serilog + ELK Stack</h2>
-<pre>
+<pre><code class="language-csharp">
 // Configure Serilog in Program.cs
 Log.Logger = new LoggerConfiguration()
     .Enrich.WithProperty("Application", "OrderService")
@@ -2008,7 +2060,7 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 builder.Host.UseSerilog();
-</pre>
+</code></pre>
 <p>
 👉 Logs are sent to Elasticsearch, visualized in Kibana, and correlated using request IDs.
 </p>
@@ -2092,13 +2144,13 @@ These concepts are tightly interrelated:
 </ul>
 
 <h2>8. Example Flow</h2>
-<pre>
+<pre><code class="language-csharp">
 AKS (Azure-managed Kubernetes)
    └── Cluster
          └── Node (VM)
                └── Pod
                      └── Container (App)
-</pre>
+</code></pre>
 
 <h2>9. Interview Insight</h2>
 <p>
@@ -2130,22 +2182,22 @@ Securing inter-service communication ensures confidentiality, integrity, and tru
 </ul>
 
 <h2>3. Example: Mutual TLS in Kubernetes</h2>
-<pre>
+<pre><code class="language-csharp">
 // Service A calls Service B
 // Both present certificates signed by a trusted CA
 // Communication is encrypted and authenticated
 
 Service A ----mTLS----> Service B
-</pre>
+</code></pre>
 
 <h2>4. Example: JWT Propagation</h2>
-<pre>
+<pre><code class="language-csharp">
 // Service A receives a JWT from API Gateway
 // It forwards the JWT when calling Service B
 // Service B validates the token before processing
 
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-</pre>
+</code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -2187,9 +2239,9 @@ Think of it as the "front door" to your microservices ecosystem.
 </ul>
 
 <h2>3. Example Flow</h2>
-<pre>
+<pre><code class="language-csharp">
 Client → API Gateway → Authentication → Routing → Microservice → Response
-</pre>
+</code></pre>
 
 <h2>4. Common Tools</h2>
 <ul>
@@ -2244,7 +2296,7 @@ It improves performance, reduces payload size, and provides a better client expe
 </ul>
 
 <h2>3. Example: Offset-Based Pagination</h2>
-<pre>
+<pre><code class="language-csharp">
 // Request
 GET /api/orders?limit=5&offset=10
 
@@ -2261,10 +2313,10 @@ GET /api/orders?limit=5&offset=10
     "total": 100
   }
 }
-</pre>
+</code></pre>
 
 <h2>4. Example: Cursor-Based Pagination</h2>
-<pre>
+<pre><code class="language-csharp">
 // Request
 GET /api/orders?after=ORD010&limit=5
 
@@ -2280,7 +2332,7 @@ GET /api/orders?after=ORD010&limit=5
     "nextCursor": "ORD015"
   }
 }
-</pre>
+</code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -2323,7 +2375,7 @@ It protects services from abuse, prevents overload, and ensures fair usage among
 </ul>
 
 <h2>4. Example: ASP.NET Core Middleware with Redis</h2>
-<pre>
+<pre><code class="language-csharp">
 // Pseudocode for fixed window rate limiting
 if (redis.Increment("client:123:minute") > 100)
 {
@@ -2333,7 +2385,7 @@ else
 {
     processRequest();
 }
-</pre>
+</code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -2379,7 +2431,7 @@ When a client (e.g., JavaScript in a browser) calls an API hosted on a different
 </ul>
 
 <h2>4. Example: ASP.NET Core Configuration</h2>
-<pre>
+<pre><code class="language-csharp">
 // In Program.cs
 builder.Services.AddCors(options =>
 {
@@ -2392,10 +2444,10 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 app.UseCors("AllowSpecificOrigin");
-</pre>
+</code></pre>
 
 <h2>5. Example: Express.js Configuration</h2>
-<pre>
+<pre><code class="language-csharp">
 const cors = require('cors');
 const app = require('express')();
 
@@ -2405,7 +2457,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type','Authorization'],
   credentials: true
 }));
-</pre>
+</code></pre>
 
 <h2>6. Best Practices</h2>
 <ul>
@@ -2453,7 +2505,7 @@ APIs often use HTTP headers to control caching:
 </ul>
 
 <h2>4. Example: ASP.NET Core Response Caching</h2>
-<pre>
+<pre><code class="language-csharp">
 // In Program.cs
 builder.Services.AddResponseCaching();
 
@@ -2470,10 +2522,10 @@ app.MapGet("/products", async context =>
         };
     await context.Response.WriteAsync("Cached product list");
 });
-</pre>
+</code></pre>
 
 <h2>5. Example: Redis Caching in APIs</h2>
-<pre>
+<pre><code class="language-csharp">
 // Pseudocode for caching API response
 var cacheKey = "products:all";
 var cachedData = redis.Get(cacheKey);
@@ -2488,7 +2540,7 @@ else
     redis.Set(cacheKey, data, expiry: TimeSpan.FromMinutes(10));
     return data;
 }
-</pre>
+</code></pre>
 
 <h2>6. Best Practices</h2>
 <ul>
@@ -2671,7 +2723,7 @@ It allows applications to grow seamlessly without downtime, while optimizing res
 </ul>
 
 <h2>3. Example: Horizontal Pod Autoscaler</h2>
-<pre>
+<pre><code class="language-csharp">
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -2690,7 +2742,7 @@ spec:
       target:
         type: Utilization
         averageUtilization: 70
-</pre>
+</code></pre>
 <p>
 👉 This configuration scales the <b>orderservice</b> deployment between 2 and 10 replicas based on CPU utilization.
 </p>
@@ -2738,7 +2790,7 @@ It ensures high availability, predictable performance, and virtually unlimited s
 </ul>
 
 <h2>4. Example</h2>
-<pre>
+<pre><code class="language-csharp">
 // Container with partition key = /UserId
 Item1: { "UserId": "U001", "Name": "Alice" }
 Item2: { "UserId": "U002", "Name": "Bob" }
@@ -2746,7 +2798,7 @@ Item2: { "UserId": "U002", "Name": "Bob" }
 // Logical partitions created:
 Partition U001 → contains all items with UserId = U001
 Partition U002 → contains all items with UserId = U002
-</pre>
+</code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -2782,7 +2834,7 @@ In Azure DevOps, CI/CD ensures faster delivery, consistent quality, and reduced 
 </ul>
 
 <h2>3. Example CI Pipeline (YAML)</h2>
-<pre>
+<pre><code class="language-csharp">
 trigger:
 - main
 
@@ -2807,10 +2859,10 @@ steps:
     organization: 'my-org'
     scannerMode: 'MSBuild'
     projectKey: 'my-project'
-</pre>
+</code></pre>
 
 <h2>4. Example CD Pipeline</h2>
-<pre>
+<pre><code class="language-csharp">
 stages:
 - stage: DeployToDev
   jobs:
@@ -2825,7 +2877,7 @@ stages:
               azureSubscription: 'MyServiceConnection'
               appName: 'my-app-service'
               package: '$(Pipeline.Workspace)/drop/*.zip'
-</pre>
+</code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -2864,7 +2916,7 @@ Azure provides multiple services to manage secrets securely.
 </ul>
 
 <h2>3. Example: Using Key Vault in .NET</h2>
-<pre>
+<pre><code class="language-csharp">
 // Program.cs
 builder.Configuration.AddAzureKeyVault(
     new Uri("https://mykeyvault.vault.azure.net/"),
@@ -2872,10 +2924,10 @@ builder.Configuration.AddAzureKeyVault(
 
 // Usage
 string connString = builder.Configuration["DbConnectionString"];
-</pre>
+</code></pre>
 
 <h2>4. Example: Managed Identity Access</h2>
-<pre>
+<pre><code class="language-csharp">
 // Assign a system-assigned managed identity to App Service
 // Grant Key Vault access via Access Policies or RBAC
 // Code uses DefaultAzureCredential to authenticate automatically
@@ -2884,7 +2936,7 @@ var client = new SecretClient(
     new DefaultAzureCredential());
 
 KeyVaultSecret secret = client.GetSecret("DbConnectionString");
-</pre>
+</code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -2977,7 +3029,7 @@ Polly, a .NET resilience library, enables retries, circuit breakers, and fallbac
 </p>
 
 <h2>2. Example: HTTP Trigger with Polly Retry</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 // Function: HttpTrigger calling external API with Polly retry
 [FunctionName("GetWeatherData")]
 public static async Task<IActionResult> Run(
@@ -3009,7 +3061,7 @@ public static async Task<IActionResult> Run(
         return new StatusCodeResult((int)response.StatusCode);
     }
 }
-</code></pre>
+</code></code></pre>
 
 <h2>3. Key Points</h2>
 <ul>
@@ -3051,7 +3103,7 @@ ensuring resilient communication with external APIs.
     </ul>
 
     <p><strong>Example <code>host.json</code> for Storage Queues:</strong></p>
-<pre><code>{
+<pre><code class="language-csharp"><code>{
   "version": "2.0",
   "extensions": {
     "queues": {
@@ -3059,7 +3111,7 @@ ensuring resilient communication with external APIs.
       "visibilityTimeout": "00:00:10"
     }
   }
-}</code></pre>
+}</code></code></pre>
 
     <hr>
 
@@ -3073,24 +3125,24 @@ ensuring resilient communication with external APIs.
     <h3>Strategy A: Fixed Delay</h3>
     <p>Retries a specific number of times, waiting a static amount of time between attempts.</p>
 
-<pre><code>[Function("ProcessTimerData")]
+<pre><code class="language-csharp"><code>[Function("ProcessTimerData")]
 [FixedDelayRetry(5, "00:00:10")] // Retry 5 times, waiting 10 seconds between each
 public async Task Run([TimerTrigger("0 */5 * * * *")] TimerInfo myTimer)
 {
     // Your processing logic here. 
     // If it throws an unhandled exception, it will auto-retry.
-}</code></pre>
+}</code></code></pre>
 
     <h3>Strategy B: Exponential Backoff</h3>
     <p>Increases the delay time between each attempt to give downstream services (like a database or an API) breathing room to recover.</p>
 
-<pre><code>[Function("SyncData")]
+<pre><code class="language-csharp"><code>[Function("SyncData")]
 [ExponentialBackoffRetry(5, "00:00:02", "00:05:00")] 
 // 5 retries. Starts at 2 seconds, scales exponentially, caps at 5 minutes.
 public async Task Run([EventHubTrigger("messages", Connection = "EHConnection")] string[] events)
 {
     // Your processing logic
-}</code></pre>
+}</code></code></pre>
 
     <hr>
 
@@ -3098,7 +3150,7 @@ public async Task Run([EventHubTrigger("messages", Connection = "EHConnection")]
     <p>Function-level policies don't always apply well to <strong>HTTP Triggers</strong> (as you usually want to return a quick, managed error response to the client instead of hanging the HTTP request while the runtime retries).</p>
     <p>For HTTP triggers or external API calls inside your functions, use code-level resilience libraries like <strong>Polly</strong> (.NET) or built-in wrapper logic in other languages.</p>
 
-<pre><code>// Example using Polly inside a C# Function
+<pre><code class="language-csharp"><code>// Example using Polly inside a C# Function
 var retryPolicy = Policy
     .Handle&lt;HttpRequestException&gt;()
     .WaitAndRetryAsync(3, retryAttempt =&gt; TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
@@ -3106,14 +3158,14 @@ var retryPolicy = Policy
 await retryPolicy.ExecuteAsync(async () => 
 {
     return await _httpClient.GetAsync("https://api.external-service.com/data");
-});</code></pre>
+});</code></code></pre>
 
     <hr>
 
     <h2>4. Durable Functions Orchestration Retries</h2>
     <p>If you are building long-running workflows using <strong>Durable Functions</strong>, you can specify a retry policy explicitly when invoking an Activity Function from an Orchestrator. This ensures your state survives across host restarts.</p>
 
-<pre><code>[Function("Orchestrator")]
+<pre><code class="language-csharp"><code>[Function("Orchestrator")]
 public static async Task RunOrchestrator([OrchestrationTrigger] TaskOrchestrationContext context)
 {
     var retryOptions = new TaskRetryOptions(
@@ -3125,7 +3177,7 @@ public static async Task RunOrchestrator([OrchestrationTrigger] TaskOrchestratio
 
     // Calls the "CallExternalAPI" activity function using the retry policy
     await context.CallActivityAsync("CallExternalAPI", null, retryOptions);
-}</code></pre>
+}</code></code></pre>
 
     <hr>
 
@@ -3193,17 +3245,17 @@ It helps detect issues early, optimize resource usage, and maintain compliance i
 </ul>
 
 <h2>4. Example: Enabling Container Insights</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 // Azure CLI command to enable monitoring
 az aks enable-addons \
   --resource-group myResourceGroup \
   --name myAKSCluster \
   --addons monitoring \
   --workspace-resource-id /subscriptions/{subId}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}
-</code></pre>
+</code></code></pre>
 
 <h2>5. Example: Prometheus Metrics Scraping</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 // prometheus.yaml snippet
 scrape_configs:
   - job_name: 'kubernetes-pods'
@@ -3213,7 +3265,7 @@ scrape_configs:
       - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
         action: keep
         regex: true
-</code></pre>
+</code></code></pre>
 
 <h2>6. Best Practices</h2>
 <ul>
@@ -3325,7 +3377,7 @@ Azure provides multiple services and strategies to design resilient architecture
 </ul>
 
 <h2>4. Example Architecture</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 Primary Region (East US):
   - App Service
   - SQL Database (Primary)
@@ -3339,7 +3391,7 @@ Secondary Region (West US):
 Traffic Manager:
   - Routes traffic to primary
   - Fails over to secondary if primary is unavailable
-</code></pre>
+</code></code></pre>
 
 <h2>5. Strategies</h2>
 <ul>
@@ -3410,7 +3462,7 @@ Stress the importance of defining <b>RTO/RPO</b> and regularly testing DR plans.
 </table>
 
 <h2>3. Example Usage</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 // Using Managed Identity in .NET
 var credential = new DefaultAzureCredential();
 var client = new SecretClient(new Uri("https://myvault.vault.azure.net/"), credential);
@@ -3422,7 +3474,7 @@ var credential = new ClientSecretCredential(
     clientSecret: "zzzzzzzz");
 
 var client = new SecretClient(new Uri("https://myvault.vault.azure.net/"), credential);
-</code></pre>
+</code></code></pre>
 
 <h2>4. Best Practices</h2>
 <ul>
@@ -3458,16 +3510,16 @@ It helps enforce security, compliance, and governance by assigning roles instead
 </ul>
 
 <h2>3. Example: Assigning a Role via Azure CLI</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 // Assign Contributor role to a user at resource group scope
 az role assignment create \
   --assignee user@contoso.com \
   --role Contributor \
   --resource-group MyResourceGroup
-</code></pre>
+</code></code></pre>
 
 <h2>4. Example: Assigning a Role via ARM Template</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 {
   "type": "Microsoft.Authorization/roleAssignments",
   "apiVersion": "2020-04-01-preview",
@@ -3477,7 +3529,7 @@ az role assignment create \
     "principalId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   }
 }
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -3518,7 +3570,7 @@ It provides flexibility to increase or decrease resources based on demand, ensur
 </ul>
 
 <h2>4. Example: Auto-Scaling Rule</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 // Scale out when CPU > 70% for 10 minutes
 {
   "metricName": "Percentage CPU",
@@ -3534,7 +3586,7 @@ It provides flexibility to increase or decrease resources based on demand, ensur
     "cooldown": "PT5M"
   }
 }
-</code></pre>
+</code></code></pre>
 
 <h2>5. Advanced Scaling Options</h2>
 <ul>
@@ -3577,7 +3629,7 @@ It allows developers to build, test, and deploy applications to Azure services (
 </ul>
 
 <h2>3. Example: Deploy to Azure App Service</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 name: Build and Deploy to Azure
 
 on:
@@ -3616,10 +3668,10 @@ jobs:
       with:
         app-name: 'my-app-service'
         package: ./publish
-</code></pre>
+</code></code></pre>
 
 <h2>4. Example: Secure Authentication with OIDC</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 - name: Login to Azure using OIDC
   uses: azure/login@v1
   with:
@@ -3627,7 +3679,7 @@ jobs:
     tenant-id: ${{ secrets.AZURE_TENANT_ID }}
     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
     enable-AzPSSession: true
-</code></pre>
+</code></code></pre>
 <p>
 👉 This avoids storing client secrets in GitHub. Instead, Azure trusts GitHub’s OIDC tokens via federated credentials.
 </p>
@@ -3673,7 +3725,7 @@ They protect against regional outages and allow applications to serve traffic cl
 </ul>
 
 <h2>4. Example Architecture</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 Region A (East US):
   - App Service / AKS
   - SQL Database (Primary)
@@ -3687,7 +3739,7 @@ Region B (West US):
 Azure Front Door / Traffic Manager:
   - Routes traffic to nearest healthy region
   - Provides automatic failover
-</code></pre>
+</code></code></pre>
 
 <h2>5. Cross-Cutting Concerns</h2>
 <ul>
@@ -3733,7 +3785,7 @@ Integrating enforcement into CI/CD pipelines prevents poor-quality code from rea
 </ul>
 
 <h2>3. Example: Azure DevOps Pipeline with StyleCop & SonarQube</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 trigger:
 - main
 
@@ -3764,10 +3816,10 @@ steps:
 
 - task: SonarCloudAnalyze@1
 - task: SonarCloudPublish@1
-</code></pre>
+</code></code></pre>
 
 <h2>4. Example: GitHub Actions with ESLint</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 name: Lint and Test
 
 on: [pull_request]
@@ -3781,7 +3833,7 @@ jobs:
       run: npm install
     - name: Run ESLint
       run: npm run lint
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -3919,10 +3971,10 @@ Grafana and Kibana are widely used open-source tools for this purpose.
 </ul>
 
 <h2>4. Example Setup</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 Microservices → Logs → Fluentd → Elasticsearch → Kibana (log dashboards)
 Microservices → Metrics → Prometheus → Grafana (metrics dashboards)
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -4047,7 +4099,7 @@ They catch regressions early, enforce coding standards, and validate functionali
 </ul>
 
 <h2>3. Example: Azure DevOps Pipeline</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 trigger:
 - main
 
@@ -4070,10 +4122,10 @@ steps:
   inputs:
     testResultsFiles: '**/*.trx'
     testRunTitle: 'Unit Test Results'
-</code></pre>
+</code></code></pre>
 
 <h2>4. Example: GitHub Actions Workflow</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 name: CI Pipeline
 
 on:
@@ -4093,7 +4145,7 @@ jobs:
       run: dotnet build --configuration Release
     - name: Run Tests
       run: dotnet test --configuration Release --logger trx
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -4131,7 +4183,7 @@ It allows reverting to a <b>last known good version</b> quickly, minimizing down
 </ul>
 
 <h2>3. Example: Azure DevOps Pipeline Rollback</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 jobs:
 - job: Deploy
   steps:
@@ -4144,10 +4196,10 @@ jobs:
         kubectl rollout undo deployment/myapp
       fi
     displayName: 'Rollback on Failure'
-</code></pre>
+</code></code></pre>
 
 <h2>4. Example: GitHub Actions Rollback</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -4161,7 +4213,7 @@ jobs:
           echo "Deployment failed, rolling back..."
           kubectl rollout undo deployment/myapp
         fi
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -4206,7 +4258,7 @@ the same way as application code — version-controlled, tested, and automated.
 </ul>
 
 <h2>4. Example: Terraform for Azure</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 provider "azurerm" {
   features {}
 }
@@ -4223,10 +4275,10 @@ resource "azurerm_storage_account" "storage" {
   account_tier             = "Standard"
   account_replication_type = "GRS"
 }
-</code></pre>
+</code></code></pre>
 
 <h2>5. Example: Azure Bicep</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: 'myResourceGroup'
   location: 'East US'
@@ -4240,7 +4292,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   }
   kind: 'StorageV2'
 }
-</code></pre>
+</code></code></pre>
 
 <h2>6. Best Practices</h2>
 <ul>
@@ -4310,7 +4362,7 @@ Securing pipelines ensures <b>trust, integrity, and compliance</b>.
 </ul>
 
 <h2>3. Example: Secure GitHub Actions Workflow</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 name: Secure CI/CD
 
 on:
@@ -4335,7 +4387,7 @@ jobs:
 
     - name: Run Security Scan
       run: dotnet build && dotnet test && dotnet list package --vulnerable
-</code></pre>
+</code></code></pre>
 
 <h2>4. Best Practices</h2>
 <ul>
@@ -4369,7 +4421,7 @@ Approvals add a <b>human checkpoint</b> in CI/CD pipelines. They ensure that dep
 </ul>
 
 <h2>3. Example: Azure DevOps Pipeline Approvals</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 # YAML pipeline with environment approvals
 stages:
 - stage: DeployToProd
@@ -4381,13 +4433,13 @@ stages:
         deploy:
           steps:
           - script: echo "Deploying to Production..."
-</code></pre>
+</code></code></pre>
 <p>
 👉 In Azure DevOps, you configure <b>environment approvals</b> in the portal. For example, require approval from "Ops Team" before the <code>Production</code> environment runs.
 </p>
 
 <h2>4. Example: GitHub Actions with Manual Approval</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 name: Deploy Workflow
 
 on:
@@ -4407,7 +4459,7 @@ jobs:
       url: https://myapp.azurewebsites.net
     steps:
     - run: echo "Deploying to Production"
-</code></pre>
+</code></code></pre>
 <p>
 👉 In GitHub Actions, environments can be configured with <b>required reviewers</b>. The pipeline pauses until reviewers approve the deployment.
 </p>
@@ -4490,14 +4542,14 @@ SonarQube metrics help teams:
 </ul>
 
 <h2>4. Example Quality Gate</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 Conditions:
 - Coverage &gt;= 80%
 - Duplications &lt; 3%
 - Security Rating = A
 - Reliability Rating = A
 - Maintainability Rating = A
-</code></pre>
+</code></code></pre>
 
 <p>
 If any condition fails, the pipeline blocks the merge/deployment until issues are resolved.
@@ -4537,7 +4589,7 @@ By enforcing rules automatically, teams reduce <b>code review friction</b>, impr
 </ul>
 
 <h2>3. Example: Azure DevOps Pipeline</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 steps:
 - task: UseDotNet@2
   inputs:
@@ -4549,7 +4601,7 @@ steps:
 
 - script: dotnet format --verify-no-changes
   displayName: 'Check Code Formatting'
-</code></pre>
+</code></code></pre>
 
 <h2>4. Best Practices</h2>
 <ul>
@@ -4590,7 +4642,7 @@ They enforce <b>coding standards, detect issues, and provide real-time feedback<
 </ul>
 
 <h2>4. Example: GitHub Actions Workflow</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 name: Build & Analyze
 
 on: [push, pull_request]
@@ -4608,7 +4660,7 @@ jobs:
         run: dotnet restore
       - name: Build with Roslyn Analyzers
         run: dotnet build --configuration Release -warnaserror
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -4653,7 +4705,7 @@ It helps identify untested parts of the application and ensures that critical lo
 </ul>
 
 <h2>4. Example Workflow with Coverlet</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 # Run tests with coverage enabled
 dotnet test /p:CollectCoverage=true \
             /p:CoverletOutput=TestResults/coverage.json \
@@ -4662,7 +4714,7 @@ dotnet test /p:CollectCoverage=true \
 # Generate HTML report
 reportgenerator -reports:TestResults/coverage.cobertura.xml \
                 -targetdir:CoverageReport
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -4781,12 +4833,12 @@ flexible notification routing, and integration with incident management tools.
 </ul>
 
 <h2>3. Example: CPU Usage Alert</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 Alert Rule:
 - Query: rate(node_cpu_seconds_total{mode!="idle"}[1m])
 - Condition: > 80% usage
 - Notification: Slack channel #infra-alerts
-</code></pre>
+</code></code></pre>
 
 <h2>4. Best Practices</h2>
 <ul>
@@ -4852,14 +4904,14 @@ better scalability, and reduced resource usage</b>.
 </ul>
 
 <h2>3. Example Optimization</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 -- Slow query
 SELECT * FROM Orders WHERE YEAR(OrderDate) = 2026;
 
 -- Optimized query (index-friendly)
 SELECT * FROM Orders 
 WHERE OrderDate >= '2026-01-01' AND OrderDate < '2027-01-01';
-</code></pre>
+</code></code></pre>
 
 <h2>4. Best Practices</h2>
 <ul>
@@ -4923,7 +4975,7 @@ They act like a <b>lookup table</b>, allowing the database engine to quickly loc
 </ul>
 
 <h2>4. Example Index Creation</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 -- Clustered Index
 CREATE CLUSTERED INDEX IX_Orders_OrderID ON Orders(OrderID);
 
@@ -4936,7 +4988,7 @@ INCLUDE (OrderDate, TotalAmount);
 CREATE NONCLUSTERED INDEX IX_Orders_Active
 ON Orders(Status)
 WHERE Status = 'Active';
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -4999,7 +5051,7 @@ The schema design determines how tenant data is stored and accessed.
 </ul>
 
 <h2>4. Example: Shared Schema Design</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 CREATE TABLE Orders (
     OrderId INT PRIMARY KEY,
     TenantId INT NOT NULL,
@@ -5012,7 +5064,7 @@ CREATE TABLE Orders (
 -- Composite index for tenant isolation
 CREATE INDEX IX_Orders_Tenant_Customer
 ON Orders (TenantId, CustomerId);
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <ul>
@@ -5140,7 +5192,7 @@ by terminating one transaction (the <b>deadlock victim</b>).
 </ul>
 
 <h2>3. Example: Retry Logic in C#</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 int retryCount = 3;
 for (int i = 0; i < retryCount; i++)
 {
@@ -5156,7 +5208,7 @@ for (int i = 0; i < retryCount; i++)
         Thread.Sleep(1000 * (i + 1)); // exponential backoff
     }
 }
-</code></pre>
+</code></code></pre>
 
 <h2>4. Best Practices</h2>
 <ul>
@@ -5294,32 +5346,32 @@ while still being treated as a single logical object. It improves <b>query perfo
 <p>
 Defines how rows are mapped to partitions based on a column.
 </p>
-<pre><code>
+<pre><code class="language-csharp"><code>
 CREATE PARTITION FUNCTION pfOrdersByYear (INT)
 AS RANGE LEFT FOR VALUES (2020, 2021, 2022, 2023);
-</code></pre>
+</code></code></pre>
 
 <h3>Step 2: Create a Partition Scheme</h3>
 <p>
 Maps partitions to filegroups for physical storage.
 </p>
-<pre><code>
+<pre><code class="language-csharp"><code>
 CREATE PARTITION SCHEME psOrdersByYear
 AS PARTITION pfOrdersByYear
 TO (FG2020, FG2021, FG2022, FG2023, FG2024);
-</code></pre>
+</code></code></pre>
 
 <h3>Step 3: Create a Partitioned Table</h3>
 <p>
 Apply the partition scheme to the table.
 </p>
-<pre><code>
+<pre><code class="language-csharp"><code>
 CREATE TABLE Orders (
     OrderId INT PRIMARY KEY,
     OrderYear INT,
     Amount DECIMAL(10,2)
 ) ON psOrdersByYear(OrderYear);
-</code></pre>
+</code></code></pre>
 
 <h2>4. Benefits of Partitioning</h2>
 <ul>
@@ -5391,7 +5443,7 @@ Well-designed procedures reduce <b>network round-trips</b>, leverage <b>executio
 </ul>
 
 <h2>3. Example Stored Procedure</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 CREATE PROCEDURE usp_GetActiveOrders
     @TenantId INT,
     @StartDate DATE,
@@ -5407,7 +5459,7 @@ BEGIN
       AND Status = 'Active'
     ORDER BY OrderDate;
 END;
-</code></pre>
+</code></code></pre>
 
 <h2>4. Best Practices</h2>
 <ul>
@@ -5471,7 +5523,7 @@ Well-designed procedures reduce <b>network round-trips</b>, leverage <b>executio
 </ul>
 
 <h2>3. Example Stored Procedure</h2>
-<pre><code>
+<pre><code class="language-csharp"><code>
 CREATE PROCEDURE usp_GetActiveOrders
     @TenantId INT,
     @StartDate DATE,
@@ -5487,7 +5539,7 @@ BEGIN
       AND Status = 'Active'
     ORDER BY OrderDate;
 END;
-</code></pre>
+</code></code></pre>
 
 <h2>4. Best Practices</h2>
 <ul>
@@ -5590,7 +5642,7 @@ If another transaction has changed the data, EF Core throws a <code>DbUpdateConc
 You typically use a <b>RowVersion</b> or <b>Timestamp</b> column in SQL Server.
 </p>
 
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 public class Person
 {
     public int PersonId { get; set; }
@@ -5599,25 +5651,25 @@ public class Person
     [Timestamp] // Marks as concurrency token
     public byte[] Version { get; set; }
 }
-</code></pre>
+</code></code></pre>
 
 <h2>3. How EF Core Generates SQL</h2>
 <p>
 When updating, EF Core includes the concurrency token in the <code>WHERE</code> clause:
 </p>
 
-<pre><code class="sql">
+<pre><code class="language-csharp"><code class="sql">
 UPDATE [People]
 SET [FirstName] = @p0
 WHERE [PersonId] = @p1 AND [Version] = @p2;
-</code></pre>
+</code></code></pre>
 
 <h2>4. Handling Concurrency Conflicts</h2>
 <p>
 You catch <code>DbUpdateConcurrencyException</code> and decide how to resolve conflicts:
 </p>
 
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 try
 {
     await context.SaveChangesAsync();
@@ -5638,7 +5690,7 @@ catch (DbUpdateConcurrencyException ex)
     }
     await context.SaveChangesAsync();
 }
-</code></pre>
+</code></code></pre>
 
 <h2>5. Resolution Strategies</h2>
 <ul>
@@ -5675,7 +5727,7 @@ Audit logs must ensure <b>completeness</b> (capture critical actions),
 </p>
 
 <h2>3. Audit Log Schema Design</h2>
-<pre><code class="sql">
+<pre><code class="language-csharp"><code class="sql">
 CREATE TABLE AuditLog (
     AuditId INT IDENTITY PRIMARY KEY,
     EventTime DATETIME2 NOT NULL,
@@ -5687,7 +5739,7 @@ CREATE TABLE AuditLog (
     IPAddress NVARCHAR(45),
     CorrelationId UNIQUEIDENTIFIER
 );
-</code></pre>
+</code></code></pre>
 
 <h2>4. What to Capture</h2>
 <p>
@@ -5710,7 +5762,7 @@ and integrate with <b>SIEM tools</b> (Splunk, ELK, Azure Sentinel).
 </p>
 
 <h2>7. Example in C# (Application Layer)</h2>
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 public async Task LogAuditAsync(string userId, string action, string entity, string entityId, string details)
 {
     var audit = new AuditLog
@@ -5727,7 +5779,7 @@ public async Task LogAuditAsync(string userId, string action, string entity, str
     _context.AuditLogs.Add(audit);
     await _context.SaveChangesAsync();
 }
-</code></pre>
+</code></code></pre>
 
 <h2>8. Compliance Considerations</h2>
 <p>
@@ -5868,7 +5920,7 @@ Invalidate cache when underlying data changes.
 </p>
 
 <h2>3. Implementation Example (Application Layer)</h2>
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 public async Task&lt;List&lt;Product&gt;&gt; GetProductsAsync()
 {
     if (!_cache.TryGetValue("products", out List&lt;Product&gt; products))
@@ -5882,10 +5934,10 @@ public async Task&lt;List&lt;Product&gt;&gt; GetProductsAsync()
     }
     return products;
 }
-</code></pre>
+</code></code></pre>
 
 <h2>4. Implementation Example (Redis)</h2>
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 var cacheKey = "top-products";
 var cachedData = await _redis.GetStringAsync(cacheKey);
 
@@ -5902,7 +5954,7 @@ if (cachedData == null)
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
         });
 }
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <p>
@@ -5947,7 +5999,7 @@ This ensures tests are <b>fast, reliable, and deterministic</b>.
 Moq is a popular library for mocking dependencies in C# unit tests.
 </p>
 
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 // Example: Service depends on IRepository
 public interface IRepository
 {
@@ -5981,7 +6033,7 @@ public async Task GetProductName_ReturnsName()
     Assert.Equal("Laptop", result);
     mockRepo.Verify(r =&gt; r.GetByIdAsync(1), Times.Once);
 }
-</code></pre>
+</code></code></pre>
 
 <h2>4. Best Practices</h2>
 <p>
@@ -6038,7 +6090,7 @@ Integration tests are <b>slower, broader, and closer to real-world scenarios</b>
 <h2>3. Example in .NET</h2>
 
 <h3>Unit Test (with Moq)</h3>
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 [Fact]
 public async Task GetProductName_ReturnsName()
 {
@@ -6052,10 +6104,10 @@ public async Task GetProductName_ReturnsName()
 
     Assert.Equal("Laptop", result);
 }
-</code></pre>
+</code></code></pre>
 
 <h3>Integration Test (with In-Memory EF Core)</h3>
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 [Fact]
 public async Task GetProductName_IntegrationTest()
 {
@@ -6072,7 +6124,7 @@ public async Task GetProductName_IntegrationTest()
 
     Assert.Equal("Laptop", result);
 }
-</code></pre>
+</code></code></pre>
 
 <h2>4. Interview Insight</h2>
 <p>
@@ -6104,7 +6156,7 @@ It ensures critical logic is validated and helps identify untested areas in the 
 </p>
 
 <h2>3. CI/CD Pipeline Integration</h2>
-<pre><code class="yaml">
+<pre><code class="language-csharp"><code class="yaml">
 # Example Azure DevOps pipeline
 steps:
 - task: DotNetCoreCLI@2
@@ -6124,7 +6176,7 @@ steps:
 - task: SonarQubePrepare@4
   inputs:
     sonarCoverageReportPaths: 'TestResults/coverage.cobertura.xml'
-</code></pre>
+</code></code></pre>
 
 <h2>4. Best Practices</h2>
 <p>
@@ -6212,7 +6264,7 @@ xUnit supports async tests natively. You can write tests with <code>async Task</
 return types to await asynchronous methods.
 </p>
 
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 [Fact]
 public async Task GetDataAsync_ReturnsExpectedResult()
 {
@@ -6222,14 +6274,14 @@ public async Task GetDataAsync_ReturnsExpectedResult()
 
     Assert.Equal("Hello World", result);
 }
-</code></pre>
+</code></code></pre>
 
 <h2>3. Handling Exceptions in Async Tests</h2>
 <p>
 Use <code>await Assert.ThrowsAsync&lt;T&gt;</code> to validate exceptions in async methods.
 </p>
 
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 [Fact]
 public async Task GetDataAsync_ThrowsException_WhenInvalid()
 {
@@ -6238,14 +6290,14 @@ public async Task GetDataAsync_ThrowsException_WhenInvalid()
     await Assert.ThrowsAsync&lt;ArgumentException&gt;(
         () =&gt; service.GetDataAsync(null));
 }
-</code></pre>
+</code></code></pre>
 
 <h2>4. Mocking Async Dependencies</h2>
 <p>
 Use Moq’s <code>ReturnsAsync</code> to mock async methods.
 </p>
 
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 var mockRepo = new Mock&lt;IRepository&gt;();
 mockRepo.Setup(r =&gt; r.GetByIdAsync(1))
         .ReturnsAsync(new Product { Id = 1, Name = "Laptop" });
@@ -6254,7 +6306,7 @@ var service = new ProductService(mockRepo.Object);
 var result = await service.GetProductNameAsync(1);
 
 Assert.Equal("Laptop", result);
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <p>
@@ -6294,7 +6346,7 @@ They help avoid repetitive setup code and make tests more expressive.
 </p>
 
 <h2>3. Example in C#</h2>
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 // Domain class
 public class Product
 {
@@ -6349,7 +6401,7 @@ public void Product_ShouldHaveCorrectName()
 
     Assert.Equal("Laptop", product.Name);
 }
-</code></pre>
+</code></code></pre>
 
 <h2>4. Best Practices</h2>
 <p>
@@ -6395,20 +6447,20 @@ provides living documentation of system behavior.
 </p>
 
 <h2>4. Example in Gherkin</h2>
-<pre><code class="gherkin">
+<pre><code class="language-csharp"><code class="gherkin">
 Feature: Login functionality
   Scenario: Successful login
     Given the user is on the login page
     When the user enters valid credentials
     Then the user should be redirected to the dashboard
-</code></pre>
+</code></code></pre>
 
 <h2>5. Implementation in .NET (SpecFlow)</h2>
 <p>
 SpecFlow is a popular BDD framework for .NET that integrates with xUnit/NUnit.
 </p>
 
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 // Step Definition
 [Binding]
 public class LoginSteps
@@ -6434,7 +6486,7 @@ public class LoginSteps
         Assert.True(_result);
     }
 }
-</code></pre>
+</code></code></pre>
 
 <h2>6. Best Practices</h2>
 <p>
@@ -6473,7 +6525,7 @@ It does not care about how the method is invoked, only about returning controlle
 Stubs are used when you want to <b>simulate data or behavior</b> without verifying interactions.
 </p>
 
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 // Stub example with Moq
 var stubRepo = new Mock&lt;IRepository&gt;();
 stubRepo.Setup(r =&gt; r.GetByIdAsync(1))
@@ -6484,7 +6536,7 @@ var service = new ProductService(stubRepo.Object);
 var result = await service.GetProductNameAsync(1);
 
 Assert.Equal("Laptop", result);
-</code></pre>
+</code></code></pre>
 
 <h2>3. Mocking</h2>
 <p>
@@ -6493,7 +6545,7 @@ Mocks are used when you want to ensure that a dependency was called with the cor
 parameters, the right number of times, or in a specific order.
 </p>
 
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 // Mock example with Moq
 var mockRepo = new Mock&lt;IRepository&gt;();
 mockRepo.Setup(r =&gt; r.GetByIdAsync(It.IsAny&lt;int&gt;()))
@@ -6504,7 +6556,7 @@ await service.GetProductNameAsync(1);
 
 // Verify interaction
 mockRepo.Verify(r =&gt; r.GetByIdAsync(1), Times.Once);
-</code></pre>
+</code></code></pre>
 
 <h2>4. Key Differences</h2>
 <p>
@@ -6571,7 +6623,7 @@ Use <b>Polly</b> for retries, circuit breakers, and fallback logic.
 </p>
 
 <h2>3. Example: Contract Testing with Pact.NET</h2>
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 // Consumer Test
 [Fact]
 public void GetProduct_ReturnsExpectedResponse()
@@ -6588,10 +6640,10 @@ public void GetProduct_ReturnsExpectedResponse()
 
     // Verify consumer expectations
 }
-</code></pre>
+</code></code></pre>
 
 <h2>4. Example: End-to-End API Test</h2>
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 [Fact]
 public async Task OrderService_CallsProductServiceSuccessfully()
 {
@@ -6603,7 +6655,7 @@ public async Task OrderService_CallsProductServiceSuccessfully()
 
     Assert.Equal("Laptop", order.ProductName);
 }
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <p>
@@ -6824,10 +6876,10 @@ shows maturity in system design thinking.
             <li><strong>If any participant voted to abort (or timed out):</strong> The coordinator sends a <code>Global Abort</code> command. All participants roll back their local changes using the undo logs and release their locks.</li>
         </ul>
 
-        <pre>[Coordinator] --------(1. Prepare)--------> [Service A] & [Service B]
+        <pre><code class="language-csharp">[Coordinator] --------(1. Prepare)--------> [Service A] & [Service B]
 [Coordinator] <-----(2. Vote Commit)------ [Service A] & [Service B]
 
-[Coordinator] --------(3. Global Commit)---> [Service A] & [Service B]</pre>
+[Coordinator] --------(3. Global Commit)---> [Service A] & [Service B]</code></pre>
 
         <h3>The Catch: Why it's rarely used in microservices</h3>
         <ul>
@@ -7003,7 +7055,7 @@ become unstable.
 </p>
 
 <h2>5. Example in .NET + Azure</h2>
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 // Using Polly for resilience
 var policy = Policy
     .Handle&lt;HttpRequestException&gt;()
@@ -7013,7 +7065,7 @@ var policy = Policy
     );
 
 await policy.ExecuteAsync(() =&gt; httpClient.GetAsync("https://external-api"));
-</code></pre>
+</code></code></pre>
 
 <h2>6. Best Practices</h2>
 <p>
@@ -7085,7 +7137,7 @@ CQRS and Event Sourcing complement each other:
 </p>
 
 <h2>4. Example in .NET</h2>
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 // Command
 public record PlaceOrderCommand(Guid OrderId, string Product);
 
@@ -7113,7 +7165,7 @@ public class OrderProjection
 
     public IEnumerable&lt;string&gt; GetProducts() =&gt; _events.Select(e =&gt; e.Product);
 }
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <p>
@@ -7160,7 +7212,7 @@ It reduces <b>latency</b>, <b>database load</b>, and <b>network overhead</b>, wh
 </p>
 
 <h2>4. Example in .NET (Redis)</h2>
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 // Using Redis for distributed caching
 var cacheKey = $"product:{id}";
 var cachedProduct = await _redis.GetAsync&lt;Product&gt;(cacheKey);
@@ -7172,7 +7224,7 @@ var product = await _db.GetProductAsync(id);
 await _redis.SetAsync(cacheKey, product, TimeSpan.FromMinutes(10));
 
 return product;
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <p>
@@ -7218,7 +7270,7 @@ They decouple producers (senders) and consumers (receivers), improving scalabili
 </p>
 
 <h2>4. Example in .NET (Azure Service Bus)</h2>
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 // Sending a message
 await using var client = new ServiceBusClient(connectionString);
 var sender = client.CreateSender("orders");
@@ -7242,7 +7294,7 @@ processor.ProcessErrorAsync += async args =>
 };
 
 await processor.StartProcessingAsync();
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <p>
@@ -7290,7 +7342,7 @@ as user demand rises.
 </p>
 
 <h2>4. Example: Horizontal Scaling in Kubernetes</h2>
-<pre><code class="yaml">
+<pre><code class="language-csharp"><code class="yaml">
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -7309,7 +7361,7 @@ spec:
       target:
         type: Utilization
         averageUtilization: 70
-</code></pre>
+</code></code></pre>
 <p>
 👉 This configuration scales the <b>orderservice</b> deployment between 2 and 10 replicas based on CPU utilization.
 </p>
@@ -7385,7 +7437,7 @@ while ensuring eventual propagation.
 </p>
 
 <h2>4. Example in .NET (Eventual Consistency with Messaging)</h2>
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 // Producer publishes event
 await _bus.Publish(new OrderCreatedEvent(orderId));
 
@@ -7395,7 +7447,7 @@ public async Task Handle(OrderCreatedEvent evt)
     await _readModel.UpdateAsync(evt.OrderId, evt.Product);
     // Read model may lag behind, but will eventually catch up
 }
-</code></pre>
+</code></code></pre>
 
 <h2>5. Best Practices</h2>
 <p>
@@ -7454,7 +7506,7 @@ from distributed applications. It enables <b>observability, debugging, auditing,
 </p>
 
 <h2>5. Example in .NET</h2>
-<pre><code class="csharp">
+<pre><code class="language-csharp"><code class="csharp">
 // Structured logging with Serilog
 Log.Logger = new LoggerConfiguration()
     .Enrich.WithCorrelationId()
@@ -7463,7 +7515,7 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 Log.Information("Order {OrderId} created successfully", orderId);
-</code></pre>
+</code></code></pre>
 
 <h2>6. Best Practices</h2>
 <p>
@@ -7578,7 +7630,7 @@ Console.WriteLine($"Salary: {emp1.CalculateSalary()}");
 
 emp2.ShowDetails();
 Console.WriteLine($"Salary: {emp2.CalculateSalary()}");
- </code> </pre>
+ </code> </code></pre>
 
   <hr>
 
@@ -7616,10 +7668,9 @@ managerPolicy.PrintPolicy();
 
 LeavePolicy staffPolicy = new StaffLeavePolicy();
 staffPolicy.PrintPolicy();
-  </code></pre>
+  </code></code></pre>
 
 </details>
-
 
 <details>
   <summary>Sealed Class Example (InternEmployee with Stipend)</summary>
@@ -7670,7 +7721,7 @@ Console.WriteLine($"Salary: {intern.CalculateSalary()}");
 // ❌ Error if you try:
 // public class SummerIntern : InternEmployee { } 
 // => Compile-time error: cannot inherit from sealed class
-  </code></pre>
+  </code></code></pre>
 
   <h2>🔹 When to Use a Sealed Class</h2>
   <ul>
@@ -7683,6 +7734,6 @@ Console.WriteLine($"Salary: {intern.CalculateSalary()}");
   <p><b>Interview one-liner:</b> 
   “A sealed class can be instantiated but not inherited. Use it when the class is complete, stable, or should not be extended further.”</p>
 </details>
-
+			
 </body>
 </html>
