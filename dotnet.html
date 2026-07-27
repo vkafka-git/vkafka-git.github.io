@@ -167,6 +167,332 @@ Here, both service calls start concurrently. <code>await Task.WhenAll</code> fre
 </details>
 
 <details>
+<summary>CancellationToken</summary>
+<p>
+
+<h2>1. What is CancellationToken?</h2>
+<p>
+<code>CancellationToken</code> is a mechanism in .NET for cooperative cancellation of asynchronous operations. It doesn’t force a task to stop; instead, it signals that the task should gracefully end if possible.
+</p>
+
+<h2>2. Why is it Important?</h2>
+<p>
+It prevents wasted resources when a client disconnects, cancels, or times out. For example, in file uploads, if the user closes the browser mid‑upload, the server can stop processing instead of continuing unnecessarily.
+</p>
+
+<h2>3. Code Example: File Upload</h2>
+<pre><code class="language-csharp">
+[HttpPost("upload")]
+public async Task<IActionResult> UploadFile(IFormFile file, CancellationToken cancellationToken)
+{
+    if (file == null || file.Length == 0)
+        return BadRequest("No file uploaded.");
+
+    var blobClient = new BlobClient(connectionString, containerName, file.FileName);
+
+    await using var stream = file.OpenReadStream();
+
+    try
+    {
+        // Pass cancellationToken to UploadAsync
+        await blobClient.UploadAsync(stream, cancellationToken);
+        return Ok("File uploaded successfully.");
+    }
+    catch (OperationCanceledException)
+    {
+        // Clean up partial blob if needed
+        await blobClient.DeleteIfExistsAsync();
+        return StatusCode(StatusCodes.Status499ClientClosedRequest,
+                          "Upload cancelled by client.");
+    }
+}
+</code></pre>
+
+<h2>4. Key Points</h2>
+<ul>
+  <li><code>HttpContext.RequestAborted</code> is automatically passed as the <code>CancellationToken</code>.</li>
+  <li>If the user closes the browser mid‑upload, the token is triggered.</li>
+  <li>The async method throws <code>OperationCanceledException</code>.</li>
+  <li>You can catch it, clean up partial files, and return a meaningful response.</li>
+</ul>
+
+<h2>5. Interview Insight</h2>
+<p>
+“In a file upload pipeline, passing <code>HttpContext.RequestAborted</code> down to async methods ensures that if the client cancels or disconnects, the upload stops gracefully with <code>OperationCanceledException</code>. This prevents wasted resources and allows us to clean up partial files.”
+</p>
+
+</p>
+</details>
+
+<details>
+<summary>Async API Failures and Retry Strategy</summary>
+<p>
+
+<h2>1. The Setup</h2>
+<p>
+Imagine you call three external APIs in parallel using <code>Task.WhenAll(api1, api2, api3)</code>.  
+If <b>API2 fails</b>, you need to identify which one failed and then decide: retry only API2, or retry all three again?
+</p>
+
+<h2>2. Identifying Which API Failed</h2>
+<p>
+When you use <code>Task.WhenAll</code>, if any task fails, the returned task is faulted with an <code>AggregateException</code>.  
+Each inner exception corresponds to the failed task. You can inspect which task failed by checking <code>task.Exception.InnerExceptions</code> or by wrapping each call in its own <code>try/catch</code>.
+</p>
+
+<pre><code class="language-csharp">
+var api1Task = CallApi1Async();
+var api2Task = CallApi2Async();
+var api3Task = CallApi3Async();
+
+try
+{
+    await Task.WhenAll(api1Task, api2Task, api3Task);
+}
+catch
+{
+    if (api2Task.IsFaulted)
+    {
+        Console.WriteLine("API2 failed: " + api2Task.Exception?.Message);
+    }
+}
+</code></pre>
+
+<h2>3. Retry Strategy Options</h2>
+<h3>a) Retry Only the Failed API</h3>
+<ul>
+  <li><b>Pros:</b> Saves time and resources.</li>
+  <li><b>Cons:</b> Must ensure partial retries still combine results correctly.</li>
+</ul>
+
+<h3>b) Retry All APIs Together</h3>
+<ul>
+  <li><b>Pros:</b> Simpler logic, ensures consistency if APIs depend on each other.</li>
+  <li><b>Cons:</b> Wastes resources if API1 and API3 already succeeded.</li>
+</ul>
+
+<h2>4. Best Practice</h2>
+<ul>
+  <li><b>Independent APIs:</b> Retry only the failed one.</li>
+  <li><b>Dependent APIs:</b> Retry all together for consistency.</li>
+  <li>Use a resilience library like <b>Polly</b> to implement retry policies per API call.</li>
+  <li>Combine with <b>circuit breaker</b> so you don’t hammer a failing API repeatedly.</li>
+</ul>
+
+<h2>5. Example with Polly</h2>
+<pre><code class="language-csharp">
+var retryPolicy = Policy
+    .Handle<HttpRequestException>()
+    .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+
+var api1Task = retryPolicy.ExecuteAsync(() => CallApi1Async());
+var api2Task = retryPolicy.ExecuteAsync(() => CallApi2Async());
+var api3Task = retryPolicy.ExecuteAsync(() => CallApi3Async());
+
+await Task.WhenAll(api1Task, api2Task, api3Task);
+</code></pre>
+<p>
+Here, each API has its own retry logic. If API2 fails, only API2 retries — API1 and API3 are unaffected.
+</p>
+
+<h2>6. Interview Insight</h2>
+<p>
+“When calling multiple APIs in parallel, you can identify which one failed by checking the faulted tasks after <code>Task.WhenAll</code>.  
+If APIs are independent, retry only the failed one using a retry policy.  
+If they’re dependent, retry all together for consistency.  
+Libraries like Polly make it easy to apply per‑API retry, exponential backoff, and circuit breakers.”
+</p>
+
+</p>
+</details>
+
+
+<details>
+<summary>Dependent Async Calls with Retry and Logging</summary>
+<p>
+
+<h2>1. Scenario</h2>
+<p>
+You have multiple async calls where one depends on the result of another:
+<ul>
+  <li><b>API1:</b> Get customer details</li>
+  <li><b>API2:</b> Get customer’s orders (requires customer ID from API1)</li>
+  <li><b>API3:</b> Get shipping info (requires order ID from API2)</li>
+</ul>
+Because of dependencies, these calls must be executed sequentially with <code>await</code>.
+</p>
+
+<h2>2. Sequential Awaits</h2>
+<p>
+Dependent calls cannot run in parallel. You must <code>await</code> each one before starting the next.  
+If API1 fails, API2 and API3 cannot even start.
+</p>
+
+<h2>3. Code Example with Retry and Logging</h2>
+<pre><code class="language-csharp">
+public async Task<CustomerShippingInfo> GetCustomerShippingAsync(int customerId)
+{
+    // Define a retry policy for each call (Polly)
+    var retryPolicy = Policy
+        .Handle<HttpRequestException>()
+        .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+            (exception, timespan, retryCount, context) =>
+            {
+                Console.WriteLine($"Retry {retryCount} due to: {exception.Message}");
+            });
+
+    try
+    {
+        // Step 1: Call API1 with retry and logging
+        var customer = await retryPolicy.ExecuteAsync(async () =>
+        {
+            try
+            {
+                return await GetCustomerDetailsAsync(customerId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"API1 failed: {ex.Message}");
+                throw;
+            }
+        });
+
+        // Step 2: Call API2 (depends on API1 result)
+        var orders = await retryPolicy.ExecuteAsync(async () =>
+        {
+            try
+            {
+                return await GetCustomerOrdersAsync(customer.Id);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"API2 failed: {ex.Message}");
+                throw;
+            }
+        });
+
+        // Step 3: Call API3 (depends on API2 result)
+        var shipping = await retryPolicy.ExecuteAsync(async () =>
+        {
+            try
+            {
+                return await GetShippingInfoAsync(orders.First().OrderId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"API3 failed: {ex.Message}");
+                throw;
+            }
+        });
+
+        return new CustomerShippingInfo(customer, orders, shipping);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Failure in dependent chain: {ex.Message}");
+        throw;
+    }
+}
+</code></pre>
+
+<h2>4. Key Practices</h2>
+<ul>
+  <li><b>Sequential awaits:</b> Each dependent call waits for the previous one.</li>
+  <li><b>Try/catch per call:</b> Handle failures gracefully at each stage.</li>
+  <li><b>Retry policies per call:</b> Apply Polly retry individually, not globally.</li>
+  <li><b>Logging:</b> Log failures and retries for observability and debugging.</li>
+</ul>
+
+<h2>5. Interview Insight</h2>
+<p>
+“In dependent async chains, you must use sequential awaits. If API1 fails, API2 and API3 cannot run.  
+Wrap each call in try/catch to log failures, and apply retry policies per call so only the failed call retries.  
+This ensures resilience without re‑executing successful calls, and observability through logging makes debugging easier.”
+</p>
+
+</p>
+</details>
+
+<details>
+<summary>Task Lifecycle in .NET</summary>
+<p>
+
+<h2>1. What is Task Lifecycle?</h2>
+<p>
+A <code>Task</code> in .NET represents an asynchronous operation.  
+Its lifecycle describes the different states a task can go through from creation to completion.
+</p>
+
+<h2>2. Task States</h2>
+<ul>
+  <li><b>Created:</b> Task is instantiated but not started.</li>
+  <li><b>WaitingForActivation:</b> Task is scheduled but not yet running.</li>
+  <li><b>Running:</b> Task is executing.</li>
+  <li><b>RanToCompletion:</b> Task finished successfully.</li>
+  <li><b>Faulted:</b> Task threw an exception (<code>IsFaulted == true</code>).</li>
+  <li><b>Canceled:</b> Task was canceled via <code>CancellationToken</code> (<code>IsCanceled == true</code>).</li>
+</ul>
+
+<h2>3. Code Example</h2>
+<pre><code class="language-csharp">
+public async Task DemoTaskLifecycle()
+{
+    var task = Task.Run(() =>
+    {
+        // Simulate work
+        Thread.Sleep(1000);
+        // Uncomment to simulate failure
+        // throw new Exception("Something went wrong!");
+    });
+
+    try
+    {
+        await task;
+        if (task.IsCompletedSuccessfully)
+            Console.WriteLine("Task completed successfully.");
+    }
+    catch
+    {
+        if (task.IsFaulted)
+            Console.WriteLine("Task failed: " + task.Exception?.Message);
+        else if (task.IsCanceled)
+            Console.WriteLine("Task was canceled.");
+    }
+}
+</code></pre>
+
+<h2>4. Key Properties</h2>
+<ul>
+  <li><code>IsCompleted</code> → Task finished (success, fault, or cancel).</li>
+  <li><code>IsCompletedSuccessfully</code> → Task finished without errors.</li>
+  <li><code>IsFaulted</code> → Task ended with exception.</li>
+  <li><code>IsCanceled</code> → Task was canceled.</li>
+  <li><code>Exception</code> → Holds exception details if faulted.</li>
+</ul>
+
+<h2>5. Why Lifecycle Matters</h2>
+<p>
+Understanding task states helps you:
+<ul>
+  <li>Handle errors gracefully with <code>IsFaulted</code>.</li>
+  <li>Support cancellation with <code>IsCanceled</code>.</li>
+  <li>Log task outcomes for observability.</li>
+  <li>Design retry strategies based on task results.</li>
+</ul>
+</p>
+
+<h2>6. Interview Insight</h2>
+<p>
+“A Task in .NET can be Created, Running, Completed, Faulted, or Canceled.  
+Properties like <code>IsFaulted</code>, <code>IsCanceled</code>, and <code>IsCompletedSuccessfully</code> let us check the outcome.  
+This lifecycle is crucial for building resilient async code, because it allows us to retry failed tasks, cancel long‑running ones, and log outcomes for monitoring.”
+</p>
+
+</p>
+</details>
+
+
+<details>
 <summary>EF Core Concurrency Handling</summary>
 <p>
 
@@ -7313,77 +7639,7 @@ Highlight practical experience with <b>Azure Service Bus, RabbitMQ, or Kafka</b>
 (e.g., throughput vs ordering, durability vs latency) shows maturity in designing robust messaging solutions.
 </p>
 </details>
-<details>
-  <summary>Designing for Scalability</summary>
-  
 
-<h2>1. What Is Scalability?</h2>
-<p>
-Scalability is the ability of a system to <b>handle increasing load</b> by adding resources 
-without compromising performance or reliability. It ensures applications can grow seamlessly 
-as user demand rises.
-</p>
-
-<h2>2. Types of Scalability</h2>
-<p>
-- <b>Horizontal Scaling (Scale Out):</b> Add more instances/servers to distribute load.<br/>
-- <b>Vertical Scaling (Scale Up):</b> Increase resources (CPU, memory) of a single instance.<br/>
-- <b>Elastic Scaling:</b> Automatically adjust resources based on demand (cloud-native).<br/>
-</p>
-
-<h2>3. Key Strategies</h2>
-<p>
-- <b>Stateless Services:</b> Design services without local state, enabling easy horizontal scaling.<br/>
-- <b>Load Balancing:</b> Distribute traffic across multiple servers (e.g., Azure Front Door, AWS ELB).<br/>
-- <b>Database Scaling:</b> Use sharding, replication, and read replicas.<br/>
-- <b>Caching:</b> Reduce database load with Redis/CDN.<br/>
-- <b>Asynchronous Processing:</b> Offload heavy tasks to queues (RabbitMQ, Kafka, Azure Service Bus).<br/>
-- <b>Microservices:</b> Break monoliths into independently scalable services.<br/>
-</p>
-
-<h2>4. Example: Horizontal Scaling in Kubernetes</h2>
-<pre><code class="language-csharp"><code class="yaml">
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: orderservice-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: orderservice
-  minReplicas: 2
-  maxReplicas: 10
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-</code></code></pre>
-<p>
-👉 This configuration scales the <b>orderservice</b> deployment between 2 and 10 replicas based on CPU utilization.
-</p>
-
-<h2>5. Best Practices</h2>
-<p>
-- Design for <b>statelessness</b> and externalize state (databases, caches).<br/>
-- Use <b>observability tools</b> (Prometheus, Grafana, Azure Monitor) to monitor scaling needs.<br/>
-- Implement <b>graceful shutdown</b> to avoid request loss during scaling events.<br/>
-- Test scaling under load with performance testing tools.<br/>
-- Combine <b>autoscaling</b> with <b>scheduled scaling</b> for predictable traffic patterns.<br/>
-</p>
-
-<h2>6. Interview Insight</h2>
-<p>
-In interviews, emphasize that scalability is achieved through <b>horizontal scaling, load balancing, 
-and stateless design</b>. Highlight practical experience with <b>Kubernetes HPA, cloud-native autoscaling, 
-and database sharding</b>. Mention trade-offs between <b>vertical vs horizontal scaling</b>, and explain how 
-observability and caching play a critical role. Demonstrating awareness of <b>cost vs performance trade-offs</b> 
-shows maturity in designing scalable systems.
-</p>
-</details>
 <details>
   <summary>Handling Eventual Consistency</summary>
   
@@ -7734,6 +7990,188 @@ Console.WriteLine($"Salary: {intern.CalculateSalary()}");
   <p><b>Interview one-liner:</b> 
   “A sealed class can be instantiated but not inherited. Use it when the class is complete, stable, or should not be extended further.”</p>
 </details>
-			
+<details>
+<summary>How do you develop a scalable application?</summary>
+<p>
+
+<h2>1. Define Scalability</h2>
+<p>
+Scalability means the application can handle increasing load (users, requests, data) without degrading performance. It should grow seamlessly by adding resources horizontally (more instances) or vertically (bigger servers).
+</p>
+
+<h2>2. Design Principles</h2>
+<ul>
+  <li><b>Stateless Services:</b> Keep services stateless so they can scale out easily.</li>
+  <li><b>Microservices:</b> Break monoliths into independently scalable services.</li>
+  <li><b>Loose Coupling:</b> Use modular architecture to scale components independently.</li>
+  <li><b>Load Balancing:</b> Distribute traffic across multiple servers or regions.</li>
+  <li><b>Asynchronous Processing:</b> Offload heavy tasks to queues (Azure Service Bus, Kafka, RabbitMQ).</li>
+  <li><b>Caching:</b> Reduce database load with Redis, CDN, or in‑memory caching.</li>
+  <li><b>Database Scaling:</b> Use sharding, replication, and read replicas.</li>
+</ul>
+
+<h2>3. Example: Web API Handling 10,000 Requests</h2>
+<pre><code class="language-csharp">
+public async Task<IActionResult> GetData(int id)
+{
+    // Async I/O frees threads
+    var detailsTask = productService.GetDetailsAsync(id);
+    var priceTask = pricingService.GetPriceAsync(id);
+
+    await Task.WhenAll(detailsTask, priceTask);
+
+    return Ok(new ProductResponse(detailsTask.Result, priceTask.Result));
+}
+</code></pre>
+<p>
+Here, async calls prevent thread blocking, allowing the server to handle thousands of concurrent requests.
+</p>
+
+<h2>4. Example: Horizontal Scaling in Kubernetes</h2>
+<p>
+In Kubernetes, horizontal scaling is achieved by increasing the number of pods in a deployment.  
+The <b>Horizontal Pod Autoscaler (HPA)</b> automatically adjusts the number of replicas based on resource utilization.
+</p>
+
+<pre><code class="language-csharp"><code class="yaml">
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: orderservice-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: orderservice
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+</code></code></pre>
+
+<p>
+👉 This configuration scales the <b>orderservice</b> deployment between 2 and 10 replicas based on CPU utilization.  
+It ensures elasticity — the application can handle traffic spikes by adding pods and scale down when demand decreases, optimizing resource usage.
+</p>
+
+<h2>5. Resilience Patterns</h2>
+<ul>
+  <li><b>Retry Policies:</b> Use Polly for retries with exponential backoff.</li>
+  <li><b>Circuit Breaker:</b> Stop calling failing services temporarily.</li>
+  <li><b>Timeouts:</b> Prevent long waits on unresponsive services.</li>
+  <li><b>Bulkhead Isolation:</b> Isolate failures to avoid cascading impact.</li>
+</ul>
+
+<h2>6. Observability</h2>
+<ul>
+  <li><b>Logging:</b> Capture structured logs for failures and performance.</li>
+  <li><b>Metrics:</b> Monitor CPU, memory, request latency, error rates.</li>
+  <li><b>Tracing:</b> Use distributed tracing (OpenTelemetry, Application Insights).</li>
+</ul>
+
+<h2>7. Cloud Scaling Strategies</h2>
+<ul>
+  <li><b>Auto‑Scaling:</b> Scale out/in based on CPU, memory, or request count.</li>
+  <li><b>Scheduled Scaling:</b> Scale during predictable traffic spikes.</li>
+  <li><b>Geo‑Scaling:</b> Deploy in multiple regions with global load balancing.</li>
+</ul>
+
+<h2>8. Interview Insight</h2>
+<p>
+“To build a scalable application, I design stateless services, break monoliths into microservices, use async I/O, caching, and database sharding.  
+I apply resilience patterns like retries and circuit breakers, and ensure observability with logging and metrics.  
+In cloud environments, I leverage auto‑scaling and geo‑distribution. For containerized workloads, I use Kubernetes Horizontal Pod Autoscaler to scale pods automatically based on demand. This ensures the system can handle growth gracefully while staying resilient and cost‑efficient.”
+</p>
+
+</p>
+</details>
+
+<details>
+<summary>How do you do Application Design & Architecture</summary>
+<p>
+
+<h2>1. My Approach to Clean Architecture</h2>
+<p>
+I design applications using <b>Clean Architecture</b> principles to ensure scalability, maintainability, and testability.
+</p>
+
+<ul>
+  <li><b>Separation of Concerns:</b> Business logic is kept independent of frameworks. Domain entities and rules are pure C# classes, free from EF Core, ASP.NET, or Azure SDK dependencies.</li>
+  <li><b>Dependency Inversion:</b> Outer layers (Infrastructure, UI) depend on inner layers (Domain, Application) via interfaces. Inner layers never depend on outer layers.</li>
+  <li><b>Testability & Maintainability:</b> Core domain logic can be unit tested without infrastructure.</li>
+  <li><b>Flexibility:</b> Databases, frameworks, or UI layers can be swapped without touching business rules.</li>
+</ul>
+
+<h3>Layered Structure</h3>
+<ul>
+  <li><b>Domain Layer:</b> Entities, Value Objects, Aggregates, Domain Events.</li>
+  <li><b>Application Layer:</b> CQRS handlers, Mediator pattern, use cases, validators.</li>
+  <li><b>Infrastructure Layer:</b> EF Core repositories, Service Bus, external API clients.</li>
+  <li><b>Presentation Layer:</b> ASP.NET Core controllers, middleware, DTOs.</li>
+</ul>
+
+</p>
+
+<h2>2. Request Flow (Right from Receiving the Request)</h2>
+<ol>
+  <li><b>Client → API Gateway:</b> Request hits API Gateway for routing, SSL termination, throttling, and authentication.</li>
+  <li><b>Controller → Mediator → CQRS:</b> Controller delegates to Mediator, which routes to the correct CQRS handler (Command/Query).</li>
+  <li><b>Validation & Immediate Response:</b> Request is validated. If valid, API returns <code>200 OK</code> immediately to the client.</li>
+  <li><b>Publish to Service Bus:</b> Handler publishes event to Azure Service Bus Topic <code>RequestReceived</code>.</li>
+  <li><b>Azure Functions Saga Orchestration:</b> Durable Function Saga listens to the topic, orchestrates workflow, calls external APIs, manages retries and compensations.</li>
+  <li><b>External API Calls & Finalization:</b> Saga invokes external services (Payment, Notification, etc.), updates query database (CQRS read side). Client can query status via <code>GET /status/{id}</code>.</li>
+</ol>
+
+</p>
+
+<h2>3. .NET Project Structure (Clean Architecture)</h2>
+<pre><code>
+Solution
+│
+├── Presentation (Web/UI Layer)
+│   ├── MyApp.Api
+│   ├── Controllers
+│   ├── Middleware
+│   └── DTOs
+│
+├── Application (Use Case Layer)
+│   ├── Commands / Queries
+│   ├── Mediator Handlers
+│   ├── Interfaces
+│   └── Validators
+│
+├── Domain (Core Business Layer)
+│   ├── Entities
+│   ├── ValueObjects
+│   ├── DomainEvents
+│   └── Services
+│
+├── Infrastructure (Implementation Layer)
+│   ├── Persistence (EF Core)
+│   ├── Messaging (Service Bus)
+│   ├── ExternalServices (API clients)
+│   └── Configurations
+│
+└── Tests
+    ├── UnitTests
+    ├── IntegrationTests
+    └── ArchitectureTests
+</code></pre>
+
+</p>
+
+<h2>4. Example Narrative (Interview Delivery)</h2>
+<p>
+“My approach to Clean Architecture starts with modeling the domain and keeping it independent of frameworks. The ASP.NET Core controller uses the Mediator pattern, which hands requests to CQRS handlers. The handler validates the request and immediately returns a 200 OK to the client. At the same time, it publishes a <code>RequestReceived</code> event to Azure Service Bus. An Azure Durable Function Saga orchestration listens to that topic, coordinates external API calls, and manages retries or compensations. This way, the client gets a quick response, while the full workflow is reliably handled in the background. I structure the solution into Presentation, Application, Domain, and Infrastructure projects, ensuring separation of concerns, dependency inversion, testability, and scalability.”
+</p>
+
+</details>
+
+
 </body>
 </html>
