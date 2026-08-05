@@ -12,7 +12,7 @@
   <!-- SQL language component -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
-  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
 	<style>
 	    body {
 	        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -8092,6 +8092,73 @@ In cloud environments, I leverage auto‑scaling and geo‑distribution. For con
 </details>
 
 <details>
+  <summary>Scalable Application Design Framework</summary>
+  <div>
+
+    <h3>1. Client Layer (Entry Points)</h3>
+    <ul>
+      <li>Web, Mobile, IoT Devices → entry points making HTTPS/gRPC requests</li>
+      <li>ASP.NET Core API Gateway → reverse proxy, authentication, rate limiting, request routing</li>
+      <li>Authentication & Authorization → JWT validation, identity checks</li>
+      <li>Rate Limiting → protects backend from spikes/DDoS</li>
+      <li>Routing → directs requests to correct microservice</li>
+    </ul>
+
+    <h3>2. Communication Layer (Asynchronous Messaging)</h3>
+    <ul>
+      <li>Azure Service Bus (Event Bus) → decoupled, event‑driven communication</li>
+      <li>Pub/Sub → microservices broadcast domain events (e.g., OrderCreated)</li>
+      <li>Saga Orchestration / Choreography → coordinates distributed workflows without blocking HTTP calls</li>
+      <li>Loose Coupling → services communicate via events, not direct dependencies</li>
+    </ul>
+
+    <h3>3. Microservices Layer (Compute Core)</h3>
+    <ul>
+      <li>AKS Cluster (Azure Kubernetes Service) → hosts containerized services (User, Order, Inventory)</li>
+      <li>Saga Pattern → distributed transaction management with compensating actions</li>
+      <li>CQRS → separates write models (commands) from read models (queries)</li>
+      <li>Bulkhead Isolation → isolates resource pools (threads, CPU, memory) per service</li>
+      <li>Stateless Services → scale horizontally; state externalized to DB/cache</li>
+    </ul>
+
+    <h3>4. Data Layer (Persistence & Caching)</h3>
+    <ul>
+      <li>Redis Cache → in‑memory store for hot data, reduces latency</li>
+      <li>SQL Server Shards → horizontal partitioning for large datasets</li>
+      <li>Materialized Views → pre‑computed read tables for CQRS queries</li>
+      <li>Async Processing → queues/workers handle heavy tasks outside request cycle</li>
+    </ul>
+
+    <h3>5. Resilience & Scaling (Cross‑Cutting Pillar)</h3>
+    <ul>
+      <li>Polly (.NET Resilience Library) → retries (exponential backoff), circuit breakers, bulkheads</li>
+      <li>Azure Autoscale → dynamic scaling of pods/resources based on metrics</li>
+      <li>Backup & Recovery → geo‑replication, snapshot backups for DR</li>
+      <li>Graceful Degradation → fallback responses when services fail</li>
+    </ul>
+
+    <h3>6. Observability (Cross‑Cutting Pillar)</h3>
+    <ul>
+      <li>Application Insights + Log Analytics → telemetry, error tracking, performance monitoring</li>
+      <li>Metrics & Dashboards → real‑time monitoring of throughput, latency, error rates</li>
+      <li>Distributed Tracing → correlation IDs track requests across API Gateway, Service Bus, and microservices</li>
+    </ul>
+
+    <h3>Interview Narrative</h3>
+    <p>
+      “To design a scalable application, I start with stateless microservices behind an ASP.NET Core API Gateway. 
+      Communication is event‑driven via Azure Service Bus, using Saga orchestration for distributed workflows. 
+      Each service runs in AKS with CQRS for separation of reads/writes, and Bulkhead isolation for fault containment. 
+      Data is scaled with Redis caching and SQL Server sharding. Resilience is built with Polly (retries, circuit breakers), 
+      and scaling is automated with Azure Autoscale. Finally, observability is ensured with Application Insights, 
+      Log Analytics, and distributed tracing. This combination ensures the system can grow horizontally, remain resilient 
+      under failure, and provide consistent performance.”
+    </p>
+
+  </div>
+</details>
+
+<details>
 <summary>How do you do Application Design & Architecture</summary>
 <p>
 
@@ -8172,6 +8239,99 @@ Solution
 
 </details>
 
+<details>
+    <summary>API Gateway with Ocelot - Full Summary</summary>
 
+    <h2>Main Elements</h2>
+    <ul>
+      <li><strong>Routing</strong> – Maps upstream paths (client calls) to downstream microservices.</li>
+      <li><strong>Rate Limiting</strong> – Controls request quotas per user/API key to prevent abuse.</li>
+      <li><strong>Authentication</strong> – Validates identity (JWT, OAuth2, API keys).</li>
+      <li><strong>Authorization</strong> – Enforces role/claim/scope-based access policies.</li>
+      <li><strong>Reverse Proxy</strong> – Forwards requests to backend services and relays responses.</li>
+      <li><strong>Load Balancing</strong> – Distributes traffic across multiple service instances.</li>
+    </ul>
+
+    <h2>Program.cs (Code Changes)</h2>
+    <pre><code class="language-csharp">
+var builder = WebApplication.CreateBuilder(args);
+
+// Load Ocelot config
+builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true);
+
+// Authentication
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.Authority = "https://identityserver";
+        options.Audience = "myapi";
+    });
+
+// Authorization
+builder.Services.AddAuthorization();
+
+// Ocelot
+builder.Services.AddOcelot();
+
+var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
+await app.UseOcelot();
+
+app.Run();
+    </code></pre>
+
+    <h2>ocelot.json (Routing + Rate Limiting + Load Balancing)</h2>
+    <pre><code class="language-json">
+{
+  "Routes": [
+    {
+      "UpstreamPathTemplate": "/api/orders",
+      "DownstreamPathTemplate": "/orders",
+      "DownstreamHostAndPorts": [
+        { "Host": "orderservice.default.svc.cluster.local", "Port": 5000 }
+      ],
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": [ "orders.read", "orders.write" ]
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "Limit": 100,
+        "PeriodTimespan": 60
+      },
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      }
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "https://gateway.myapp.com"
+  }
+}
+    </code></pre>
+
+    <h2>Execution Order</h2>
+    <ol>
+      <li><strong>Authentication</strong> – Validate identity (JWT, OAuth2).</li>
+      <li><strong>Authorization</strong> – Enforce roles/claims/scopes.</li>
+      <li><strong>Rate Limiting</strong> – Apply quotas per identity.</li>
+      <li><strong>Routing</strong> – Forward request to downstream service.</li>
+      <li><strong>Load Balancing</strong> – Distribute traffic across service instances.</li>
+    </ol>
+
+    <h2>Interview Takeaway</h2>
+    <p>
+      “In an ASP.NET Core API Gateway with Ocelot, developers configure authentication and authorization 
+      in <code>Program.cs</code>, while routing, rate limiting, and load balancing are declared in 
+      <code>ocelot.json</code>. The execution order is Authentication → Authorization → Rate Limiting → 
+      Routing (with load balancing inside routing). This keeps the gateway lightweight and configuration-driven, 
+      while microservices remain clean and independent.”
+    </p>
+
+  </details>
 </body>
 </html>
