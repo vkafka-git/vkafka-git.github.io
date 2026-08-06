@@ -8333,5 +8333,419 @@ app.Run();
     </p>
 
   </details>
+  
+  
+<details>
+  <summary>Event-Driven Saga Orchestration Solution with Resilience Patterns</summary>
+  <div>
+
+    <h2>🔹 Business Requirement</h2>
+    <ul>
+      <li>Incoming <b>ServiceOrder JSON requests</b> (Tax, Immigration, Social Security, Earnings Statements).</li>
+      <li>Payload contains employee + dependent details.</li>
+      <li>Validate and reformat payload, then forward to external system.</li>
+    </ul>
+
+    <h2>🔹 Solution Architecture</h2>
+    <ol>
+      <li><b>ServiceOrder Microservice</b> validates and reformats payload, then publishes <code>ServiceOrderCreated</code> domain event.</li>
+      <li><b>Azure Service Bus Topic</b> receives the event.</li>
+      <li><b>Multiple Subscribers</b>:
+        <ul>
+          <li>Durable Function Starter → Saga Orchestrator</li>
+          <li>Audit Service</li>
+          <li>Monitoring Service</li>
+          <li>Analytics Service</li>
+        </ul>
+      </li>
+      <li><b>Saga Orchestrator</b> coordinates distributed workflow across Tax, Immigration, Social Security, and Earnings microservices.</li>
+      <li><b>Resilience Patterns:</b> Bulkhead isolation, Polly retries, circuit breakers, Redis cache, SQL sharding, async queues/workers.</li>
+    </ol>
+
+    <h2>🔹 Domain Events vs Commands</h2>
+    <table border="1" cellpadding="5">
+      <tr><th>Commands</th><th>Domain Events</th></tr>
+      <tr><td>Imperative: "Do this"</td><td>Declarative: "This happened"</td></tr>
+      <tr><td>Sent by Orchestrator to services (e.g., <code>CreateTaxRecord</code>)</td>
+          <td>Raised by microservices when state changes (e.g., <code>ServiceOrderCreated</code>, <code>TaxRecordCreated</code>)</td></tr>
+      <tr><td>Trigger actions</td><td>Signal business events</td></tr>
+    </table>
+
+    <h2>🔹 Code Examples</h2>
+
+    <h3>ServiceOrder Microservice publishes domain event</h3>
+    <pre><code class="language-csharp">
+public class ServiceOrderCreated {
+    public Guid OrderId { get; set; }
+    public Guid EmployeeId { get; set; }
+    public string RequestType { get; set; }
+    public string PayloadJson { get; set; }
+}
+
+public class ServiceOrderPublisher {
+    private readonly ServiceBusClient _client;
+    private readonly ServiceBusSender _sender;
+
+    public ServiceOrderPublisher(ServiceBusClient client) {
+        _client = client;
+        _sender = _client.CreateSender("serviceorder-topic");
+    }
+
+    public async Task PublishAsync(ServiceOrderCreated evt) {
+        var messageBody = JsonSerializer.Serialize(evt);
+        var message = new ServiceBusMessage(messageBody) {
+            ContentType = "application/json",
+            Subject = "ServiceOrderCreated"
+        };
+        await _sender.SendMessageAsync(message);
+    }
+}
+    </code></pre>
+
+    <h3>Durable Function Starter (triggered by Service Bus Topic)</h3>
+    <pre><code class="language-csharp">
+[FunctionName("ServiceOrderStarter")]
+public static async Task Run(
+    [ServiceBusTrigger("serviceorder-topic", "durable-orchestrator-sub")] ServiceOrderCreated order,
+    [DurableClient] IDurableOrchestrationClient starter,
+    ILogger log)
+{
+    string instanceId = await starter.StartNewAsync("ServiceOrderOrchestrator", order);
+    log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
+}
+    </code></pre>
+
+    <h3>Durable Function Orchestrator with Bulkhead Isolation</h3>
+    <pre><code class="language-csharp">
+[FunctionName("ServiceOrderOrchestrator")]
+public static async Task RunOrchestrator(
+    [OrchestrationTrigger] IDurableOrchestrationContext context)
+{
+    var serviceOrder = context.GetInput<ServiceOrderCreated>();
+
+    var bulkheadPolicy = Policy.BulkheadAsync<HttpResponseMessage>(
+        maxParallelization: 10,
+        maxQueuingActions: 20
+    );
+
+    try
+    {
+        await bulkheadPolicy.ExecuteAsync(() =>
+            context.CallActivityAsync("CreateTaxRecord", serviceOrder));
+
+        await bulkheadPolicy.ExecuteAsync(() =>
+            context.CallActivityAsync("CreateImmigrationRecord", serviceOrder));
+
+        await bulkheadPolicy.ExecuteAsync(() =>
+            context.CallActivityAsync("CreateSocialSecurityRecord", serviceOrder));
+
+        await bulkheadPolicy.ExecuteAsync(() =>
+            context.CallActivityAsync("CreateEarningsStatement", serviceOrder));
+    }
+    catch (Exception ex)
+    {
+        await context.CallActivityAsync("CancelTaxRecord", serviceOrder);
+        await context.CallActivityAsync("CancelImmigrationRecord", serviceOrder);
+    }
+}
+    </code></pre>
+
+    <h3>Activity Function with Polly Retry + Circuit Breaker</h3>
+    <pre><code class="language-csharp">
+public static class TaxServiceClient
+{
+    private static readonly HttpClient _httpClient = new HttpClient();
+
+    private static readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy =
+        Policy.Handle<HttpRequestException>()
+              .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
+              .WaitAndRetryAsync(
+                  3,
+                  attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                  onRetry: (outcome, timespan, attempt, context) =>
+                  {
+                      Console.WriteLine($"Retry {attempt} after {timespan.TotalSeconds}s");
+                  });
+
+    private static readonly AsyncCircuitBreakerPolicy<HttpResponseMessage> _circuitBreakerPolicy =
+        Policy.Handle<HttpRequestException>()
+              .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
+              .CircuitBreakerAsync(
+                  5,
+                  TimeSpan.FromSeconds(30),
+                  onBreak: (outcome, breakDelay) =>
+                      Console.WriteLine($"Circuit opened for {breakDelay.TotalSeconds}s"),
+                  onReset: () => Console.WriteLine("Circuit closed"),
+                  onHalfOpen: () => Console.WriteLine("Circuit half-open, testing...")
+              );
+
+    private static readonly IAsyncPolicy<HttpResponseMessage> _resiliencePolicy =
+        Policy.WrapAsync(_retryPolicy, _circuitBreakerPolicy);
+
+    public static async Task<HttpResponseMessage> CreateTaxRecordAsync(ServiceOrderCreated order)
+    {
+        var payload = new StringContent(order.PayloadJson, System.Text.Encoding.UTF8, "application/json");
+        return await _resiliencePolicy.ExecuteAsync(() =>
+            _httpClient.PostAsync("https://taxservice/api/create", payload));
+    }
+}
+
+[FunctionName("CreateTaxRecord")]
+public static async Task CreateTaxRecord([ActivityTrigger] ServiceOrderCreated order, ILogger log)
+{
+    var response = await TaxServiceClient.CreateTaxRecordAsync(order);
+
+    if (response.IsSuccessStatusCode)
+        log.LogInformation($"Tax record created successfully for Order {order.OrderId}");
+    else
+        throw new Exception("Tax service call failed");
+}
+    </code></pre>
+
+    <h2>🔹 Data Layer Components</h2>
+    <ul>
+      <li><b>Redis Cache:</b> Cache validated payloads and frequently accessed data (cache-aside pattern).</li>
+      <li><b>SQL Server Sharding:</b> Distribute employee records across shards for scalability.</li>
+      <li><b>Materialized Views:</b> Precompute aggregates for analytics queries.</li>
+      <li><b>Async Processing:</b> Offload non-critical tasks (notifications, audit logs) to queues.</li>
+      <li><b>Queues & Workers:</b> Service Bus queues + worker functions for background jobs.</li>
+    </ul>
+
+    <h2>🔹 Interview-Ready Summary</h2>
+    <p>
+      “We implemented an event-driven architecture using Azure Service Bus Topics and Durable Functions. 
+      The ServiceOrder microservice raises a <code>ServiceOrderCreated</code> domain event after validation. 
+      This event is published to a Service Bus Topic, allowing multiple consumers — the Durable Function starter, Audit, Monitoring, and Analytics services — to process it independently. 
+      The Durable Function orchestrator coordinates the Saga workflow by sending commands like <code>CreateTaxRecord</code> and handling compensation if failures occur. 
+      We applied <b>bulkhead isolation</b> around activity calls, and used <b>Polly retry + circuit breaker policies</b> inside activity functions to handle transient and sustained failures. 
+      In the data layer, Redis Cache accelerates reads, SQL Server Sharding scales horizontally, materialized views support analytics, and async queues/workers decouple background tasks. 
+      Together, these resilience and data patterns ensure scalability, fault tolerance, and graceful degradation.”
+    </p>
+
+  </div>
+</details>
+
+<details>
+  <summary>System Design Vocabulary Reference</summary>
+  <div>
+
+    <h2>🔹 Key Terms in Distributed Systems</h2>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <tr>
+        <th>Term</th>
+        <th>Definition</th>
+        <th>Example in Our Solution</th>
+      </tr>
+      <tr>
+        <td><b>Availability</b></td>
+        <td>Percentage of time a system is operational and accessible.</td>
+        <td>Durable Functions orchestrator and microservices are available 99.9% of the time.</td>
+      </tr>
+      <tr>
+        <td><b>Reliability</b></td>
+        <td>Ability of a system to consistently perform correctly under expected conditions.</td>
+        <td>Polly retry + circuit breaker ensures reliable calls to Tax/Immigration services.</td>
+      </tr>
+      <tr>
+        <td><b>Durability</b></td>
+        <td>Ability to preserve data safely over time, even after failures.</td>
+        <td>Service Bus messages are durable — they persist until consumed, even if consumers crash.</td>
+      </tr>
+      <tr>
+        <td><b>Scalability</b></td>
+        <td>Ability to handle increased load by adding resources (vertical or horizontal).</td>
+        <td>SQL Server sharding and autoscaling workers handle growing employee service orders.</td>
+      </tr>
+      <tr>
+        <td><b>Resilience</b></td>
+        <td>Ability to recover quickly from failures and continue functioning.</td>
+        <td>Bulkhead isolation + circuit breakers prevent one failing service from collapsing the system.</td>
+      </tr>
+      <tr>
+        <td><b>Fault Tolerance</b></td>
+        <td>Ability to continue operating properly in the presence of faults.</td>
+        <td>Compensation logic in Saga orchestration tolerates partial failures.</td>
+      </tr>
+      <tr>
+        <td><b>Consistency</b></td>
+        <td>Uniformity of data across components or replicas.</td>
+        <td>Eventual consistency between Tax, Immigration, and Social Security databases.</td>
+      </tr>
+      <tr>
+        <td><b>Latency</b></td>
+        <td>Time taken to process a request or deliver a response.</td>
+        <td>Redis cache reduces latency for repeated employee lookups.</td>
+      </tr>
+      <tr>
+        <td><b>Throughput</b></td>
+        <td>Number of requests processed per unit of time.</td>
+        <td>Global throttling ensures backend handles only 10,000 requests/sec safely.</td>
+      </tr>
+      <tr>
+        <td><b>Rate Limit</b></td>
+        <td>Max requests allowed per client in a time window.</td>
+        <td>Ocelot API Gateway enforces 100 requests/sec per client, returns 429 if exceeded.</td>
+      </tr>
+      <tr>
+        <td><b>Global Throttling</b></td>
+        <td>System-wide cap on total requests across all clients.</td>
+        <td>Custom middleware/load balancer rejects excess traffic with 503 Service Unavailable.</td>
+      </tr>
+      <tr>
+        <td><b>Backpressure</b></td>
+        <td>Mechanism to signal producers to slow down when consumers are overloaded.</td>
+        <td>Service Bus queues apply backpressure when workers can’t keep up.</td>
+      </tr>
+      <tr>
+        <td><b>Load Shedding</b></td>
+        <td>Dropping low-priority requests when system is near capacity.</td>
+        <td>Analytics jobs are dropped first if throughput limit is exceeded.</td>
+      </tr>
+    </table>
+
+    <h2>🔹 Interview-Ready Summary</h2>
+    <p>
+      “Availability is about uptime, reliability is about correctness, durability is about safe data persistence, and scalability is about handling growth. 
+      Resilience and fault tolerance ensure graceful recovery from failures. Rate limits protect fairness per client, while global throttling protects overall system capacity. 
+      Redis reduces latency, Service Bus ensures durability, and sharding increases throughput. 
+      Together, these terms describe how we design systems that are scalable, reliable, and fault tolerant.”
+    </p>
+
+  </div>
+</details>
+
+<details>
+  <summary>HTTP Status Codes Reference</summary>
+  <div>
+
+    <h2>🔹 Common HTTP Status Codes</h2>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <tr>
+        <th>Code</th>
+        <th>Category</th>
+        <th>Meaning</th>
+        <th>Typical Use Case</th>
+      </tr>
+      <tr>
+        <td><b>100 Continue</b></td>
+        <td>Informational</td>
+        <td>Request headers received, client should continue with body.</td>
+        <td>Large file upload with <code>Expect: 100-continue</code>.</td>
+      </tr>
+      <tr>
+        <td><b>200 OK</b></td>
+        <td>Success</td>
+        <td>Request succeeded.</td>
+        <td>Standard response for successful GET/POST.</td>
+      </tr>
+      <tr>
+        <td><b>201 Created</b></td>
+        <td>Success</td>
+        <td>Resource created successfully.</td>
+        <td>POST creating a new user/order.</td>
+      </tr>
+      <tr>
+        <td><b>202 Accepted</b></td>
+        <td>Success</td>
+        <td>Request accepted but not yet processed.</td>
+        <td>Async job submission.</td>
+      </tr>
+      <tr>
+        <td><b>204 No Content</b></td>
+        <td>Success</td>
+        <td>Request succeeded, no body returned.</td>
+        <td>DELETE or PUT with no response body.</td>
+      </tr>
+      <tr>
+        <td><b>301 Moved Permanently</b></td>
+        <td>Redirection</td>
+        <td>Resource permanently moved to new URL.</td>
+        <td>SEO-friendly permanent redirect.</td>
+      </tr>
+      <tr>
+        <td><b>302 Found</b></td>
+        <td>Redirection</td>
+        <td>Temporary redirect.</td>
+        <td>Redirecting to login page.</td>
+      </tr>
+      <tr>
+        <td><b>304 Not Modified</b></td>
+        <td>Redirection</td>
+        <td>Cached resource still valid.</td>
+        <td>Browser cache validation with ETag.</td>
+      </tr>
+      <tr>
+        <td><b>400 Bad Request</b></td>
+        <td>Client Error</td>
+        <td>Malformed request syntax or invalid parameters.</td>
+        <td>Broken JSON payload.</td>
+      </tr>
+      <tr>
+        <td><b>401 Unauthorized</b></td>
+        <td>Client Error</td>
+        <td>Authentication required or invalid credentials.</td>
+        <td>Missing/invalid JWT token.</td>
+      </tr>
+      <tr>
+        <td><b>403 Forbidden</b></td>
+        <td>Client Error</td>
+        <td>Authenticated but not authorized.</td>
+        <td>User lacks permission for resource.</td>
+      </tr>
+      <tr>
+        <td><b>404 Not Found</b></td>
+        <td>Client Error</td>
+        <td>Resource not found.</td>
+        <td>Invalid URL or missing record.</td>
+      </tr>
+      <tr>
+        <td><b>409 Conflict</b></td>
+        <td>Client Error</td>
+        <td>Request conflicts with current state.</td>
+        <td>Duplicate record, version mismatch.</td>
+      </tr>
+      <tr>
+        <td><b>429 Too Many Requests</b></td>
+        <td>Client Error</td>
+        <td>Rate limit exceeded.</td>
+        <td>API throttling.</td>
+      </tr>
+      <tr>
+        <td><b>500 Internal Server Error</b></td>
+        <td>Server Error</td>
+        <td>Generic server failure.</td>
+        <td>Unhandled exception.</td>
+      </tr>
+      <tr>
+        <td><b>502 Bad Gateway</b></td>
+        <td>Server Error</td>
+        <td>Invalid response from upstream server.</td>
+        <td>Reverse proxy error.</td>
+      </tr>
+      <tr>
+        <td><b>503 Service Unavailable</b></td>
+        <td>Server Error</td>
+        <td>Server overloaded or down for maintenance.</td>
+        <td>Peak load downtime.</td>
+      </tr>
+      <tr>
+        <td><b>504 Gateway Timeout</b></td>
+        <td>Server Error</td>
+        <td>Upstream server didn’t respond in time.</td>
+        <td>Timeout in microservice chain.</td>
+      </tr>
+    </table>
+
+    <h2>🔹 Key Takeaways</h2>
+    <ul>
+      <li><b>2xx = Success</b> → Everything worked.</li>
+      <li><b>3xx = Redirection</b> → Client must go elsewhere.</li>
+      <li><b>4xx = Client Error</b> → Problem with the request.</li>
+      <li><b>5xx = Server Error</b> → Problem with the server.</li>
+    </ul>
+
+  </div>
+</details>
+
 </body>
 </html>
