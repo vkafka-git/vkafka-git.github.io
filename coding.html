@@ -195,15 +195,19 @@ var result = employees
   <p><strong>Question:</strong> How can we list all employees along with their department names, ensuring employees without a department are still included?</p>
   <p><strong>What this does:</strong> Ensures all employees are listed, even if they don’t belong to any department. Missing departments show as "No Department".</p>
   <pre><code class="language-csharp">
-var leftJoin = from e in employees
-               join d in departments
-               on e.DepartmentId equals d.DepartmentId into deptGroup
-               from d in deptGroup.DefaultIfEmpty()
-               select new 
-               { 
-                   EmployeeName = e.Name, 
-                   DepartmentName = d?.DepartmentName ?? "No Department" 
-               };
+var leftJoin = employees
+    .GroupJoin(departments,
+        e => e.DepartmentId,
+        d => d.DepartmentId,
+        (e, deptGroup) => new { e, deptGroup })
+    .SelectMany(
+        x => x.deptGroup.DefaultIfEmpty(),
+        (x, d) => new 
+        {
+            EmployeeName = x.e.Name,
+            DepartmentName = d?.DepartmentName ?? "No Department"
+        });
+
   </code></pre>
   <div class="tip">Tip: Use <code>GroupJoin + DefaultIfEmpty()</code> to simulate a LEFT JOIN in LINQ.</div>
 </details>
