@@ -211,9 +211,28 @@ var leftJoin = employees
   </code></pre>
   <div class="tip">Tip: Use <code>GroupJoin + DefaultIfEmpty()</code> to simulate a LEFT JOIN in LINQ.</div>
 </details>
-
 <details>
-  <summary>Calculate the average salary per department - Three Table Join Example</summary>
+  <summary>Calculate the average salary per department</summary>
+  <p><strong>Question:</strong> How can we calculate the average salary per department per location using Employees, Departments, and Locations tables?</p>
+  <p><strong>What this does:</strong> Joins Employees → Departments → Locations, then groups by department and location, and calculates the average salary per group.</p>
+  <pre><code class="language-csharp">
+var avgSalaryPerDept = employees
+    .Join(departments,
+          e => e.DepartmentId,
+          d => d.DepartmentId,
+          (e, d) => new { e.Salary, d.DepartmentName })
+    .GroupBy(ed => ed.DepartmentName)
+    .Select(g => new 
+    { 
+        Department = g.Key, 
+        AverageSalary = g.Average(x => x.Salary) 
+    });
+
+  </code></pre>
+  
+</details>
+<details>
+  <summary>Three Table Join Example</summary>
   <p><strong>Question:</strong> How can we calculate the average salary per department per location using Employees, Departments, and Locations tables?</p>
   <p><strong>What this does:</strong> Joins Employees → Departments → Locations, then groups by department and location, and calculates the average salary per group.</p>
   <pre><code class="language-csharp">
