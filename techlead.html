@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Tech Lead/Full stack developer</title>
+	   <!-- Prism CSS theme -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+
+  <!-- Prism core -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <!-- SQL language component -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+	<style>
+	    body {
+	        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	        line-height: 1.6;
+	        color: #333;
+	        max-width: 800px;
+	        margin: 0 auto;
+	        padding: 20px;
+	        counter-reset: question-counter; /* start numbering */
+	    }
+	    h1 { border-bottom: 2px solid #0078d4; padding-bottom: 10px; color: #0078d4; }
+	    h2 { color: #24292e; margin-top: 30px; border-bottom: 1px solid #eaecef; padding-bottom: 5px; }
+	    h3 { color: #444; }
+	    hr { border: 0; height: 1px; background: #eaecef; margin: 20px 0; }
+	    
+	    
+	    blockquote { margin: 20px 0; padding: 0 1em; color: #6a737d; border-left: 0.25em solid #ffe58f; background-color: #fffbe6; padding: 10px 15px; border-radius: 0 4px 4px 0; }
+	    blockquote strong { color: #b78103; }
+	    table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+	    th, td { border: 1px solid #dfe2e5; padding: 12px; text-align: left; }
+	    th { background-color: #f6f8fa; }
+	    tr:nth-child(even) { background-color: #f8f9fa; }
+	
+	    details {
+	        counter-increment: question-counter; /* increment for each details */
+	        margin-bottom: 10px;
+	    }
+	
+	    summary {
+	        font-size: 1.6em;       /* make it big like <h1> */
+	        font-weight: bold;
+	        color: #0078d4;         /* same blue you used for h1 */
+	        cursor: pointer;
+	        display: flex;          /* align number + text horizontally */
+	        align-items: center;    /* vertical centering */
+	        margin-bottom: 10px;
+	    }
+	
+	    summary::-webkit-details-marker {
+	        display: none; /* hide default arrow */
+	    }
+	
+	    details summary::before {
+	        content: counter(question-counter) ". "; /* numbering only */
+	        color: #0078d4;
+	        font-weight: bold;
+	        margin-right: 8px;
+	    }
+	</style>
+<style>
+        /* Dark background container to match VS Code */
+        pre[class*="language-"] {
+            background-color: #1e1e1e !important;
+            color: #d4d4d4 !important;
+            padding: 1rem;
+            border-radius: 6px;
+        }
+
+        /* Blue: Keywords & Control Statements (public, static, void, class, return) */
+        .token.keyword, 
+        .token.class-name.keyword {
+            color: #569cd6 !important;
+        }
+
+        /* Green / Teal: Classes, Structs, Interfaces, & Types (Program, Console, String) */
+        .token.class-name, 
+        .token.type-definition,
+        .token.builtin {
+            color: #4ec9b0 !important;
+        }
+
+        /* Strings (Orange/Brown or Light Green) */
+        .token.string {
+            color: #ce9178 !important;
+        }
+
+        /* Comments (Muted Green) */
+        .token.comment {
+            color: #6a9955 !important;
+        }
+
+        /* Methods / Functions (Yellow) */
+        .token.function {
+            color: #dcdcaa !important;
+        }
+    </style>
+</head>
+<body>
+<details>
+  <summary>Unpopular Technical Decision (Decision-Making & Influence)</summary>
+
+  <h2>Question</h2>
+  <p>Tell me about a time you had to make an unpopular technical decision. How did you get buy-in from the team?</p>
+
+  <h3>Situation</h3>
+  <p>
+    In one of our large-scale projects, the team was comfortable using synchronous API calls between services. 
+    It was simple and familiar, but as traffic grew, we started seeing cascading failures and bottlenecks during peak loads.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    As Tech Lead, I had to ensure the system remained resilient and scalable. 
+    I realized continuing with synchronous calls would hurt reliability and customer experience, 
+    so I needed to introduce asynchronous messaging — even though the team was resistant to the added complexity.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li>Presented <strong>data</strong>: metrics showing increased error rates and downtime caused by synchronous dependencies.</li>
+    <li>Explained the <strong>business impact</strong>: poor customer experience and higher operational costs.</li>
+    <li>Ran a <strong>brown‑bag session</strong> demonstrating how queues (RabbitMQ/Azure Service Bus) handle retries, dead‑letter queues, and monitoring.</li>
+    <li>Phased the rollout: starting with one critical service, proving the benefits, then expanding.</li>
+    <li>Paired senior devs with juniors to spread knowledge and reduce the learning curve.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    Within weeks, production incidents dropped significantly, and recovery times improved. 
+    The team saw the benefits firsthand and began suggesting other areas to adopt async messaging. 
+    What started as an unpopular decision became a <strong>team win</strong>, and it strengthened trust in my leadership.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “I once had to enforce asynchronous messaging instead of synchronous APIs, which the team initially resisted due to complexity. 
+    I explained the risks with production metrics, ran knowledge‑sharing sessions, and phased the rollout. 
+    Once the team saw fewer incidents and better scalability, they embraced the approach. 
+    My focus was on transparency, education, and proving value through results.”
+  </p>
+</details>
+
+<details>
+  <summary>Stakeholder Conflict (Decision-Making & Influence)</summary>
+
+  <h2>Question</h2>
+  <p>Describe a time you disagreed with a stakeholder's timeline or scope. How did you handle it?</p>
+
+  <h3>Situation</h3>
+  <p>
+    I was leading a project to build a new reporting dashboard. The stakeholder wanted it delivered in six weeks 
+    with advanced features like real‑time data refresh, complex drill‑downs, and role‑based access.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    Based on the team’s capacity and dependencies (data warehouse upgrades, API readiness), I knew six weeks was unrealistic. 
+    Delivering everything in that timeline would risk quality and burnout. My task was to negotiate a feasible plan 
+    without losing stakeholder trust.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li>Listened to the stakeholder’s priorities to separate <strong>must‑haves</strong> from <strong>nice‑to‑haves</strong>.</li>
+    <li>Presented a <strong>capacity plan</strong> showing team velocity, dependencies, and risks.</li>
+    <li>Proposed a <strong>phased delivery</strong>: core dashboard in six weeks, advanced features in later sprints.</li>
+    <li>Suggested an <strong>MVP approach</strong> with interim checkpoints so stakeholders could see progress and adjust priorities.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    The stakeholder agreed to the phased plan. We delivered the MVP on time, which met the launch needs. 
+    Later, we added advanced features without compromising quality. 
+    The trust built from transparency made future negotiations smoother.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “In one project, a stakeholder wanted a complex dashboard in six weeks. I knew the scope was unrealistic, 
+    so I first listened to their priorities. Then I presented data showing capacity limits and risks, 
+    and proposed a phased MVP approach. We delivered the core features on time, and added advanced ones later. 
+    By being transparent and collaborative, I turned a potential conflict into a win‑win outcome.”
+  </p>
+</details>
+<details>
+  <summary>Mentorship & Growth (with Conflict Resolution in Team)</summary>
+
+  <h2>Question</h2>
+  <p>How do you structure code reviews for your team — what do you personally look for, and how do you give feedback to a resistant senior dev?</p>
+
+  <h3>Situation</h3>
+  <p>
+    In a project where we were scaling a microservices platform, code reviews became critical for consistency. 
+    One senior developer often resisted feedback, dismissing comments as “style preferences” rather than quality concerns.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    As Tech Lead, I needed to ensure reviews upheld standards for readability, maintainability, and performance, 
+    while also keeping the senior developer engaged and respected. My task was to structure reviews effectively 
+    and handle resistance without damaging morale.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li>Structured reviews around <strong>key pillars</strong>: readability, maintainability, performance, security, and test coverage.</li>
+    <li>Created a <strong>review checklist</strong> (naming conventions, SOLID principles, unit tests, error handling) to make expectations explicit.</li>
+    <li>Shifted feedback style from directive to collaborative — asking questions like 
+        <em>“How would this scale if we added 10x more users?”</em> instead of saying “This is wrong.”</li>
+    <li>Backed feedback with <strong>data</strong> (SonarCloud findings, bug history, performance metrics) to show objective impact.</li>
+    <li>Held a one‑on‑one with the senior dev to acknowledge their expertise, explain the rationale, and invite them to co‑own the checklist improvements.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    The senior developer gradually aligned with the standards and even contributed to refining the checklist. 
+    Reviews became less contentious, team consistency improved, and overall defect rates dropped. 
+    The process shifted from “criticism” to “collaboration,” strengthening team culture.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “I structure reviews around readability, maintainability, performance, and security, using a checklist to keep them consistent. 
+    With resistant developers, I shift from directives to collaboration — asking questions and backing feedback with data. 
+    In one case, a senior dev eventually embraced the standards and helped refine them, which improved team quality and reduced friction.”
+  </p>
+</details>
+<details>
+  <summary>Mentorship & Growth</summary>
+
+  <h2>Question</h2>
+  <p>Tell me about mentoring a junior/mid developer who was struggling. What was your approach and the outcome?</p>
+
+  <h3>Situation</h3>
+  <p>
+    A mid-level developer on my team was struggling with writing efficient LINQ queries and often produced code 
+    that worked functionally but performed poorly in production. This led to frustration and slowed down delivery.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    As Tech Lead, I needed to help the developer improve their skills, build confidence, and ensure their contributions 
+    met performance standards without discouraging them.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li>Scheduled <strong>pair programming sessions</strong> to walk through query design and optimization together.</li>
+    <li>Created a <strong>learning path</strong> with targeted resources (SQL joins, LINQ best practices, EF Core performance tips).</li>
+    <li>Used <strong>real-world examples</strong> from our codebase to show how small changes improved performance significantly.</li>
+    <li>Set <strong>incremental goals</strong> — first improving readability, then tackling performance tuning.</li>
+    <li>Provided <strong>positive reinforcement</strong> during code reviews, highlighting improvements before suggesting further refinements.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    Within two months, the developer’s queries became more efficient and aligned with team standards. 
+    They gained confidence, started contributing performance tips in reviews, and eventually mentored newer team members. 
+    The outcome was not just technical improvement but also stronger team collaboration.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “I mentored a mid-level developer struggling with LINQ performance. I paired with them, gave structured learning resources, 
+    and set incremental goals. Over time, their queries improved, they gained confidence, and even began mentoring others. 
+    This turned a challenge into a growth story that benefited both the individual and the team.”
+  </p>
+</details>
+<details>
+  <summary>Communication & Stakeholder Management</summary>
+
+  <h2>Question</h2>
+  <p>How do you define and communicate a technical roadmap to non-technical stakeholders?</p>
+
+  <h3>Situation</h3>
+  <p>
+    In a cloud migration project, leadership wanted clarity on how infrastructure upgrades, service refactoring, 
+    and resilience improvements would align with business goals. Non-technical stakeholders struggled to understand 
+    the technical jargon and dependencies.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    As Tech Lead, I needed to define a clear technical roadmap and communicate it in a way that business stakeholders 
+    could understand, ensuring alignment between engineering priorities and business outcomes.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li>Broke down the roadmap into <strong>business-aligned themes</strong> (e.g., “Improve reliability,” “Enable faster releases,” “Reduce costs”).</li>
+    <li>Mapped technical initiatives (microservices refactor, CI/CD automation, database sharding) to <strong>business outcomes</strong> like uptime, speed to market, and scalability.</li>
+    <li>Created a <strong>visual timeline</strong> with phases and milestones instead of technical task lists.</li>
+    <li>Used <strong>simple analogies</strong> (e.g., “sharding is like splitting traffic across multiple lanes”) to explain complex concepts.</li>
+    <li>Held regular <strong>roadmap reviews</strong> with stakeholders, inviting feedback and adjusting priorities collaboratively.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    Stakeholders gained confidence in the plan and understood how technical work supported business goals. 
+    This improved buy-in for engineering initiatives, reduced pushback on tech debt work, and created a shared language 
+    between product and engineering. The roadmap became a reference point for quarterly planning.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “I define roadmaps by aligning technical initiatives with business themes like reliability or speed to market. 
+    I use visuals, timelines, and analogies to make them accessible. In one cloud migration, this approach helped 
+    non-technical stakeholders see how microservices refactoring and CI/CD automation tied directly to uptime and faster releases. 
+    It built trust and made roadmap discussions collaborative instead of technical debates.”
+  </p>
+</details>
+<details>
+  <summary>Resilience & Incident Management</summary>
+
+  <h2>Question</h2>
+  <p>Describe a production incident you led the response for. What was the postmortem process, and what changed afterward?</p>
+
+  <h3>Situation</h3>
+  <p>
+    During a deployment of a new microservice in our compliance platform, we noticed a sudden spike in error rates and latency. 
+    Critical API calls to an external immigration service began failing, leading to cascading failures across dependent services. 
+    This impacted user onboarding workflows globally.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    As Tech Lead, I had to quickly stabilize the system, coordinate the response across teams, and ensure we captured learnings 
+    for long-term resilience. The challenge was balancing immediate containment with root cause analysis.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li><strong>Detection:</strong> Monitored Grafana/Kibana dashboards and confirmed elevated error rates and slow response times.</li>
+    <li><strong>Containment:</strong> Applied a circuit breaker (Polly in .NET) to throttle traffic and prevent cascading failures.</li>
+    <li><strong>Communication:</strong> Notified stakeholders via Teams and created a war room channel for coordination.</li>
+    <li><strong>Root Cause Analysis:</strong> Used correlation IDs in Kibana logs to trace failing requests and identified external API timeouts.</li>
+    <li><strong>Resolution:</strong> Rolled back deployment using Kubernetes rollout undo, applied exponential backoff with jitter, 
+        and implemented fallback responses for non-critical calls.</li>
+    <li><strong>Vendor Engagement:</strong> Contacted the external API provider to confirm their outage and align on recovery timeline.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    The system stabilized within hours, and user onboarding resumed with minimal disruption. 
+    Postmortem actions included adding synthetic monitoring for external dependencies, enhancing retry policies, 
+    and updating CI/CD pipelines to include canary deployments. These changes reduced future incident impact 
+    and improved stakeholder confidence in our resilience strategy.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “In one incident, a new microservice caused cascading failures when an external API degraded. 
+    I led containment with circuit breakers, rolled back the deployment, and coordinated communication in a war room. 
+    After resolution, we added synthetic monitoring and canary deployments. 
+    This not only stabilized the system quickly but also strengthened our long-term resilience.” 
+  </p>
+</details>
+<details>
+  <summary>Balancing Technical Debt vs Delivery (Decision-Making & Influence)</summary>
+
+  <h2>Question</h2>
+  <p>How do you balance tech debt paydown against feature delivery pressure from product/leadership?</p>
+
+  <h3>Situation</h3>
+  <p>
+    In one project, our product team was pushing for rapid delivery of new customer-facing features. 
+    At the same time, our codebase had accumulated significant technical debt — duplicated logic, 
+    poor test coverage, and performance bottlenecks. Ignoring it risked long-term velocity and stability.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    As Tech Lead, I needed to balance leadership’s demand for new features with the engineering need 
+    to address tech debt, ensuring we didn’t compromise quality or burn out the team.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li>Created an <strong>impact vs urgency matrix</strong> to prioritize debt items (e.g., high-impact performance fixes vs low-impact refactors).</li>
+    <li>Negotiated a <strong>70/30 split</strong> in sprint planning — 70% feature work, 30% debt paydown.</li>
+    <li>Framed debt work in <strong>business terms</strong> (e.g., “This refactor reduces onboarding time by 20%” instead of “cleaning code”).</li>
+    <li>Tracked debt reduction metrics (bug count, build times, performance improvements) and shared them with stakeholders.</li>
+    <li>Embedded small debt fixes into feature delivery (e.g., improving test coverage while adding new modules).</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    Over several sprints, bug counts dropped and release velocity improved. 
+    Product stakeholders saw that addressing debt directly supported faster delivery. 
+    The balanced approach built trust and created a sustainable rhythm for the team.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “I balance tech debt and delivery by using an impact vs urgency matrix and negotiating a 70/30 split in sprint planning. 
+    I frame debt work in business terms and track improvements like reduced bugs and faster builds. 
+    In one case, this approach lowered defect rates and improved velocity, showing stakeholders that debt paydown 
+    actually accelerates delivery rather than slowing it down.”
+  </p>
+</details>
+<details>
+  <summary>Conflict Resolution in Team</summary>
+
+  <h2>Question</h2>
+  <p>Tell me about a time two team members were in conflict over an architectural decision. How did you resolve it?</p>
+
+  <h3>Situation</h3>
+  <p>
+    In one project, two senior developers disagreed on how to scale our database. 
+    One advocated for vertical scaling (adding more resources to a single instance), 
+    while the other pushed for sharding (splitting data across multiple nodes). 
+    The debate became heated and started slowing progress.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    As Tech Lead, I needed to resolve the conflict constructively, ensure the team stayed aligned, 
+    and make a decision that balanced technical feasibility with business needs.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li>Facilitated a <strong>structured discussion</strong> where each developer presented pros and cons of their approach.</li>
+    <li>Documented both options in an <strong>Architecture Decision Record (ADR)</strong> for transparency.</li>
+    <li>Encouraged a <strong>proof-of-concept spike</strong> to test sharding under simulated load, while also benchmarking vertical scaling limits.</li>
+    <li>Brought in <strong>business context</strong> — projected user growth and budget constraints — to ground the decision.</li>
+    <li>Guided the team toward a <strong>hybrid approach</strong>: start with vertical scaling for immediate needs, 
+        but design clear boundaries to support sharding later when scale demanded it.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    The conflict was resolved without either developer feeling dismissed. 
+    The ADR captured the rationale, and the hybrid approach gave us short-term simplicity with long-term scalability. 
+    The team appreciated the collaborative process, and future disagreements were handled more constructively.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “Two senior devs disagreed on database scaling — vertical vs sharding. 
+    I facilitated a structured discussion, documented trade-offs, and ran a proof-of-concept. 
+    We agreed on a hybrid approach: vertical scaling now, sharding later. 
+    This resolved the conflict, aligned the team, and gave us both immediate stability and long-term scalability.” 
+  </p>
+</details>
+<details>
+  <summary>Tech Lead Role — Weekly Balance</summary>
+
+  <h2>Question</h2>
+  <p>What does a typical week look like for you as a Tech Lead — how do you split hands-on coding vs leadership work?</p>
+
+  <h3>Situation</h3>
+  <p>
+    In my current role as Tech Lead, I balance hands-on coding with leadership responsibilities. 
+    The challenge is ensuring delivery while also guiding design and architecture decisions that shape long-term scalability.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    My task each week is to deliver production code, mentor the team, align with stakeholders, 
+    and make architecture/design decisions that keep the system resilient and scalable.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li><strong>Hands-on Coding (40%):</strong> I take complex or critical tasks, contribute to architecture-heavy modules, and write production code to stay grounded.</li>
+    <li><strong>Design & Architecture Decisions (30%):</strong> I lead discussions on system design, evaluate trade-offs, document ADRs, and ensure scalability, performance, and maintainability.</li>
+    <li><strong>Code Reviews & Mentorship (20%):</strong> I run structured reviews, coach juniors/mids, and provide constructive feedback to seniors.</li>
+    <li><strong>Stakeholder Communication (10%):</strong> Present progress, risks, and roadmap updates to product and leadership in business-friendly terms.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    This balance keeps me technically sharp while ensuring the team is aligned and supported. 
+    It builds trust with stakeholders, empowers developers, and ensures delivery without sacrificing quality. 
+    Over time, the team has become more autonomous, allowing me to gradually shift focus toward higher-level architecture.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “A typical week for me as Tech Lead is split across coding, design, mentorship, and communication. 
+    I spend about <strong>40%</strong> on hands-on coding — taking complex or critical tasks, contributing to architecture-heavy modules, and writing production code to stay grounded. 
+    Around <strong>30%</strong> goes into design and architecture decisions — leading discussions, evaluating trade-offs, documenting ADRs, and ensuring scalability, performance, and maintainability. 
+    Another <strong>20%</strong> is dedicated to code reviews and mentorship — running structured reviews, coaching juniors/mids, and giving constructive feedback to seniors. 
+    Finally, about <strong>10%</strong> is stakeholder communication — presenting progress, risks, and roadmap updates in business-friendly terms. 
+    This balance keeps me close to the codebase while ensuring the team is aligned, supported, and our systems remain resilient and scalable.” 
+  </p>
+</details>
+
+
+
+
+
+</body>
+</html>

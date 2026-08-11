@@ -1184,49 +1184,53 @@ Always mention lifetimes (Singleton, Scoped, Transient) and constructor injectio
 </p>
 </details>
 <details>
-  <summary>Middleware Pipeline in ASP.NET Core</summary>
-  
-
-<h2>1. What is Middleware?</h2>
-<p>
-Middleware are components in ASP.NET Core that process HTTP requests and responses. Each middleware can perform operations before and after passing control to the next middleware in the pipeline.
-</p>
-
-<h2>2. How the Pipeline Works</h2>
-<ul>
-  <li>Requests enter the pipeline and pass through each middleware in sequence.</li>
-  <li>Each middleware decides whether to:
+  <summary>ASP.NET Core Middleware Overview</summary>
+  <div>
+    <h3>🔹 What is Middleware?</h3>
+    <p><b>Definition:</b> Middleware in ASP.NET Core is software assembled into the request pipeline to handle requests and responses.</p>
     <ul>
-      <li>Process the request and pass it to the next middleware.</li>
-      <li>Short-circuit the pipeline (e.g., return a response immediately).</li>
+      <li>Can perform work <b>before</b> passing the request to the next middleware.</li>
+      <li>Can perform work <b>after</b> the next middleware has executed.</li>
+      <li>Can <b>short-circuit</b> the pipeline by returning a response immediately.</li>
     </ul>
-  </li>
-  <li>Responses travel back through the pipeline in reverse order.</li>
-</ul>
+    <p><b>Registration:</b> Middleware is added in <code>Program.cs</code> using <code>app.UseMiddleware&lt;LoggingMiddleware&gt;();</code>.</p>
 
-<h2>3. Middleware Registration</h2>
-<p>
-Middleware is registered in <code>Program.cs</code> or <code>Startup.cs</code> using the <code>app.Use...</code> methods.
-</p>
-<pre><code class="language-csharp">
-// Example pipeline setup in Program.cs
-var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
+    <h3>🔹 Why is Middleware Used?</h3>
+    <p>Middleware is used to handle <b>cross-cutting concerns</b> in a clean, modular way:</p>
+    <ul>
+      <li>Authentication & Authorization</li>
+      <li>Logging & Monitoring</li>
+      <li>Error Handling</li>
+      <li>Routing</li>
+      <li>Serving Static Files</li>
+      <li>Security (CORS, HTTPS redirection, headers)</li>
+      <li>Performance (Response compression, caching)</li>
+    </ul>
 
-app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
+    <h3>🔹 Middleware Pipeline Flow</h3>
+    <pre><code class="language-csharp">
+Incoming Request
+   ↓
+Middleware 1 (Logging)
+   ↓
+Middleware 2 (Authentication)
+   ↓
+Middleware 3 (Routing)
+   ↓
+Controller / Endpoint
+   ↑
+Middleware 3 (Routing)
+   ↑
+Middleware 2 (Authentication)
+   ↑
+Middleware 1 (Logging)
+   ↑
+Outgoing Response
+  </code>  </pre>
+    <p><b>Note:</b> Each middleware runs twice — once on the way <b>in</b> (request) and once on the way <b>out</b> (response).</p>
 
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllers();
-});
-
-app.Run();
-</code></pre>
-
-<h2>4. Custom Middleware Example</h2>
-<pre><code class="language-csharp">
+    <h3>🔹 Example: Logging Middleware</h3>
+    <pre><code class="language-csharp">
 public class LoggingMiddleware
 {
     private readonly RequestDelegate _next;
@@ -1238,31 +1242,38 @@ public class LoggingMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        Console.WriteLine($"Request: {context.Request.Path}");
-        await _next(context); // Call the next middleware
-        Console.WriteLine($"Response: {context.Response.StatusCode}");
+        // Runs on the way IN (Request)
+        Console.WriteLine($"Incoming request: {context.Request.Path}");
+
+        await _next(context); // Pass control to next middleware
+
+        // Runs on the way OUT (Response)
+        Console.WriteLine($"Response status: {context.Response.StatusCode}");
     }
 }
+    </code></pre>
+
+    <h3>🔹 Registration in Program.cs</h3>
+    <pre><code class="language-csharp">
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
 
 // Register custom middleware
 app.UseMiddleware&lt;LoggingMiddleware&gt;();
-</code></pre>
 
-<h2>5. Common Middleware Components</h2>
-<ul>
-  <li><b>UseRouting:</b> Matches incoming requests to endpoints.</li>
-  <li><b>UseAuthentication:</b> Validates user identity.</li>
-  <li><b>UseAuthorization:</b> Enforces access policies.</li>
-  <li><b>UseStaticFiles:</b> Serves static content like CSS, JS, images.</li>
-  <li><b>UseExceptionHandler:</b> Handles errors globally.</li>
-</ul>
+app.MapControllers();
+app.Run();
+    </code></pre>
 
-<h2>6. Interview Insight</h2>
-<p>
-👉 The middleware pipeline is <b>ordered</b> and <b>sequential</b>. The order of registration matters — for example, <code>UseRouting</code> must come before <code>UseEndpoints</code>, and <code>UseAuthentication</code> must come before <code>UseAuthorization</code>. 
-Always emphasize that middleware can both handle requests and modify responses.
-</p>
+    <p><b>Explanation:</b></p>
+    <ul>
+      <li>Before <code>_next(context)</code> → Logs the incoming request.</li>
+      <li>After <code>_next(context)</code> → Logs the outgoing response.</li>
+    </ul>
+    <p>This shows why middleware executes twice: it wraps logic around the request and response lifecycle.</p>
+  </div>
 </details>
+
 <details>
   <summary>Global Exception Handling in ASP.NET Core</summary>
   

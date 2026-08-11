@@ -232,6 +232,53 @@ var avgSalaryPerDept = employees
   
 </details>
 <details>
+  <summary>Aggregates in LINQ Method Syntax</summary>
+  <div>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <tr><th>Aggregate</th><th>Example</th><th>Description</th></tr>
+      <tr><td><b>Count</b></td><td>g.Count()</td><td>Number of elements in the group</td></tr>
+      <tr><td><b>Sum</b></td><td>g.Sum(x => x.Salary)</td><td>Total of a numeric field</td></tr>
+      <tr><td><b>Average</b></td><td>g.Average(x => x.Salary)</td><td>Mean value of a numeric field</td></tr>
+      <tr><td><b>Min</b></td><td>g.Min(x => x.Salary)</td><td>Smallest value in the group</td></tr>
+      <tr><td><b>Max</b></td><td>g.Max(x => x.Salary)</td><td>Largest value in the group</td></tr>
+      <tr><td><b>First</b></td><td>g.OrderBy(x => x.HireDate).First()</td><td>First element (ordered for deterministic result)</td></tr>
+      <tr><td><b>Last</b></td><td>g.OrderBy(x => x.HireDate).Last()</td><td>Last element (ordered for deterministic result)</td></tr>
+      <tr><td><b>Aggregate</b></td><td>g.Aggregate(0, (acc, x) => acc + x.Salary)</td><td>Custom aggregation logic (like fold/reduce)</td></tr>
+    </table>
+  </div>
+</details>
+
+<details>
+  <summary>LINQ GroupBy Aggregates Example</summary>
+  <div>
+    <pre><code class="language-csharp">
+var deptStats = employees
+    .GroupBy(e => e.DepartmentId)
+    .Select(g => new 
+    {
+        DepartmentId   = g.Key,
+        EmployeeCount  = g.Count(),
+        TotalSalary    = g.Sum(x => x.Salary),
+        AverageSalary  = g.Average(x => x.Salary),
+        MinSalary      = g.Min(x => x.Salary),
+        MaxSalary      = g.Max(x => x.Salary),
+        FirstEmployee  = g.OrderBy(x => x.HireDate).First().Name,
+        LastEmployee   = g.OrderBy(x => x.HireDate).Last().Name
+    });
+
+foreach (var dept in deptStats)
+{
+    Console.WriteLine(
+        $"Dept {dept.DepartmentId}: " +
+        $"Count={dept.EmployeeCount}, Sum={dept.TotalSalary}, " +
+        $"Avg={dept.AverageSalary}, Min={dept.MinSalary}, Max={dept.MaxSalary}, " +
+        $"First={dept.FirstEmployee}, Last={dept.LastEmployee}");
+}
+    </code></pre>
+  </div>
+</details>
+
+<details>
   <summary>Three Table Join Example</summary>
   <p><strong>Question:</strong> How can we calculate the average salary per department per location using Employees, Departments, and Locations tables?</p>
   <p><strong>What this does:</strong> Joins Employees → Departments → Locations, then groups by department and location, and calculates the average salary per group.</p>
@@ -331,40 +378,82 @@ Console.WriteLine($"{n}th Highest Salary: {nthHighestSalary}");
   <p><strong>Question:</strong> How can we list employees who do not belong to any department?</p>
   <p><strong>What this does:</strong> Performs a LEFT JOIN between Employees and Departments, then filters where department is null.</p>
   <pre><code class="language-csharp">
-var employeesWithoutDept = from e in employees
-                           join d in departments
-                           on e.DepartmentId equals d.DepartmentId into deptGroup
-                           from d in deptGroup.DefaultIfEmpty()
-                           where d == null
-                           select e;
+var employeesWithoutDept = employees
+    .GroupJoin(departments,
+        e => e.DepartmentId,
+        d => d.DepartmentId,
+        (e, deptGroup) => new { e, deptGroup })
+    .SelectMany(
+        x => x.deptGroup.DefaultIfEmpty(),
+        (x, d) => new 
+        {
+            EmployeeName = x.e.Name,
+            DepartmentName = d?.DepartmentName
+        })
+    .Where(result => result.DepartmentName == null);
 
-foreach (var emp in employeesWithoutDept)
-{
-    Console.WriteLine(emp.Name);
-}
   </code></pre>
   <div class="tip">Tip: Use <code>DefaultIfEmpty()</code> to simulate LEFT JOIN and check for nulls.</div>
 </details>
 
 <details>
-  <summary>Find Duplicates in a List Example</summary>
-  <p><strong>Question:</strong> How can we find duplicate elements in a list using LINQ?</p>
-  <p><strong>What this does:</strong> Groups elements by value and selects those with count greater than 1.</p>
-  <pre><code class="language-csharp">
-var numbers = new List<int> { 1, 2, 3, 2, 4, 5, 1 };
+  <summary>Find Duplicate Employees by Name</summary>
+  <div>
+    <pre><code class="language-csharp">
+	var duplicateEmployees = employees
+		.GroupBy(e => e.Name)
+		.Where(g => g.Count() > 1)
+		.Select(g => new 
+		{ 
+			EmployeeName = g.Key, 
+			Count = g.Count() 
+		});
 
-var duplicates = numbers
-    .GroupBy(n => n)
-    .Where(g => g.Count() > 1)
-    .Select(g => g.Key);
-
-foreach (var dup in duplicates)
-{
-    Console.WriteLine($"Duplicate: {dup}");
-}
-  </code></pre>
-  <div class="tip">Tip: <code>GroupBy()</code> + <code>Count()</code> is the easiest way to detect duplicates.</div>
+    </code></pre>
+  </div>
 </details>
+
+<details>
+  <summary>Employees With Each Department (INNER JOIN)</summary>
+  <div>
+    <pre><code class="language-csharp">
+var employeesWithDept = employees
+    .Join(departments,
+          e => e.DepartmentId,
+          d => d.DepartmentId,
+          (e, d) => new 
+          {
+              EmployeeName = e.Name,
+              DepartmentName = d.DepartmentName
+          });
+
+
+    </code></pre>
+  </div>
+</details>
+
+<details>
+  <summary>Employees With Each Department (LEFT JOIN)</summary>
+  <div>
+    <pre><code class="language-csharp">
+var employeesWithDeptLeftJoin = employees
+    .GroupJoin(departments,
+        e => e.DepartmentId,
+        d => d.DepartmentId,
+        (e, deptGroup) => new { e, deptGroup })
+    .SelectMany(
+        x => x.deptGroup.DefaultIfEmpty(),
+        (x, d) => new 
+        {
+            EmployeeName = x.e.Name,
+            DepartmentName = d?.DepartmentName ?? "No Department"
+        });
+
+
+    </code></pre>
+  </div>
+</details>
+
 
 <details>
   <summary>Employees Count Per Department Example</summary>
@@ -379,10 +468,6 @@ var empCountPerDept = employees
     .GroupBy(x => x.DepartmentName)
     .Select(g => new { Department = g.Key, Count = g.Count() });
 
-foreach (var item in empCountPerDept)
-{
-    Console.WriteLine($"{item.Department}: {item.Count}");
-}
   </code></pre>
   <div class="tip">Tip: Use <code>GroupBy()</code> with <code>Count()</code> to get totals per group.</div>
 </details>
@@ -398,10 +483,6 @@ var aboveAverageEmployees = employees
     .Where(e => e.Salary > avgSalary)
     .Select(e => new { e.Name, e.Salary });
 
-foreach (var emp in aboveAverageEmployees)
-{
-    Console.WriteLine($"{emp.Name} - {emp.Salary}");
-}
   </code></pre>
   <div class="tip">Tip: Use <code>Average()</code> first, then filter with <code>Where()</code>.</div>
 </details>
@@ -416,10 +497,6 @@ var top3Employees = employees
     .Take(3)
     .Select(e => new { e.Name, e.Salary });
 
-foreach (var emp in top3Employees)
-{
-    Console.WriteLine($"{emp.Name} - {emp.Salary}");
-}
   </code></pre>
   <div class="tip">Tip: Use <code>Take(N)</code> after sorting to get the top N records.</div>
 </details>
@@ -436,32 +513,7 @@ foreach (var emp in top3Employees)
   }
 </style>
 
-<details>
-  <summary>GroupJoin Example</summary>
-  <p><strong>Question:</strong> How can we use <code>GroupJoin</code> to list each department with its employees?</p>
-  <pre><code class="language-csharp">
-var deptWithEmployees = departments
-    .GroupJoin(employees,
-               d => d.DepartmentId,
-               e => e.DepartmentId,
-               (d, empGroup) => new 
-               { 
-                   Department = d.DepartmentName, 
-                   Employees = empGroup.Select(e => e.Name) 
-               });
 
-foreach (var item in deptWithEmployees)
-{
-    Console.WriteLine($"{item.Department}: {string.Join(", ", item.Employees)}");
-}
-  </code></pre>
-  <p><strong>Expected Output:</strong></p>
-  <div class="output">
-HR: Alice, Charlie
-IT: Bob, Frank
-Finance: Eva
-  </div>
-</details>
 
 <details>
   <summary>Zip Example</summary>
@@ -535,38 +587,6 @@ Bob - React
   </div>
 </details>
 
-<details>
-  <summary>Global Exception Handling Middleware</summary>
-  <p><strong>Question:</strong> How can we implement a simple global exception handling middleware in ASP.NET Core?</p>
-  <pre><code class="language-csharp">
-public class ExceptionHandlingMiddleware
-{
-    private readonly RequestDelegate _next;
-
-    public ExceptionHandlingMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
-
-    public async Task Invoke(HttpContext context)
-    {
-        try
-        {
-            await _next(context);
-        }
-        catch (Exception ex)
-        {
-            context.Response.StatusCode = 500;
-            await context.Response.WriteAsync($"Error: {ex.Message}");
-        }
-    }
-}
-
-// Register in Program.cs
-app.UseMiddleware&lt;ExceptionHandlingMiddleware&gt;();
-  </code></pre>
-  <div class="tip">Tip: This middleware catches unhandled exceptions and returns a 500 response.</div>
-</details>
 
 <details>
   <summary>Simple Dependency Injection Example</summary>
@@ -862,6 +882,80 @@ Alice
   </div>
 
   <div class="tip">Tip: Extension methods let you "extend" existing types (like <code>string</code>) with new methods, while keeping your code clean and reusable.</div>
+</details>
+
+<details>
+  <summary>LINQ Methods Comparison</summary>
+  <div>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <tr>
+        <th>Method</th>
+        <th>Purpose</th>
+        <th>Example</th>
+        <th>Output</th>
+      </tr>
+      <tr>
+        <td><b>Select</b></td>
+        <td>Projects each element into a new form (1-to-1 mapping).</td>
+        <td>employees.Select(e => e.Name)</td>
+        <td>List of names</td>
+      </tr>
+      <tr>
+        <td><b>SelectMany</b></td>
+        <td>Flattens collections (1-to-many mapping).</td>
+        <td>departments.SelectMany(d => d.Employees)</td>
+        <td>All employees across departments in a single list</td>
+      </tr>
+      <tr>
+        <td><b>Any</b></td>
+        <td>Checks if any element satisfies a condition.</td>
+        <td>employees.Any(e => e.Salary > 50000)</td>
+        <td>true / false</td>
+      </tr>
+      <tr>
+        <td><b>All</b></td>
+        <td>Checks if all elements satisfy a condition.</td>
+        <td>employees.All(e => e.Salary > 30000)</td>
+        <td>true / false</td>
+      </tr>
+      <tr>
+        <td><b>First</b></td>
+        <td>Returns the first element that matches a condition. Throws exception if none found.</td>
+        <td>employees.First(e => e.Salary > 50000)</td>
+        <td>Employee object</td>
+      </tr>
+      <tr>
+        <td><b>FirstOrDefault</b></td>
+        <td>Same as First, but returns default (null for reference types) if none found.</td>
+        <td>employees.FirstOrDefault(e => e.Salary > 100000)</td>
+        <td>Employee or null</td>
+      </tr>
+      <tr>
+        <td><b>Single</b></td>
+        <td>Returns the only element that matches a condition. Throws exception if none or more than one found.</td>
+        <td>employees.Single(e => e.Id == 5)</td>
+        <td>Employee object</td>
+      </tr>
+      <tr>
+        <td><b>SingleOrDefault</b></td>
+        <td>Same as Single, but returns default if none found. Throws exception if more than one found.</td>
+        <td>employees.SingleOrDefault(e => e.Id == 5)</td>
+        <td>Employee or null</td>
+      </tr>
+      <tr>
+        <td><b>Count</b></td>
+        <td>Returns the number of elements (optionally with condition).</td>
+        <td>employees.Count(e => e.Salary > 50000)</td>
+        <td>Integer</td>
+      </tr>
+      <tr>
+        <td><b>Contains</b></td>
+        <td>Checks if a sequence contains a specific element.</td>
+        <td>employees.Select(e => e.Id).Contains(10)</td>
+        <td>true / false</td>
+      </tr>
+    </table>
+  </div>
 </details>
 
 </body>
