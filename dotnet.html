@@ -13,6 +13,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <!-- Language components -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
 	<style>
 	    body {
 	        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -769,7 +771,7 @@ thread.Start();
 <ul>
   <li><b>Code Reviews:</b> Ensure classes have one clear responsibility. Split classes that mix business logic, persistence, and UI concerns.</li>
   <li><b>Service Layering:</b> Separate domain logic, application services, and infrastructure code.</li>
-  <li><b>Static Analysis:</b> Use tools like SonarQube or Roslyn analyzers to detect classes with excessive dependencies or lines of code.</li>
+  <li><b>Static Analysis:</b> Use SonarCloud to detect classes with excessive dependencies, high complexity, or large lines of code. It integrates directly into CI/CD pipelines and PR workflows, providing automated feedback on maintainability, reliability, and security hotspots.</li>
 </ul>
 
 <h2>2. Open/Closed Principle (OCP)</h2>
@@ -802,7 +804,7 @@ thread.Start();
 
 <h2>Cross-Cutting Enforcement Strategies</h2>
 <ul>
-  <li><b>Automated Code Quality:</b> StyleCop, Roslyn analyzers, and SonarQube enforce coding standards aligned with SOLID.</li>
+  <li><b>Automated Code Quality:</b> StyleCop, Roslyn analyzers, and SonarCloud enforce coding standards aligned with SOLID principles, detect code smells, and highlight maintainability/security issues directly in CI/CD pipelines and pull requests.</li>
   <li><b>Architecture Governance:</b> Define clear layering rules (Domain → Application → Infrastructure) and enforce them via tools like ArchUnit.NET.</li>
   <li><b>Continuous Integration:</b> Integrate static analysis and unit tests into CI/CD pipelines to catch violations early.</li>
   <li><b>Mentorship & Reviews:</b> Senior developers guide juniors during design reviews, ensuring adherence to SOLID principles.</li>
@@ -3219,7 +3221,7 @@ stages:
 <h2>5. Best Practices</h2>
 <ul>
   <li>Use <b>multi-stage pipelines</b> (CI + CD in one YAML).</li>
-  <li>Integrate <b>quality gates</b> (SonarQube, StyleCop, CodeQL).</li>
+  <li>Integrate <b>quality gates</b> SonarCloud, StyleCop, and CodeQL enforce coding standards, detect vulnerabilities, and block merges when thresholds for maintainability, security, or reliability are not met.</li>
   <li>Implement <b>blue-green or canary deployments</b> for zero downtime.</li>
   <li>Manage secrets with <b>Azure Key Vault</b> and <b>Managed Identities</b>.</li>
   <li>Automate rollback strategies in case of deployment failures.</li>
@@ -3229,7 +3231,7 @@ stages:
 <h2>6. Interview Insight</h2>
 <p>
 👉 In interviews, emphasize that CI/CD in Azure DevOps involves <b>automated builds, tests, and deployments</b>, 
-with <b>quality enforcement</b (SonarQube, StyleCop), <b>secure secret management</b (Key Vault), and <b>deployment strategies</b (blue-green, canary). 
+with <b>quality enforcement</b (SonarCloud, StyleCop), <b>secure secret management</b (Key Vault), and <b>deployment strategies</b (blue-green, canary). 
 Highlight that pipelines are defined as <b>YAML-as-code</b>, ensuring version control and repeatability.
 </p>
 </details>
@@ -4117,11 +4119,11 @@ Integrating enforcement into CI/CD pipelines prevents poor-quality code from rea
 <ul>
   <li><b>Static Code Analysis:</b> Tools like <b>Roslyn analyzers, StyleCop, ESLint</b> check code against defined rules.</li>
   <li><b>Formatting Tools:</b> Use <b>dotnet format</b> or <b>Prettier</b> to enforce consistent style automatically.</li>
-  <li><b>Quality Gates:</b> Integrate <b>SonarQube/SonarCloud</b> to enforce thresholds for code coverage, duplication, and maintainability.</li>
+  <li><b>Quality Gates:</b> Integrate <b>SonarCloud</b> to enforce thresholds for code coverage, duplication, and maintainability.</li>
   <li><b>Pull Request Validation:</b> Run CI checks on PRs to block merges if standards fail.</li>
 </ul>
 
-<h2>3. Example: Azure DevOps Pipeline with StyleCop & SonarQube</h2>
+<h2>3. Example: Azure DevOps Pipeline with StyleCop & SonarCloud</h2>
 <pre><code class="language-csharp"><code>
 trigger:
 - main
@@ -4185,7 +4187,7 @@ jobs:
 <p>
 👉 In interviews, emphasize that coding standards are enforced in CI/CD using <b>linters, formatters, analyzers, and quality gates</b>. 
 Highlight that pipelines should <b>fail fast</b> when violations occur, ensuring only compliant code reaches production. 
-Mention tools like <b>StyleCop, Roslyn, SonarQube, ESLint, Prettier</b> as practical examples.
+Mention tools like <b>StyleCop, Roslyn, SonarCloud, ESLint, Prettier</b> as practical examples.
 </p>
 </details>
 <details>
@@ -4196,7 +4198,7 @@ Mention tools like <b>StyleCop, Roslyn, SonarQube, ESLint, Prettier</b> as pract
 <ul>
   <li><b>Definition:</b> Examines source code without executing it.</li>
   <li><b>Purpose:</b> Detects coding standard violations, security vulnerabilities, and maintainability issues early in the development cycle.</li>
-  <li><b>Tools:</b> Roslyn analyzers, StyleCop, SonarQube, ESLint, FindBugs.</li>
+  <li><b>Tools:</b> Roslyn analyzers, StyleCop, SonarCloud, ESLint, FindBugs.</li>
   <li><b>Advantages:</b>
     <ul>
       <li>Catches issues before runtime.</li>
@@ -4242,7 +4244,7 @@ Mention tools like <b>StyleCop, Roslyn, SonarQube, ESLint, Prettier</b> as pract
   </tr>
   <tr>
     <td>Tools</td>
-    <td>StyleCop, SonarQube, ESLint</td>
+    <td>StyleCop, SonarCloud, ESLint</td>
     <td>xUnit, Selenium, JMeter</td>
   </tr>
   <tr>
@@ -4729,7 +4731,7 @@ jobs:
 <h2>4. Best Practices</h2>
 <ul>
   <li>Use <b>OIDC federated credentials</b> instead of static secrets.</li>
-  <li>Integrate <b>static analysis (SonarQube, Roslyn, ESLint)</b> and <b>dynamic tests</b> into pipelines.</li>
+  <li>Integrate <b>static analysis (SonarCloud, Roslyn, ESLint)</b> and <b>dynamic tests</b> into pipelines.</li>
   <li>Apply <b>quality gates</b> — fail builds if vulnerabilities or coding standard violations are found.</li>
   <li>Automate rollback on failed deployments.</li>
   <li>Regularly review pipeline definitions for security misconfigurations.</li>
@@ -4816,205 +4818,57 @@ jobs:
 Highlight that they enforce <b>governance and compliance</b>, and should be combined with <b>automated quality checks</b> to balance speed and safety.
 </p>
 </details>
+
 <details>
-  <summary>SonarQube Metrics Explained</summary>
-  
+  <summary>SonarCloud UI - Configuring Quality Gates</summary>
 
-<h2>1. Overview</h2>
-<p>
-SonarQube provides a set of <b>quality metrics</b> that measure different aspects of code health. 
-These metrics are used to evaluate <b>security, reliability, maintainability, test coverage, complexity, and duplications</b>. 
-They form the basis for <b>Quality Gates</b>, which enforce coding standards in CI/CD pipelines.
-</p>
+  <p><b>Step 1: Log in</b></p>
+  <ul>
+    <li>Go to <a href="https://sonarcloud.io" target="_blank">SonarCloud</a>.</li>
+    <li>Sign in with your GitHub or Azure DevOps account.</li>
+  </ul>
 
-<h2>2. Key Categories of Metrics</h2>
+  <p><b>Step 2: Navigate to your project</b></p>
+  <ul>
+    <li>Select your <b>Organization</b>.</li>
+    <li>Click on the <b>Project</b> you want to configure.</li>
+    <li>On the project dashboard, you’ll see the current <b>Quality Gate status</b> (Passed/Failed).</li>
+  </ul>
 
-<h3>🔐 Security</h3>
-<ul>
-  <li><b>Security Rating:</b> Grades from A (no issues) to E (critical issues).</li>
-  <li><b>Vulnerabilities:</b> Number of security flaws detected.</li>
-  <li><b>Security Hotspots:</b> Sensitive code areas requiring manual review.</li>
-</ul>
+  <p><b>Step 3: Configure Quality Gates</b></p>
+  <ul>
+    <li>Go to <b>Organization → Quality Gates</b> in the left menu.</li>
+    <li>You can use the default “Sonar way” or create a <b>new Quality Gate</b>.</li>
+    <li>Add conditions such as:
+      <ul>
+        <li>Coverage ≥ 80%</li>
+        <li>Duplications &lt; 3%</li>
+        <li>Security Rating = A</li>
+        <li>Reliability Rating = A</li>
+        <li>Maintainability Rating = A</li>
+      </ul>
+    </li>
+    <li>Save the Quality Gate and assign it to your project.</li>
+  </ul>
 
-<h3>⚙️ Reliability</h3>
-<ul>
-  <li><b>Reliability Rating:</b> Based on the number and severity of bugs.</li>
-  <li><b>Bugs:</b> Issues that could cause incorrect program behavior.</li>
-</ul>
+  <p><b>Step 4: Enforcement in YAML</b></p>
+  <ul>
+    <li>Your Azure DevOps pipeline runs SonarCloud tasks:
+      <ul>
+        <li><code>SonarCloudPrepare@1</code> → setup</li>
+        <li><code>SonarCloudAnalyze@1</code> → analysis</li>
+        <li><code>SonarCloudPublish@1</code> → checks Quality Gate</li>
+      </ul>
+    </li>
+    <li>If the gate fails (e.g., Coverage &lt; 80%), the pipeline fails and the PR is blocked.</li>
+  </ul>
 
-<h3>🛠️ Maintainability</h3>
-<ul>
-  <li><b>Maintainability Rating:</b> Based on code smells.</li>
-  <li><b>Code Smells:</b> Poor coding practices that make code harder to maintain.</li>
-  <li><b>Technical Debt:</b> Estimated time to fix maintainability issues.</li>
-</ul>
-
-<h3>📊 Coverage</h3>
-<ul>
-  <li><b>Coverage %:</b> Percentage of code covered by unit tests.</li>
-  <li><b>Uncovered Lines:</b> Lines of code not tested.</li>
-</ul>
-
-<h3>🔄 Duplications</h3>
-<ul>
-  <li><b>Duplicated Lines:</b> Percentage of code duplication.</li>
-  <li><b>Duplicated Blocks:</b> Repeated code segments across files.</li>
-</ul>
-
-<h3>📈 Complexity</h3>
-<ul>
-  <li><b>Cognitive Complexity:</b> Measures how difficult code is to understand.</li>
-  <li><b>Cyclomatic Complexity:</b> Number of independent paths through the code.</li>
-</ul>
-
-<h2>3. Why These Metrics Matter</h2>
-<p>
-SonarQube metrics help teams:
-</p>
-<ul>
-  <li>Detect issues early in the development cycle.</li>
-  <li>Prevent <b>technical debt</b> from accumulating.</li>
-  <li>Ensure <b>secure, reliable, and maintainable</b> codebases.</li>
-  <li>Enforce <b>coding standards</b> via Quality Gates in CI/CD pipelines.</li>
-</ul>
-
-<h2>4. Example Quality Gate</h2>
-<pre><code class="language-csharp"><code>
-Conditions:
-- Coverage &gt;= 80%
-- Duplications &lt; 3%
-- Security Rating = A
-- Reliability Rating = A
-- Maintainability Rating = A
-</code></code></pre>
-
-<p>
-If any condition fails, the pipeline blocks the merge/deployment until issues are resolved.
-</p>
+  <p>
+  ✅ This way, the <b>conditions are defined in SonarCloud UI</b and <b>enforced by your YAML pipeline</b>.
+  </p>
 </details>
-<details>
-  <summary>Enforcing StyleCop Rules</summary>
-  
 
-<h2>1. Why Enforce StyleCop?</h2>
-<p>
-StyleCop helps maintain <b>consistent coding standards</b> across .NET projects. 
-By enforcing rules automatically, teams reduce <b>code review friction</b>, improve <b>readability</b>, and ensure <b>long-term maintainability</b>.
-</p>
 
-<h2>2. Approaches to Enforcement</h2>
-
-<h3>🔧 Local Development</h3>
-<ul>
-  <li><b>NuGet Package:</b> Add <code>StyleCop.Analyzers</code> to your project.</li>
-  <li><b>EditorConfig:</b> Define rules in <code>.editorconfig</code> for IDE enforcement.</li>
-  <li><b>Build Warnings:</b> Violations appear as warnings/errors during local builds.</li>
-</ul>
-
-<h3>⚙️ CI/CD Pipelines</h3>
-<ul>
-  <li><b>Build Step:</b> Run <code>dotnet build</code> with StyleCop analyzers enabled.</li>
-  <li><b>Validation:</b> Configure pipelines to <b>fail builds</b> if StyleCop violations exist.</li>
-  <li><b>Automation:</b> Use <code>dotnet format</code> for auto-fixing style issues.</li>
-</ul>
-
-<h3>📑 Pull Request Workflow</h3>
-<ul>
-  <li>Integrate StyleCop checks into <b>PR validation pipelines</b>.</li>
-  <li>Block merges if rules are violated.</li>
-  <li>Educate developers on <b>rule categories</b> (naming, spacing, documentation, ordering).</li>
-</ul>
-
-<h2>3. Example: Azure DevOps Pipeline</h2>
-<pre><code class="language-csharp"><code>
-steps:
-- task: UseDotNet@2
-  inputs:
-    packageType: 'sdk'
-    version: '8.x'
-
-- script: dotnet build --configuration Release
-  displayName: 'Build with StyleCop'
-
-- script: dotnet format --verify-no-changes
-  displayName: 'Check Code Formatting'
-</code></code></pre>
-
-<h2>4. Best Practices</h2>
-<ul>
-  <li>Define rules in <code>.editorconfig</code> for consistency across IDEs.</li>
-  <li>Fail fast: Treat violations as <b>errors</b>, not just warnings.</li>
-  <li>Combine with <b>Roslyn analyzers</b> and <b>SonarQube</b> for holistic quality enforcement.</li>
-  <li>Use <b>pre-commit hooks</b> (Husky, Git hooks) for early feedback.</li>
-</ul>
-
-<h2>5. Interview Insight</h2>
-<p>
-👉 In interviews, emphasize that StyleCop rules are enforced via <b>analyzers, build validation, and CI/CD quality gates</b>. 
-Highlight automation (e.g., <code>dotnet format</code>) and strict pipeline enforcement to ensure only compliant code reaches production.
-</p>
-</details>
-<details>
-  <summary>Integrating Roslyn Analyzers</summary>
-  
-
-<h2>1. What Are Roslyn Analyzers?</h2>
-<p>
-Roslyn analyzers are <b>compiler-integrated tools</b> that analyze C# and VB.NET code during compilation. 
-They enforce <b>coding standards, detect issues, and provide real-time feedback</b> in IDEs and CI/CD pipelines.
-</p>
-
-<h2>2. Integration in Local Development</h2>
-<ul>
-  <li><b>NuGet Package:</b> Add <code>Microsoft.CodeAnalysis.FxCopAnalyzers</code> or <code>StyleCop.Analyzers</code> via NuGet.</li>
-  <li><b>EditorConfig:</b> Configure rules in <code>.editorconfig</code> for consistent enforcement across IDEs.</li>
-  <li><b>IDE Feedback:</b> Developers see warnings/errors directly in Visual Studio or VS Code.</li>
-</ul>
-
-<h2>3. Integration in CI/CD Pipelines</h2>
-<ul>
-  <li><b>Build Step:</b> Run <code>dotnet build</code> with analyzers enabled.</li>
-  <li><b>Fail Builds:</b> Configure pipelines to treat analyzer warnings as <b>errors</b>.</li>
-  <li><b>Quality Gates:</b> Combine with <b>SonarQube</b> or <b>StyleCop</b> for holistic enforcement.</li>
-</ul>
-
-<h2>4. Example: GitHub Actions Workflow</h2>
-<pre><code class="language-csharp"><code>
-name: Build & Analyze
-
-on: [push, pull_request]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.x'
-      - name: Restore
-        run: dotnet restore
-      - name: Build with Roslyn Analyzers
-        run: dotnet build --configuration Release -warnaserror
-</code></code></pre>
-
-<h2>5. Best Practices</h2>
-<ul>
-  <li>Use <b>custom analyzers</b> for project-specific rules.</li>
-  <li>Fail fast: Treat violations as errors to block bad code early.</li>
-  <li>Combine with <b>StyleCop</b> and <b>SonarQube</b> for layered quality checks.</li>
-  <li>Educate developers on rule categories (naming, performance, security).</li>
-</ul>
-
-<h2>6. Interview Insight</h2>
-<p>
-👉 In interviews, emphasize that Roslyn analyzers integrate directly into the compiler, 
-providing <b>real-time feedback</b> and <b>pipeline enforcement</b>. 
-Highlight automation, strict build validation, and synergy with other tools (StyleCop, SonarQube) 
-to ensure <b>consistent, secure, and maintainable codebases</b>.
-</p>
-</details>
 <details>
   <summary>Measuring Code Coverage</summary>
   
@@ -5038,7 +4892,7 @@ It helps identify untested parts of the application and ensures that critical lo
   <li><b>Visual Studio Enterprise:</b> Built-in coverage analysis in Test Explorer.</li>
   <li><b>Coverlet:</b> Open-source tool for collecting coverage during <code>dotnet test</code>.</li>
   <li><b>ReportGenerator:</b> Converts raw coverage data into HTML dashboards.</li>
-  <li><b>SonarQube:</b> Integrates coverage results into quality gates.</li>
+  <li><b>SonarCloud:</b> Integrates coverage results into quality gates.</li>
 </ul>
 
 <h2>4. Example Workflow with Coverlet</h2>
@@ -5057,7 +4911,7 @@ reportgenerator -reports:TestResults/coverage.cobertura.xml \
 <ul>
   <li>Set a <b>minimum threshold</b> (e.g., 80%) in CI/CD pipelines.</li>
   <li>Focus on <b>critical business logic</b> rather than trivial code.</li>
-  <li>Combine with <b>SonarQube</b> for unified quality enforcement.</li>
+  <li>Combine with <b>SonarCloud</b> for unified quality enforcement.</li>
   <li>Fail builds if coverage drops below agreed standards.</li>
 </ul>
 
@@ -6488,7 +6342,7 @@ It ensures critical logic is validated and helps identify untested areas in the 
 <p>
 - <b>Coverlet:</b> Collects coverage during <code>dotnet test</code>.<br/>
 - <b>ReportGenerator:</b> Converts raw coverage data into HTML dashboards.<br/>
-- <b>SonarQube/SonarCloud:</b> Integrates coverage into quality gates.<br/>
+- <b>SonarCloud:</b> Integrates coverage into quality gates.<br/>
 - <b>Visual Studio Enterprise:</b> Built-in coverage analysis.<br/>
 </p>
 
@@ -6510,7 +6364,7 @@ steps:
     reports: 'TestResults/coverage.cobertura.xml'
     targetdir: 'CoverageReport'
 
-- task: SonarQubePrepare@4
+- task: SonarCloudPrepare@1
   inputs:
     sonarCoverageReportPaths: 'TestResults/coverage.cobertura.xml'
 </code></code></pre>
@@ -6525,7 +6379,7 @@ steps:
 
 <h2>5. Interview Insight</h2>
 <p>
-In interviews, emphasize that test coverage is enforced by <b>integrating tools like Coverlet and SonarQube</b> 
+In interviews, emphasize that test coverage is enforced by <b>integrating tools like Coverlet and SonarCloud</b> 
 into CI/CD pipelines. Highlight that coverage ensures <b>confidence in testing</b> but does not guarantee bug-free code. 
 Mention strategies like <b>quality gates, thresholds, and build failure policies</b> to show practical experience. 
 Demonstrating awareness of <b>reporting dashboards</b> and <b>mutation testing</b> will showcase maturity in designing 
@@ -8757,6 +8611,298 @@ public static async Task CreateTaxRecord([ActivityTrigger] ServiceOrderCreated o
 
   </div>
 </details>
+
+<details>
+  <summary>PR Validation Pipeline</summary>
+
+  <p>
+  This pipeline runs automatically on pull requests into <b>develop</b> or <b>main</b>. 
+  It enforces <b>StyleCop</b>, <b>Roslyn analyzers</b>, <b>SonarCloud Quality Gate</b>, and runs <b>unit tests</b>. 
+  No deployment happens here.
+  </p>
+
+  <pre><code class="language-yaml"><code>
+trigger: none   # no CI trigger, only PR validation
+pr:
+  branches:
+    include:
+      - develop
+      - main
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.x'
+
+- task: SonarCloudPrepare@1
+  inputs:
+    SonarCloud: 'YourServiceConnectionName'
+    organization: 'your-org'
+    scannerMode: 'MSBuild'
+    projectKey: 'your-project-key'
+    projectName: 'your-project-name'
+
+- task: DotNetBuild@1
+  inputs:
+    projects: '*.sln'
+
+- task: VSTest@2
+  inputs:
+    testSelector: 'testAssemblies'
+    testAssemblyVer2: |
+      **\*test*.dll
+      !**\*TestAdapter.dll
+      !**\obj\**
+
+- task: SonarCloudAnalyze@1
+
+- task: SonarCloudPublish@1
+  inputs:
+    pollingTimeoutSec: '300'
+</code></code></pre>
+</details>
+
+
+<details>
+  <summary>Deployment Pipeline</summary>
+
+  <p>
+  This pipeline is triggered manually from the Azure DevOps UI. 
+  You select the branch and environment (Dev, QA, Prod) at runtime. 
+  Approvals can be configured in Azure DevOps Environments for QA and Prod.
+  </p>
+
+  <pre><code class="language-yaml"><code>
+trigger: none   # manual trigger only
+
+parameters:
+- name: branchToDeploy
+  displayName: 'Select branch to deploy'
+  type: string
+  default: 'main'
+  values:
+    - develop
+    - main
+    - release
+
+- name: environment
+  displayName: 'Select environment'
+  type: string
+  default: 'Dev'
+  values:
+    - Dev
+    - QA
+    - Prod
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: DeployDev
+  condition: eq('${{ parameters.environment }}', 'Dev')
+  jobs:
+  - job: DeployDevJob
+    steps:
+    - script: echo "Deploying branch ${{ parameters.branchToDeploy }} to Dev environment..."
+      displayName: 'Deploy to Dev'
+
+- stage: DeployQA
+  condition: eq('${{ parameters.environment }}', 'QA')
+  jobs:
+  - job: DeployQAJob
+    steps:
+    - script: echo "Deploying branch ${{ parameters.branchToDeploy }} to QA environment..."
+      displayName: 'Deploy to QA'
+
+- stage: DeployProd
+  condition: eq('${{ parameters.environment }}', 'Prod')
+  jobs:
+  - deployment: DeployProdJob
+    environment: 'Prod'   # approval gate configured in Azure DevOps Environments
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo "Deploying branch ${{ parameters.branchToDeploy }} to Production environment..."
+            displayName: 'Deploy to Prod'
+</code></code></pre>
+</details>
+
+
+<details>
+  <summary>Where to Configure YAML Files in Azure DevOps</summary>
+
+  <p>
+  Once your YAML files are committed to GitHub, you need to configure them in Azure DevOps so pipelines know how to run:
+  </p>
+
+  <ol>
+    <li><b>Store YAML in GitHub repo</b> — Place files like <code>.azure-pipelines/azure-pipelines-validation.yml</code> and <code>.azure-pipelines/azure-pipelines-deploy.yml</code> in your repository.</li>
+    <li><b>Create a pipeline in Azure DevOps</b> — Go to <b>Pipelines → New Pipeline</b>, select <b>GitHub</b> as the source, authenticate, and choose your repo.</li>
+    <li><b>Select Existing YAML</b> — When prompted, pick <b>Existing Azure Pipelines YAML file</b> and browse to the correct YAML file in your repo.</li>
+    <li><b>Repeat for each YAML</b> — Create separate pipelines for validation, Dev, QA, and Prod deployment YAMLs.</li>
+    <li><b>Configure triggers</b> — Validation YAML uses <code>pr:</code> trigger (runs automatically on PRs). Deployment YAMLs use <code>trigger: none</code> (manual runs only).</li>
+    <li><b>Set up environments & approvals</b> — In <b>Pipelines → Environments</b>, create <code>Dev</code>, <code>QA</code>, and <code>Prod</code> environments. Add approvals/checks for QA and Prod. Link these environments in your deployment YAML using <code>environment: 'QA'</code> or <code>environment: 'Prod'</code>.</li>
+  </ol>
+
+  <p>
+  ✅ This ensures: PR validation runs automatically, deployments are manual, and QA/Prod deployments require explicit approval.
+  </p>
+</details>
+
+<details>
+  <summary>Developer Checklist - Validate Code Quality Locally</summary>
+
+  <p>
+  Use this checklist to ensure your code passes <b>Roslyn analyzers</b>, <b>StyleCop</b>, and <b>SonarAnalyzer</b> before raising a PR.
+  </p>
+
+  <ol>
+    <li><b>Add NuGet packages</b> to your project/solution:
+      <pre><code class="language-bash">
+dotnet add package Microsoft.CodeAnalysis.NetAnalyzers
+dotnet add package StyleCop.Analyzers
+dotnet add package SonarAnalyzer.CSharp
+      </code></pre>
+    </li>
+
+    <li><b>Configure rules</b> in <code>.editorconfig</code> or <code>.ruleset.json</code>:
+      <pre><code class="language-ini">
+[*.cs]
+dotnet_diagnostic.CA2000.severity = error
+dotnet_diagnostic.SA1600.severity = warning
+dotnet_diagnostic.SonarAnalyzer.CS1234.severity = error
+      </code></pre>
+      <p>Adjust severities to match your team’s standards.</p>
+    </li>
+
+    <li><b>Run build locally</b>:
+      <pre><code class="language-bash">
+dotnet build
+      </code></pre>
+      <p>This surfaces Roslyn + StyleCop + SonarAnalyzer warnings/errors immediately.</p>
+    </li>
+
+    <li><b>Optional: Run SonarCloud Quality Gate locally</b>:
+      <ul>
+        <li>Install SonarScanner:
+          <pre><code class="language-bash">
+dotnet tool install --global dotnet-sonarscanner
+          </code></pre>
+        </li>
+        <li>Run analysis:
+          <pre><code class="language-bash">
+dotnet sonarscanner begin /k:"project-key" /o:"org" /d:sonar.login="token"
+dotnet build
+dotnet sonarscanner end /d:sonar.login="token"
+          </code></pre>
+        </li>
+        <li>Check Quality Gate conditions in SonarCloud UI:
+          <ul>
+            <li>Coverage ≥ 80%</li>
+            <li>Duplications &lt; 3%</li>
+            <li>Security Rating = A</li>
+            <li>Reliability Rating = A</li>
+            <li>Maintainability Rating = A</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+
+    <li><b>Fix issues before PR</b>:
+      <ul>
+        <li>Resolve analyzer warnings/errors in your IDE (Visual Studio, Rider, VS Code).</li>
+        <li>Re‑run <code>dotnet build</code> until clean.</li>
+        <li>Ensure SonarCloud Quality Gate passes locally if you ran SonarScanner.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <p>
+  ✅ Following this checklist ensures your code will pass validation in the CI/CD pipeline and won’t be blocked at PR time.
+  </p>
+</details>
+
+<details>
+  <summary>Roslyn Analyzers</summary>
+  <h3>Scope:</h3>
+  <p>
+    Roslyn analyzers (via <code>Microsoft.CodeAnalysis.NetAnalyzers</code>) focus mainly on 
+    <b>code correctness, performance, and some security best practices</b>.
+  </p>
+  <p>They can catch things like:</p>
+  <ul>
+    <li>Using insecure APIs (e.g., <code>MD5CryptoServiceProvider</code>).</li>
+    <li>Potential resource leaks.</li>
+    <li>Null reference risks.</li>
+  </ul>
+  <p>
+    While they don’t enforce SOLID or OOP principles directly, they support them by flagging 
+    issues that break <b>Single Responsibility</b> (complex methods), <b>Liskov Substitution</b> 
+    (incorrect overrides), and <b>Dependency Inversion</b> (tight coupling).
+  </p>
+
+  <h3>Limitations:</h3>
+  <ul>
+    <li>Rule‑based and limited to Microsoft’s analyzer pack.</li>
+    <li>Don’t cover broader application security risks like SQL injection or XSS.</li>
+  </ul>
+</details>
+
+<details>
+  <summary>StyleCop.Analyzers</summary>
+  <h3>Scope:</h3>
+  <p>
+    StyleCop analyzers enforce <b>style and consistency rules</b> for C# code, ensuring readability and maintainability.
+  </p>
+  <p>They can catch things like:</p>
+  <ul>
+    <li>Naming convention violations.</li>
+    <li>Spacing and indentation issues.</li>
+    <li>Missing or malformed XML documentation comments.</li>
+  </ul>
+  <p>
+    StyleCop indirectly supports OOP and SOLID by ensuring code is <b>consistent and readable</b>, 
+    which makes principles like <b>Interface Segregation</b> and <b>Open/Closed</b> easier to apply.
+  </p>
+
+  <h3>Limitations:</h3>
+  <ul>
+    <li>Focuses only on style and formatting, not deeper code quality or security.</li>
+    <li>Can be noisy if rules are too strict without customization.</li>
+  </ul>
+</details>
+
+<details>
+  <summary>SonarAnalyzer.CSharp</summary>
+  <h3>Scope:</h3>
+  <p>
+    SonarAnalyzer integrates with <b>SonarCloud</b> to enforce rules around 
+    <b>reliability, maintainability, and security</b>. It aligns with Quality Gates and industry standards.
+  </p>
+  <p>It can catch things like:</p>
+  <ul>
+    <li>Code smells and duplication.</li>
+    <li>Complexity and maintainability issues.</li>
+    <li>Security hotspots and vulnerabilities (SQL injection, XSS, cryptography misuse).</li>
+  </ul>
+  <p>
+    SonarAnalyzer supports SOLID and OOP by highlighting violations of <b>Single Responsibility</b> 
+    (too complex classes), <b>Open/Closed</b> (modifications instead of extensions), and 
+    <b>Dependency Inversion</b> (direct dependencies instead of abstractions).
+  </p>
+
+  <h3>Limitations:</h3>
+  <ul>
+    <li>Requires SonarCloud or SonarQube integration for full Quality Gate enforcement.</li>
+    <li>Some “security hotspots” require manual review rather than automatic fixes.</li>
+  </ul>
+</details>
+
 
 </body>
 </html>
