@@ -1,495 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>React 3-Day Crash Guide</title>
-<style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    line-height: 1.6;
-    color: #333;
-    margin: 0;
-    background-color: #fdfdfd;
-  }
-
-  /* Wrapper centers the sidebar + content as one unit instead of
-     pinning the sidebar to the browser edge */
-  .layout {
-    display: flex;
-    max-width: 1140px;
-    margin: 0 auto;
-  }
-
-  /* Sidebar */
-  nav.sidebar {
-    width: 240px;
-    flex-shrink: 0;
-    height: 100vh;
-    overflow-y: auto;
-    position: sticky;
-    top: 0;
-    background-color: #24292e;
-    color: #d1d5da;
-    padding: 24px 0;
-    border-radius: 0 8px 8px 0;
-  }
-  nav.sidebar .brand {
-    font-size: 1.1em;
-    font-weight: 600;
-    color: #fff;
-    padding: 0 20px 16px;
-    border-bottom: 1px solid #444c56;
-    margin-bottom: 12px;
-  }
-  nav.sidebar .day-label {
-    text-transform: uppercase;
-    font-size: 0.75em;
-    letter-spacing: 0.05em;
-    color: #61dafb; /* React blue accent */
-    padding: 16px 20px 6px;
-    font-weight: 600;
-  }
-  nav.sidebar ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  nav.sidebar li a {
-    display: block;
-    padding: 6px 20px 6px 28px;
-    color: #d1d5da;
-    text-decoration: none;
-    font-size: 0.9em;
-    border-left: 3px solid transparent;
-  }
-  nav.sidebar li a:hover {
-    background-color: #2f363d;
-    color: #fff;
-    border-left-color: #61dafb;
-  }
-
-  /* Main content */
-  main {
-    flex: 1;
-    min-width: 0;
-    padding: 30px 40px 80px;
-  }
-  h1 {
-    border-bottom: 3px solid #61dafb;
-    padding-bottom: 10px;
-    color: #20232a;
-    font-size: 2em;
-  }
-  h2 {
-    color: #24292e;
-    margin-top: 50px;
-    border-bottom: 2px solid #eaecef;
-    padding-bottom: 5px;
-    scroll-margin-top: 16px;
-  }
-  h3 {
-    color: #b78103;
-    margin-top: 28px;
-    scroll-margin-top: 16px;
-  }
-  p.desc {
-    background-color: #f0fbfc;
-    border-left: 4px solid #61dafb;
-    padding: 10px 14px;
-    border-radius: 4px;
-    margin: 8px 0 14px;
-    color: #444;
-    font-size: 0.96em;
-  }
-  
-  /* Vibrant Dark Mode Code Blocks */
-  pre {
-    background-color: #1e1e1e;
-    padding: 16px;
-    border-radius: 8px;
-    overflow: auto;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 90%;
-    border: 1px solid #2d2d2d;
-    color: #d4d4d4; /* Base light gray text */
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  }
-  code {
-    background-color: #fff5b1;
-    padding: 2px 5px;
-    border-radius: 3px;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-    color: #24292e;
-  }
-  pre code {
-    background-color: transparent;
-    padding: 0;
-    color: inherit;
-  }
-  
-  /* Syntax Highlighting Classes */
-  .keyword { color: #569cd6; font-weight: 600; } /* blue */
-  .string  { color: #ce9178; }                   /* orange/brown string */
-  .builtin { color: #4ec9b0; }                   /* teal hooks/components */
-  .comment { color: #6a9955; font-style: italic; }/* green comment */
-  .number  { color: #b5cea8; }                   /* light green number */
-  .prop    { color: #9cdcfe; }                   /* light blue variables/props */
-  .func    { color: #dcdcaa; }                   /* yellow function */
-
-  ul.result {
-    background: #f6f8fa;
-    padding: 15px 15px 15px 35px;
-    border-radius: 6px;
-  }
-  ul.result li {
-    margin-bottom: 8px;
-  }
-
-  @media (max-width: 800px) {
-    .layout { display: block; }
-    nav.sidebar { display: none; }
-    main { padding: 20px; }
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>React Interview Questions Cheat Sheet</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+    h1, h2 { color: #2c3e50; }
+    .tier { margin-bottom: 30px; }
+    .question { font-weight: bold; margin-top: 10px; }
+    .answer { margin-left: 20px; color: #34495e; }
+  </style>
 </head>
 <body>
+  <h1>React Interview Questions & Answers</h1>
 
-<div class="layout">
-<nav class="sidebar">
-  <div class="brand">⚛️ React Guide</div>
+  <div class="tier">
+    <h2>🟢 Beginner (Foundations)</h2>
+    <div class="question">1. What is React?</div>
+    <div class="answer">A JavaScript library for building user interfaces using components.</div>
 
-  <div class="day-label">Day 1 — Core Core</div>
-  <ul>
-    <li><a href="#d1-components">1. Components & JSX</a></li>
-    <li><a href="#d1-props">2. Props Integration</a></li>
-    <li><a href="#d1-state">3. Component State</a></li>
-    <li><a href="#d1-events">4. Event Handling</a></li>
-    <li><a href="#d1-conditional">5. Conditional Rendering</a></li>
-    <li><a href="#d1-lists">6. Lists & Keys</a></li>
-    <li><a href="#d1-forms">7. Controlled Forms</a></li>
-  </ul>
+    <div class="question">2. What is JSX?</div>
+    <div class="answer">A syntax extension that lets you write HTML-like code inside JavaScript.</div>
 
-  <div class="day-label">Day 2 — Built-in Hooks</div>
-  <ul>
-    <li><a href="#d2-effect">1. useEffect & Cleanups</a></li>
-    <li><a href="#d2-context">2. useContext Global</a></li>
-    <li><a href="#d2-ref">3. useRef Access</a></li>
-    <li><a href="#d2-reducer">4. useReducer Complexity</a></li>
-    <li><a href="#d2-custom">5. Custom Hooks</a></li>
-    <li><a href="#d2-memo">6. useMemo Computations</a></li>
-    <li><a href="#d2-callback">7. useCallback Optimizations</a></li>
-  </ul>
+    <div class="question">3. What are components in React?</div>
+    <div class="answer">Reusable building blocks that define UI and behavior.</div>
 
-  <div class="day-label">Day 3 — Real-World Setup</div>
-  <ul>
-    <li><a href="#d3-router">1. React Router</a></li>
-    <li><a href="#d3-api">2. API Fetching Layer</a></li>
-    <li><a href="#d3-state">3. Global State Architecture</a></li>
-    <li><a href="#d3-error">4. Error Boundaries</a></li>
-    <li><a href="#d3-testing">5. React Testing Library</a></li>
-    <li><a href="#d3-ssr">6. Next.js SSR Concepts</a></li>
-    <li><a href="#d3-perfprod">7. Performance & Memo</a></li>
-  </ul>
+    <div class="question">4. Difference between functional and class components?</div>
+    <div class="answer">Functional → simple functions with hooks. Class → ES6 classes with lifecycle methods.</div>
 
-  <div class="day-label">Wrap-up</div>
-  <ul>
-    <li><a href="#end-result">🎯 End Result</a></li>
-  </ul>
-</nav>
+    <div class="question">5. What is the Virtual DOM?</div>
+    <div class="answer">An in-memory representation of the real DOM that React updates efficiently.</div>
 
-<main>
-  <h1>⚛️ React 3‑Day Crash Guide</h1>
+    <div class="question">6. What are props?</div>
+    <div class="answer">Read-only inputs passed from parent to child components.</div>
 
-  <h2 id="day1">📅 Day 1 — Core React Fundamentals</h2>
+    <div class="question">7. What is state?</div>
+    <div class="answer">Internal data managed within a component that can change over time.</div>
 
-  <h3 id="d1-components">1. Components & JSX Syntax</h3>
-  <p class="desc">React applications are built using JavaScript elements called components. JSX allows us to write HTML-like structures smoothly straight inside our JavaScript files.</p>
-  <pre><code><span class="keyword">import</span> <span class="prop">React</span> <span class="keyword">from</span> <span class="string">'react'</span>;
+    <div class="question">8. Difference between props and state?</div>
+    <div class="answer">Props → external, immutable. State → internal, mutable.</div>
 
-<span class="keyword">function</span> <span class="builtin">Welcome</span>() {
-  <span class="keyword">return</span> &lt;<span class="keyword">h1</span>&gt;Hello, Venudhar&lt;/<span class="keyword">h1</span>&gt;;
-}
+    <div class="question">9. What is lifting state up?</div>
+    <div class="answer">Moving state to a common ancestor so multiple components can share it.</div>
 
-<span class="comment">// Embedded JavaScript expressions inside templates using braces</span>
-<span class="keyword">function</span> <span class="builtin">Greeting</span>() {
-  <span class="keyword">const</span> <span class="prop">name</span> = <span class="string">'Venudhar'</span>;
-  <span class="keyword">return</span> &lt;<span class="keyword">h2</span>&gt;Welcome back, {<span class="prop">name</span>}!&lt;/<span class="keyword">h2</span>&gt;;
-}</code></pre>
+    <div class="question">10. Controlled vs uncontrolled components?</div>
+    <div class="answer">Controlled → React manages state. Uncontrolled → DOM manages state via refs.</div>
 
-  <h3 id="d1-props">2. Props Integration</h3>
-  <p class="desc">Props allow you to securely pass configurations or runtime values downstream from parent components into child nodes.</p>
-  <pre><code><span class="keyword">function</span> <span class="builtin">UserCard</span>({ <span class="prop">name</span>, <span class="prop">role</span>, <span class="prop">onStatusChange</span> }) {
-  <span class="keyword">return</span> (
-    &lt;<span class="keyword">div</span>&gt;
-      &lt;<span class="keyword">p</span>&gt;{<span class="prop">name</span>}&lt;/<span class="keyword">p</span>&gt;
-      &lt;<span class="keyword">p</span>&gt;{<span class="prop">role</span>}&lt;/<span class="keyword">p</span>&gt;
-      &lt;<span class="keyword">button</span> <span class="prop">onClick</span>={() =&gt; <span class="func">onStatusChange</span>(<span class="string">'Active'</span>)}&gt;Activate&lt;/<span class="keyword">button</span>&gt;
-    &lt;/<span class="keyword">div</span>&gt;
-  );
-}
+    <div class="question">11. What is useState?</div>
+    <div class="answer">Hook to add local state to functional components.</div>
 
-<span class="comment">// Parent declaration: &lt;UserCard name="Venudhar" role="Tech Lead" onStatusChange={handleStatus} /&gt;</span></code></pre>
+    <div class="question">12. What is useEffect?</div>
+    <div class="answer">Hook to handle side effects like fetching data or subscriptions.</div>
 
-  <h3 id="d1-state">3. Component State (useState Hook)</h3>
-  <p class="desc">State encapsulates isolated values that belong specifically to a component. Updating this internal engine forces automated screen updates.</p>
-  <pre><code><span class="keyword">import</span> { <span class="func">useState</span> } <span class="keyword">from</span> <span class="string">'react'</span>;
+    <div class="question">13. What is useContext?</div>
+    <div class="answer">Hook to consume values from React Context without prop drilling.</div>
 
-<span class="keyword">function</span> <span class="builtin">Counter</span>() {
-  <span class="keyword">const</span> [<span class="prop">count</span>, <span class="func">setCount</span>] = <span class="func">useState</span>(<span class="number">0</span>);
+    <div class="question">14. What is React’s key prop used for?</div>
+    <div class="answer">Helps React identify list items for efficient re-rendering.</div>
 
-  <span class="keyword">return</span> (
-    &lt;<span class="keyword">button</span> <span class="prop">onClick</span>={() =&gt; <span class="func">setCount</span>(<span class="prop">count</span> + <span class="number">1</span>)}&gt;
-      Count: {<span class="prop">count</span>}
-    &lt;/<span class="keyword">button</span>&gt;
-  );
-}</code></pre>
+    <div class="question">15. What is Create React App (CRA)?</div>
+    <div class="answer">A boilerplate tool to quickly set up a React project.</div>
+  </div>
 
-  <h3 id="d1-events">4. Event Handling</h3>
-  <p class="desc">React wraps native browser behaviors inside synthetic declarative wrappers (like <code>onClick</code> or <code>onChange</code>) to manage interactions predictably.</p>
-  <pre><code><span class="keyword">function</span> <span class="builtin">SearchBox</span>() {
-  <span class="keyword">const</span> <span class="func">handleInput</span> = (<span class="prop">event</span>) =&gt; {
-    <span class="prop">console</span>.<span class="func">log</span>(<span class="prop">event</span>.<span class="prop">target</span>.<span class="prop">value</span>);
-  };
+  <div class="tier">
+    <h2>🟡 Intermediate (Practical Use)</h2>
+    <div class="question">16. What is useMemo?</div>
+    <div class="answer">Memoizes expensive computations to avoid recalculation.</div>
 
-  <span class="keyword">return</span> &lt;<span class="keyword">input</span> <span class="prop">onChange</span>={<span class="func">handleInput</span>} <span class="prop">placeholder</span>=<span class="string">"Search..."</span> /&gt;;
-}</code></pre>
+    <div class="question">17. What is useCallback?</div>
+    <div class="answer">Memoizes functions to prevent unnecessary re-renders.</div>
 
-  <h3 id="d1-conditional">5. Conditional Rendering</h3>
-  <p class="desc">Control flow conditions in React rely entirely on clean native JavaScript code structures (such as ternary operators or short-circuit statements).</p>
-  <pre><code><span class="keyword">function</span> <span class="builtin">Status</span>({ <span class="prop">isLoggedIn</span> }) {
-  <span class="keyword">return</span> (
-    &lt;<span class="keyword">div</span>&gt;
-      {<span class="prop">isLoggedIn</span> ? &lt;<span class="keyword">p</span>&gt;Welcome back!&lt;/<span class="keyword">p</span>&gt; : &lt;<span class="keyword">p</span>&gt;Please log in.&lt;/<span class="keyword">p</span>&gt;}
-    &lt;/<span class="keyword">div</span>&gt;
-  );
-}</code></pre>
+    <div class="question">18. What are error boundaries?</div>
+    <div class="answer">Components that catch errors in child components and show fallback UI.</div>
 
-  <h3 id="d1-lists">6. Lists & Keys</h3>
-  <p class="desc">Iterating over multiple data entries uses regular arrays mapped cleanly. Unique tracker <code>key</code> properties provide critical optimization signals to the framework engine.</p>
-  <pre><code><span class="keyword">function</span> <span class="builtin">StockList</span>() {
-  <span class="keyword">const</span> <span class="prop">stocks</span> = [
-    { <span class="prop">id</span>: <span class="number">1</span>, <span class="prop">symbol</span>: <span class="string">'ONGC'</span>, <span class="prop">price</span>: <span class="number">270</span> }
-  ];
+    <div class="question">19. What is reconciliation?</div>
+    <div class="answer">React’s process of diffing Virtual DOM and updating the real DOM.</div>
 
-  <span class="keyword">return</span> (
-    &lt;<span class="keyword">ul</span>&gt;
-      {<span class="prop">stocks</span>.<span class="func">map</span>(<span class="prop">stock</span> =&gt; (
-        &lt;<span class="keyword">li</span> <span class="prop">key</span>={<span class="prop">stock</span>.<span class="prop">id</span>}&gt;{<span class="prop">stock</span>.<span class="prop">symbol</span>} — {<span class="prop">stock</span>.<span class="prop">price</span>}&lt;/<span class="keyword">li</span>&gt;
-      ))}
-    &lt;/<span class="keyword">ul</span>&gt;
-  );
-}</code></pre>
+    <div class="question">20. What is code splitting?</div>
+    <div class="answer">Loading parts of the app on demand to reduce bundle size.</div>
 
-  <h3 id="d1-forms">7. Controlled Forms</h3>
-  <p class="desc">Controlled elements lock field text changes directly into the component's internal hook state storage, providing a unified source of data truth.</p>
-  <pre><code><span class="keyword">function</span> <span class="builtin">LoginForm</span>() {
-  <span class="keyword">const</span> [<span class="prop">email</span>, <span class="func">setEmail</span>] = <span class="func">useState</span>(<span class="string">''</span>);
+    <div class="question">21. What is lazy loading in React?</div>
+    <div class="answer">Deferring component loading until needed using React.lazy and Suspense.</div>
 
-  <span class="keyword">const</span> <span class="func">handleSubmit</span> = (<span class="prop">e</span>) =&gt; {
-    <span class="prop">e</span>.<span class="func">preventDefault</span>();
-    <span class="prop">console</span>.<span class="func">log</span>(<span class="prop">email</span>);
-  };
+    <div class="question">22. How to prevent unnecessary re-renders?</div>
+    <div class="answer">Use React.memo, useCallback, useMemo, and proper keys.</div>
 
-  <span class="keyword">return</span> (
-    &lt;<span class="keyword">form</span> <span class="prop">onSubmit</span>={<span class="func">handleSubmit</span>}&gt;
-      &lt;<span class="keyword">input</span> <span class="prop">value</span>={<span class="prop">email</span>} <span class="prop">onChange</span>={(<span class="prop">e</span>) =&gt; <span class="func">setEmail</span>(<span class="prop">e</span>.<span class="prop">target</span>.<span class="prop">value</span>)} /&gt;
-      &lt;<span class="keyword">button</span> <span class="prop">type</span>=<span class="string">"submit"</span>&gt;Submit&lt;/<span class="keyword">button</span>&gt;
-    &lt;/<span class="keyword">form</span>&gt;
-  );
-}</code></pre>
+    <div class="question">23. What is Context API?</div>
+    <div class="answer">Built-in way to manage global state without prop drilling.</div>
 
-  <h2 id="day2">📅 Day 2 — Core Hooks & State Transformations</h2>
+    <div class="question">24. Difference between Redux and Context API?</div>
+    <div class="answer">Redux → predictable state container. Context → simpler global state sharing.</div>
 
-  <h3 id="d2-effect">1. useEffect & Execution Cleanups</h3>
-  <p class="desc">This hook manages external application adjustments (like network fetches, element bindings, or background timers). It also returns cleanup operations safely.</p>
-  <pre><code><span class="keyword">import</span> { <span class="func">useEffect</span>, <span class="func">useState</span> } <span class="keyword">from</span> <span class="string">'react'</span>;
+    <div class="question">25. What is hydration in React?</div>
+    <div class="answer">Attaching event listeners to server-rendered HTML during SSR.</div>
 
-<span class="keyword">function</span> <span class="builtin">StockPrice</span>({ <span class="prop">symbol</span> }) {
-  <span class="keyword">const</span> [<span class="prop">price</span>, <span class="func">setPrice</span>] = <span class="func">useState</span>(<span class="keyword">null</span>);
+    <div class="question">26. What is useReducer?</div>
+    <div class="answer">Hook for managing complex state logic using reducers.</div>
 
-  <span class="func">useEffect</span>(() =&gt; {
-    <span class="comment">// API call side-effect goes here</span>
-    <span class="keyword">return</span> () =&gt; {
-      <span class="comment">// Optional connection or subscription cleanups</span>
-    };
-  }, [<span class="prop">symbol</span>]); <span class="comment">// Triggers execution when dependencies update</span>
+    <div class="question">27. What is useRef used for?</div>
+    <div class="answer">Persist values across renders or reference DOM elements.</div>
 
-  <span class="keyword">return</span> &lt;<span class="keyword">p</span>&gt;{<span class="prop">symbol</span>}: {<span class="prop">price</span>}&lt;/<span class="keyword">p</span>&gt;;
-}</code></pre>
+    <div class="question">28. Difference between useEffect and useLayoutEffect?</div>
+    <div class="answer">useLayoutEffect runs synchronously after DOM mutations; useEffect runs asynchronously after paint.</div>
 
-  <h3 id="d2-context">2. useContext Global Infrastructure</h3>
-  <p class="desc">Context simplifies deep structural application adjustments by broadcasting shared values directly to sub-nodes without manual mid-level property passing.</p>
-  <pre><code><span class="keyword">import</span> { <span class="func">createContext</span>, <span class="func">useContext</span> } <span class="keyword">from</span> <span class="string">'react'</span>;
+    <div class="question">29. What is a custom hook?</div>
+    <div class="answer">Reusable function that encapsulates logic using hooks.</div>
 
-<span class="keyword">const</span> <span class="prop">ThemeContext</span> = <span class="func">createContext</span>(<span class="string">'dark'</span>);
+    <div class="question">30. What is prop drilling?</div>
+    <div class="answer">Passing props through multiple layers unnecessarily.</div>
+  </div>
 
-<span class="keyword">function</span> <span class="builtin">Toolbar</span>() {
-  <span class="keyword">const</span> <span class="prop">theme</span> = <span class="func">useContext</span>(<span class="prop">ThemeContext</span>);
-  <span class="keyword">return</span> &lt;<span class="keyword">div</span> <span class="prop">className</span>={<span class="prop">theme</span>}&gt;Toolbar Content&lt;/<span class="keyword">div</span>&gt;;
-}</code></pre>
+  <div class="tier">
+    <h2>🔴 Advanced (Deep Dive & Ecosystem)</h2>
+    <div class="question">31. What is React Fiber?</div>
+    <div class="answer">The reconciliation engine enabling async rendering and prioritization.</div>
 
-  <h3 id="d2-ref">3. useRef Access Point</h3>
-  <p class="desc">This hook stores mutable references that don't trigger layout updates, making it perfect for targeting direct DOM elements instantly.</p>
-  <pre><code><span class="keyword">import</span> { <span class="func">useRef</span> } <span class="keyword">from</span> <span class="string">'react'</span>;
+    <div class="question">32. What is concurrent mode in React?</div>
+    <div class="answer">Features that make rendering interruptible and prioritize urgent updates.</div>
 
-<span class="keyword">function</span> <span class="builtin">FocusInput</span>() {
-  <span class="keyword">const</span> <span class="prop">inputRef</span> = <span class="func">useRef</span>(<span class="keyword">null</span>);
+    <div class="question">33. Difference between synchronous vs asynchronous rendering?</div>
+    <div class="answer">Sync → blocks until finished. Async → can pause, resume, and prioritize.</div>
 
-  <span class="keyword">const</span> <span class="func">onClick</span> = () =&gt; {
-    <span class="prop">inputRef</span>.<span class="prop">current</span>.<span class="func">focus</span>();
-  };
+    <div class="question">34. What is hydration in SSR?</div>
+    <div class="answer">Process of attaching React to server-rendered markup.</div>
 
-  <span class="keyword">return</span> (
-    &lt;<span class="keyword">div</span>&gt;
-      &lt;<span class="keyword">input</span> <span class="prop">ref</span>={<span class="prop">inputRef</span>} /&gt;
-      &lt;<span class="keyword">button</span> <span class="prop">onClick</span>={<span class="func">onClick</span>}&gt;Focus Input&lt;/<span class="keyword">button</span>&gt;
-    &lt;/<span class="keyword">div</span>&gt;
-  );
-}</code></pre>
+    <div class="question">35. What is useImperativeHandle?</div>
+    <div class="answer">Customizes ref values exposed to parent components.</div>
 
-  <h3 id="d2-reducer">4. useReducer State Complexities</h3>
-  <p class="desc">Perfect for managing advanced multi-step properties. State mutations are grouped inside a predictable reducer function driven by clean action dispatches.</p>
-  <pre><code><span class="keyword">import</span> { <span class="func">useReducer</span> } <span class="keyword">from</span> <span class="string">'react'</span>;
+    <div class="question">36. What is memoization in React?</div>
+    <div class="answer">Caching results of computations/components to avoid re-execution.</div>
 
-<span class="keyword">function</span> <span class="func">reducer</span>(<span class="prop">state</span>, <span class="prop">action</span>) {
-  <span class="keyword">switch</span> (<span class="prop">action</span>.<span class="prop">type</span>) {
-    <span class="keyword">case</span> <span class="string">'increment'</span>: <span class="keyword">return</span> { <span class="prop">count</span>: <span class="prop">state</span>.<span class="prop">count</span> + <span class="number">1</span> };
-    <span class="keyword">default</span>: <span class="keyword">throw</span> <span class="keyword">new</span> <span class="builtin">Error</span>();
-  }
-}
+    <div class="question">37. What is React.memo?</div>
+    <div class="answer">HOC that prevents re-rendering if props haven’t changed.</div>
 
-<span class="keyword">function</span> <span class="builtin">CounterWithReducer</span>() {
-  <span class="keyword">const</span> [<span class="prop">state</span>, <span class="func">dispatch</span>] = <span class="func">useReducer</span>(<span class="func">reducer</span>, { <span class="prop">count</span>: <span class="number">0</span> });
-  <span class="keyword">return</span> (
-    &lt;<span class="keyword">button</span> <span class="prop">onClick</span>={() =&gt; <span class="func">dispatch</span>({ <span class="prop">type</span>: <span class="string">'increment'</span> })}&gt;
-      Count: {<span class="prop">state</span>.<span class="prop">count</span>}
-    &lt;/<span class="keyword">button</span>&gt;
-  );
-}</code></pre>
+    <div class="question">38. Difference between useMemo and useCallback?</div>
+    <div class="answer">useMemo memoizes values; useCallback memoizes functions.</div>
 
-  <h3 id="d2-custom">5. Custom Hooks Extraction</h3>
-  <p class="desc">Isolate and package redundant component algorithms away cleanly into independent, testable utilities.</p>
-  <pre><code><span class="keyword">function</span> <span class="func">useWindowWidth</span>() {
-  <span class="keyword">const</span> [<span class="prop">width</span>, <span class="func">setWidth</span>] = <span class="func">useState</span>(<span class="builtin">window</span>.<span class="prop">innerWidth</span>);
-  <span class="func">useEffect</span>(() =&gt; {
-    <span class="keyword">const</span> <span class="func">handleResize</span> = () =&gt; <span class="func">setWidth</span>(<span class="builtin">window</span>.<span class="prop">innerWidth</span>);
-    <span class="builtin">window</span>.<span class="func">addEventListener</span>(<span class="string">'resize'</span>, <span class="func">handleResize</span>);
-    <span class="keyword">return</span> () =&gt; <span class="builtin">window</span>.<span class="func">removeEventListener</span>(<span class="string">'resize'</span>, <span class="func">handleResize</span>);
-  }, []);
-  <span class="keyword">return</span> <span class="prop">width</span>;
-}</code></pre>
+    <div class="question">39. What is virtualization in React?</div>
+    <div class="answer">Rendering only visible items in large lists (e.g., react-window).</div>
 
-  <h3 id="d2-memo">6. useMemo Computations</h3>
-  <p class="desc">Caches heavy calculations locally so that complex operations skip executing during unrelated component redraws.</p>
-  <pre><code><span class="keyword">import</span> { <span class="func">useMemo</span> } <span class="keyword">from</span> <span class="string">'react'</span>;
+    <div class="question">40. What is tree shaking?</div>
+    <div class="answer">Removing unused code during bundling.</div>
 
-<span class="keyword">const</span> <span class="prop">expensiveValue</span> = <span class="func">useMemo</span>(() =&gt; {
-  <span class="keyword">return</span> <span class="func">runHeavyCalculation</span>(<span class="prop">data</span>);
-}, [<span class="prop">data</span>]);</code></pre>
+    <div class="question">41. What is Redux?</div>
+    <div class="answer">Predictable state container using actions, reducers, and a single store.</div>
 
-  <h3 id="d2-callback">7. useCallback Optimizations</h3>
-  <p class="desc">Preserves static callback function instances across component rerenders, stopping unnecessary updates on sensitive sub-components.</p>
-  <pre><code><span class="keyword">import</span> { <span class="func">useCallback</span> } <span class="keyword">from</span> <span class="string">'react'</span>;
+    <div class="question">42. Difference between Redux and MobX?</div>
+    <div class="answer">Redux → strict, immutable state. MobX → reactive, mutable state.</div>
 
-<span class="keyword">const</span> <span class="prop">handleSelection</span> = <span class="func">useCallback</span>((<span class="prop">id</span>) =&gt; {
-  <span class="func">doSomethingWith</span>(<span class="prop">id</span>);
-}, [<span class="prop">dependencies</span>]);</code></pre>
+    <div class="question">43. What is Redux middleware?</div>
+    <div class="answer">Functions that intercept actions for logging or async calls.</div>
 
-  <h2 id="day3">📅 Day 3 — Production Architecture</h2>
+    <div class="question">44. What is snapshot testing?</div>
+    <div class="answer">Capturing component output and comparing against future renders.</div>
 
-  <h3 id="d3-router">1. React Router (Navigation)</h3>
-  <p class="desc">Enables reliable, smooth page route configurations inside standard single-page applications.</p>
-  <pre><code><span class="keyword">import</span> { <span class="prop">BrowserRouter</span>, <span class="prop">Routes</span>, <span class="prop">Route</span>, <span class="prop">Link</span> } <span class="keyword">from</span> <span class="string">'react-router-dom'</span>;
+    <div class="question">45. How do you test React components?</div>
+    <div class="answer">Using Jest and React Testing Library.</div>
 
-<span class="keyword">function</span> <span class="builtin">App</span>() {
-  <span class="keyword">return</span> (
-    &lt;<span class="prop">BrowserRouter</span>&gt;
-      &lt;<span class="keyword">nav</span>&gt;
-        &lt;<span class="prop">Link</span> <span class="prop">to</span>=<span class="string">"/"</span>&gt;Home&lt;/<span class="prop">Link</span>&gt;
-        &lt;<span class="prop">Link</span> <span class="prop">to</span>=<span class="string">"/portfolio"</span>&gt;Portfolio&lt;/<span class="prop">Link</span>&gt;
-      &lt;/<span class="keyword">nav</span>&gt;
-      &lt;<span class="prop">Routes</span>&gt;
-        &lt;<span class="prop">Route</span> <span class="prop">path</span>=<span class="string">"/"</span> <span class="prop">element</span>={&lt;<span class="prop">Home</span> /&gt;} /&gt;
-        &lt;<span class="prop">Route</span> <span class="prop">path</span>=<span class="string">"/portfolio"</span> <span class="prop">element</span>={&lt;<span class="prop">Portfolio</span> /&gt;} /&gt;
-      &lt;/<span class="prop">Routes</span>&gt;
-    &lt;/<span class="prop">BrowserRouter</span>&gt;
-  );
-}</code></pre>
+    <div class="question">46. What is SSR vs CSR?</div>
+    <div class="answer">SSR → server renders HTML. CSR → browser renders after JS loads.</div>
 
-  <h3 id="d3-api">2. API Fetching Layer (Clean Hooks)</h3>
-  <p class="desc">Bundle API tracking setups systematically away inside specialized custom hook functions to track loading and failure indicators seamlessly.</p>
-  <pre><code><span class="keyword">function</span> <span class="func">useStocksApi</span>() {
-  <span class="keyword">const</span> [<span class="prop">stocks</span>, <span class="func">setStocks</span>] = <span class="func">useState</span>([]);
-  <span class="keyword">const</span> [<span class="prop">loading</span>, <span class="func">setLoading</span>] = <span class="func">useState</span>(<span class="keyword">true</span>);
+    <div class="question">47. What is Next.js?</div>
+    <div class="answer">A React framework that provides server-side rendering (SSR), static site generation (SSG), built-in routing, and performance optimizations.</div>
 
-  <span class="func">useEffect</span>(() =&gt; {
-    <span class="func">fetch</span>(<span class="string">'/api/portfolio'</span>)
-      .<span class="func">then</span>(<span class="prop">res</span> =&gt; <span class="prop">res</span>.<span class="func">json</span>())
-      .<span class="func">then</span>(<span class="prop">data</span> =&gt; { <span class="func">setStocks</span>(<span class="prop">data</span>); <span class="func">setLoading</span>(<span class="keyword">false</span>); });
-  }, []);
+    <div class="question">48. What is server-side rendering (SSR) hydration?</div>
+    <div class="answer">Hydration is the process where React attaches event handlers and makes server-rendered HTML interactive on the client side.</div>
 
-  <span class="keyword">return</span> { <span class="prop">stocks</span>, <span class="prop">loading</span> };
-}</code></pre>
+    <div class="question">49. What is React’s reconciliation engine (Fiber) designed to solve?</div>
+    <div class="answer">Fiber enables React to break rendering work into units, pause and resume tasks, and prioritize updates for smoother user experiences.</div>
 
-  <h3 id="d3-state">3. Global State Architecture (Zustand Example)</h3>
-  <p class="desc">Clean global state management stores application-wide values elegantly without forcing heavy Context redraw boilerplate overhead.</p>
-  <pre><code><span class="keyword">import</span> { <span class="func">create</span> } <span class="keyword">from</span> <span class="string">'zustand'</span>;
-
-<span class="keyword">const</span> <span class="prop">useStore</span> = <span class="func">create</span>((<span class="prop">set</span>) =&gt; ({
-  <span class="prop">stocks</span>: [],
-  <span class="prop">addStock</span>: (<span class="prop">stock</span>) =&gt; <span class="func">set</span>((<span class="prop">state</span>) =&gt; ({ <span class="prop">stocks</span>: [...<span class="prop">state</span>.<span class="prop">stocks</span>, <span class="prop">stock</span>] }))
-}));</code></pre>
-
-  <h3 id="d3-error">4. Error Boundaries</h3>
-  <p class="desc">Catch JavaScript syntax runtime crashes safely down inside child component trees before they take down the entire active screen interface.</p>
-  <pre><code><span class="keyword">class</span> <span class="builtin">ErrorBoundary</span> <span class="keyword">extends</span> <span class="prop">React</span>.<span class="builtin">Component</span> {
-  <span class="prop">state</span> = { <span class="prop">hasError</span>: <span class="keyword">false</span> };
-  <span class="keyword">static</span> <span class="func">getDerivedStateFromError</span>() { <span class="keyword">return</span> { <span class="prop">hasError</span>: <span class="keyword">true</span> }; }
-  <span class="func">render</span>() {
-    <span class="keyword">if</span> (<span class="keyword">this</span>.<span class="prop">state</span>.<span class="prop">hasError</span>) <span class="keyword">return</span> &lt;<span class="keyword">h1</span>&gt;Something broke.&lt;/<span class="keyword">h1</span>&gt;;
-    <span class="keyword">return</span> <span class="keyword">this</span>.<span class="prop">props</span>.<span class="prop">children</span>;
-  }
-}</code></pre>
-
-  <h3 id="d3-testing">5. Component Testing (React Testing Library)</h3>
-  <p class="desc">Write clear validation tests that assert core visual element shifts from user behavior simulation triggers.</p>
-  <pre><code><span class="keyword">import</span> { <span class="prop">render</span>, <span class="prop">screen</span>, <span class="prop">fireEvent</span> } <span class="keyword">from</span> <span class="string">'@testing-library/react'</span>;
-<span class="keyword">import</span> <span class="prop">Counter</span> <span class="keyword">from</span> <span class="string">'./Counter'</span>;
-
-<span class="func">test</span>(<span class="string">'increments count value'</span>, () =&gt; {
-  <span class="func">render</span>(&lt;<span class="prop">Counter</span> /&gt;);
-  <span class="keyword">const</span> <span class="prop">button</span> = <span class="prop">screen</span>.<span class="func">getByText</span>(<span class="string">/Count: 0/</span>);
-  <span class="prop">fireEvent</span>.<span class="func">click</span>(<span class="prop">button</span>);
-  <span class="func">expect</span>(<span class="prop">button</span>.<span class="prop">textContent</span>).<span class="func">toBe</span>(<span class="string">'Count: 1'</span>);
-});</code></pre>
-
-  <h3 id="d3-ssr">6. Server-Side Rendering Theory (Next.js Layer)</h3>
-  <p class="desc">Pre-compiles structural content directly on the server host, returning complete markup early for high performance optimization.</p>
-  <pre><code><span class="comment">// Standard Next.js server retrieval architecture</span>
-<span class="keyword">export</span> <span class="keyword">async</span> <span class="keyword">function</span> <span class="func">getServerSideProps</span>() {
-  <span class="keyword">const</span> <span class="prop">data</span> = <span class="keyword">await</span> <span class="func">fetchPortfolioData</span>();
-  <span class="keyword">return</span> { <span class="prop">props</span>: { <span class="prop">data</span> } };
-}</code></pre>
-
-  <h3 id="d3-perfprod">7. Performance Optimization & Memoization</h3>
-  <p class="desc">Lazy loading splits bundling chunks automatically, while <code>React.memo</code> bypasses costly re-evaluation loops if inputs haven't changed.</p>
-  <pre><code><span class="comment">// Defer bundle assets smoothly with lazy loading</span>
-<span class="keyword">const</span> <span class="prop">Dashboard</span> = <span class="prop">React</span>.<span class="func">lazy</span>(() =&gt; <span class="keyword">import</span>(<span class="string">'./Dashboard'</span>));
-
-<span class="comment">// React.memo stops unnecessary sub-component evaluations</span>
-<span class="keyword">const</span> <span class="prop">StockRow</span> = <span class="prop">React</span>.<span class="func">memo</span>(({ <span class="prop">stock</span> }) =&gt; (
-  &lt;<span class="keyword">tr</span>&gt;&lt;<span class="keyword">td</span>&gt;{<span class="prop">stock</span>.<span class="prop">symbol</span>}&lt;/<span class="keyword">td</span>&gt;&lt;/<span class="keyword">tr</span>&gt;
-));</code></pre>
-
-  <h2 id="end-result">🎯 End Result</h2>
-  <ul class="result">
-    <li>Understand React fundamentals (JSX, props, state, events, lists, forms).</li>
-    <li>Master Hooks (useEffect, useContext, useRef, useReducer, custom hooks) and performance patterns (useMemo, useCallback, memo).</li>
-    <li>Apply React in real-world apps: routing, API integration, global state management architectures, Next.js server principles, and testing specifications.</li>
-  </ul>
-</main>
-</div>
-
+    <div class="question">50. What is the difference between controlled and uncontrolled forms in large apps?</div>
+    <div class="answer">Controlled forms are managed by React state, offering predictability and easier validation. Uncontrolled forms rely on the DOM, making them simpler but less consistent for complex apps.</div>
 </body>
-</html>
