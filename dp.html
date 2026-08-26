@@ -1528,5 +1528,111 @@ public class Student { public Guid Id { get; set; } public string Name { get; se
   </ul>
 </details>
 
+<details>
+  <summary>OOP Concepts</summary>
+  <div>
+      <h3>1. Abstraction</h3>
+    <p>Hiding implementation details, showing only essential features.</p>
+    <pre><code class="language-csharp">
+abstract class Shape {
+    public abstract double Area();
+}
+class Circle : Shape {
+    public double Radius { get; set; }
+    public override double Area() => Math.PI * Radius * Radius;
+}
+   </code> </pre>
+    <p><b>Memory hook:</b> Abstract = show what, hide how.</p>
+	
+    <h3>2. Encapsulation</h3>
+    <p>Wrapping data (fields) and behavior (methods) together inside a class. Protects data and controls access.</p>
+    <pre><code class="language-csharp">
+class BankAccount {
+    private decimal balance; // hidden data
+    public void Deposit(decimal amount) => balance += amount;
+    public decimal GetBalance() => balance; // controlled access
+}
+    </code></pre>
+    <p><b>Memory hook:</b> Capsule = protect + control access.</p>
+
+
+
+    <h3>3. Inheritance</h3>
+    <p>One class derives from another, reusing its properties and methods.</p>
+    <pre><code class="language-csharp">
+class Animal {
+    public void Eat() => Console.WriteLine("Eating...");
+}
+class Dog : Animal {
+    public void Bark() => Console.WriteLine("Barking...");
+}
+   </code> </pre>
+    <p><b>Memory hook:</b> Inheritance = reuse parent features.</p>
+
+    <h3>4. Polymorphism</h3>
+    <p>Same interface, different implementations. Two main types:</p>
+    <ul>
+      <li><b>Compile-time (Overloading):</b> Same method name, different signatures.</li>
+      <li><b>Runtime (Overriding):</b> Subclass changes base method behavior.</li>
+    </ul>
+    <pre><code class="language-csharp">
+class Shape {
+    public virtual void Draw() => Console.WriteLine("Drawing shape");
+}
+class Circle : Shape {
+    public override void Draw() => Console.WriteLine("Drawing circle");
+}
+    </code></pre>
+    <p><b>Memory hook:</b> Poly = many forms.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Polymorphism Types</summary>
+  <div>
+    <h3>1. Compile-time Polymorphism (Static Binding)</h3>
+    <p>Achieved via method overloading or operator overloading. Decided at compile time.</p>
+    <pre><code class="language-csharp">
+class Calculator {
+    public int Add(int a, int b) => a + b;
+    public double Add(double a, double b) => a + b;
+}
+  </code>  </pre>
+
+    <h3>2. Runtime Polymorphism (Dynamic Binding)</h3>
+    <p>Achieved via method overriding using virtual/override. Decided at runtime.</p>
+    <pre><code class="language-csharp">
+class Animal {
+    public virtual void Speak() => Console.WriteLine("Animal sound");
+}
+class Dog : Animal {
+    public override void Speak() => Console.WriteLine("Bark");
+}
+   </code> </pre>
+
+    <h3>3. Interface Polymorphism</h3>
+    <p>Multiple classes implement the same interface differently.</p>
+    <pre><code class="language-csharp">
+interface IPayment { void Pay(decimal amount); }
+class CreditCard : IPayment {
+    public void Pay(decimal amount) => Console.WriteLine($"Paid {amount} via Credit Card");
+}
+class PayPal : IPayment {
+    public void Pay(decimal amount) => Console.WriteLine($"Paid {amount} via PayPal");
+}
+   </code> </pre>
+
+
+    <h3>4. Polymorphism with Inheritance Levels</h3>
+    <ul>
+      <li><b>Single Inheritance:</b> One base → one derived (Animal → Dog).</li>
+      <li><b>Multilevel Inheritance:</b> Chain of classes (LivingBeing → Animal → Dog).</li>
+      <li><b>Hierarchical Inheritance:</b> Multiple derived classes from one base (Shape → Circle, Rectangle).</li>
+      <li><b>Hybrid:</b> Combination of multilevel + interfaces (Employee : Person, IWorker).</li>
+    </ul>
+    <p><b>Key Idea:</b> Runtime polymorphism shines in inheritance chains — same base call, different derived outputs.</p>
+  </div>
+</details>
+
 </body>
 </html>
