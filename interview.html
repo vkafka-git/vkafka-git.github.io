@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Tech Lead / Full Stack Developer Interview Prep</title>
+
+<!-- Prism CSS theme -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+<!-- Prism core + languages -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+<style>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        counter-reset: question-counter;
+    }
+    h1 { border-bottom: 2px solid #0078d4; padding-bottom: 10px; color: #0078d4; }
+    h2 { color: #24292e; margin-top: 30px; border-bottom: 1px solid #eaecef; padding-bottom: 5px; }
+    summary {
+        font-size: 1.1em;
+        font-weight: bold;
+        color: #0078d4;
+        cursor: pointer;
+        margin-bottom: 10px;
+    }
+    summary::-webkit-details-marker { display: none; }
+    details { margin-bottom: 15px; }
+    details summary::before {
+        counter-increment: question-counter;
+        content: counter(question-counter) ". ";
+        color: #0078d4;
+        font-weight: bold;
+        margin-right: 6px;
+    }
+    #sidebar {
+        position: fixed; left:0; top:0; width:200px; height:100%;
+        background:#f6f8fa; padding:20px; overflow-y:auto;
+    }
+    #content { margin-left:220px; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar Navigation -->
+<div id="sidebar">
+  <h3>Categories</h3>
+  <ul style="list-style:none;padding:0;">
+    <li><a href="#csharp">C# / .NET</a></li>
+    <li><a href="#efcore">EF Core</a></li>
+    <li><a href="#sql">SQL</a></li>
+    <li><a href="#designpatterns">Design Patterns</a></li>
+    <li><a href="#coding">Coding / LINQ Guide</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#microservices">Microservices</a></li>
+    <li><a href="#react">React</a></li>
+    <li><a href="#azure">Azure</a></li>
+    <li><a href="#devops">DevOps</a></li>
+    <li><a href="#testing">Testing</a></li>
+    <li><a href="#leadership">Leadership</a></li>
+    <li><a href="#scenarios">Project Challenges</a></li>
+  </ul>
+  <hr>
+  <input type="text" id="searchBox" placeholder="Search topics..." style="width:100%;padding:8px;">
+  <button onclick="toggleFlashcards()" style="margin-top:10px;">Flashcard Mode</button>
+  <button onclick="window.print()" style="margin-top:10px;">Export PDF</button>
+</div>
+
+
+
+
+<div id="content">
+<h1>Tech Lead / Full Stack Developer Interview Prep</h1>
+
+<!-- Example Category -->
+<h2 id="csharp">C# / .NET</h2>
+<details><summary>Async/Await Internals in C#</summary></details>
+<details><summary>CancellationToken</summary></details>
+<details><summary>Task Lifecycle in .NET</summary></details>
+<details><summary>Difference between Task, ValueTask, and Thread</summary></details>
+<details><summary>IEnumerable vs IQueryable vs List</summary></details>
+<details><summary>LINQ Deferred Execution</summary></details>
+<details><summary>Dependency Injection in ASP.NET Core</summary></details>
+<details><summary>AddScoped vs AddTransient vs AddSingleton</summary></details>
+<details><summary>ASP.NET Core Middleware Overview</summary></details>
+<details><summary>Global Exception Handling in ASP.NET Core</summary></details>
+<details><summary>SignalR for Real-Time Communication</summary></details>
+<details><summary>MediatR Usage</summary></details>
+<details><summary>AutoMapper Usage</summary></details>
+<details><summary>Roslyn Analyzers</summary></details>
+<details><summary>StyleCop.Analyzers</summary></details>
+<details><summary>SonarAnalyzer.CSharp</summary></details>
+
+<h2 id="efcore">EF Core</h2>
+<details><summary>EF Core Concurrency Handling</summary></details>
+<details><summary>RowVersion in EF Core</summary></details>
+<details><summary>Loading Strategies in EF Core</summary></details>
+<details><summary>EF Core Migrations</summary></details>
+<details><summary>Optimizing EF Core Queries</summary></details>
+
+<h2 id="sql">SQL Interview Questions</h2>
+<details><summary>Difference between DELETE, TRUNCATE, DROP</summary></details>
+<details><summary>Primary Key vs Unique Key vs Foreign Key</summary></details>
+<details><summary>WHERE vs HAVING</summary></details>
+<details><summary>INNER JOIN vs LEFT JOIN vs FULL JOIN</summary></details>
+<details><summary>Second Highest Salary Query</summary></details>
+<details><summary>Find Duplicate Records</summary></details>
+<details><summary>Subquery vs CTE</summary></details>
+<details><summary>GROUP BY & Aggregates</summary></details>
+<details><summary>CHAR vs VARCHAR</summary></details>
+<details><summary>NULL Handling</summary></details>
+<details><summary>Clustered vs Non‑Clustered Index</summary></details>
+<details><summary>Covering Index</summary></details>
+<details><summary>Query Execution Plan</summary></details>
+<details><summary>UNION vs UNION ALL</summary></details>
+<details><summary>Window Functions</summary></details>
+<details><summary>Nth Highest Salary</summary></details>
+<details><summary>Transactions & ACID</summary></details>
+<details><summary>Isolation Levels</summary></details>
+<details><summary>Deadlocks</summary></details>
+<details><summary>Optimistic vs Pessimistic Locking</summary></details>
+<details><summary>Partitioning</summary></details>
+<details><summary>Sharding vs Partitioning</summary></details>
+<details><summary>Materialized Views</summary></details>
+<details><summary>OLTP vs OLAP Schema</summary></details>
+<details><summary>Audit Logging</summary></details>
+<details><summary>Schema for Ride‑Sharing App</summary></details>
+<details><summary>Scaling Queries for 200M Row Orders Table</summary></details>
+<details><summary>Fact & Dimension Tables</summary></details>
+<details><summary>Troubleshooting Slow Query</summary></details>
+<details><summary>Index Fragmentation</summary></details>
+<details><summary>Heap vs Clustered Tables</summary></details>
+<details><summary>Soft Deletes</summary></details>
+<details><summary>Change Data Capture (CDC)</summary></details>
+<details><summary>Replication vs Log Shipping</summary></details>
+<details><summary>Data Consistency Across Microservices</summary></details>
+<details><summary>CQRS Pattern</summary></details>
+<details><summary>Multi‑Tenant Database</summary></details>
+<details><summary>Horizontal vs Vertical Scaling</summary></details>
+<details><summary>Securing Sensitive Data</summary></details>
+<details><summary>Row‑Level Security</summary></details>
+<details><summary>High Availability in SQL Server</summary></details>
+<details><summary>Temp Tables vs Table Variables</summary></details>
+<details><summary>Large Batch Inserts</summary></details>
+<details><summary>Query Hints</summary></details>
+<details><summary>Monitoring SQL Server Performance</summary></details>
+<details><summary>Index Seek vs Index Scan</summary></details>
+<details><summary>Schema for Event Sourcing</summary></details>
+<details><summary>Denormalization</summary></details>
+<details><summary>Legacy Database Migration</summary></details>
+<details><summary>Best Practices for Schema Versioning in Enterprise Systems</summary></details>
+<details><summary>SQL with CTE: Employee and Manager</summary></details>
+
+
+<!-- Architecture -->
+<h2 id="architecture">Architecture & Design</h2>
+<details><summary>SOLID Principles in Large Codebases</summary></details>
+<details><summary>Repository vs Unit of Work</summary></details>
+<details><summary>Monolith vs Microservices Trade-offs</summary></details>
+<details><summary>Idempotent REST API Design</summary></details>
+<details><summary>Backward Compatibility in APIs</summary></details>
+<details><summary>API Versioning in ASP.NET Core</summary></details>
+<details><summary>Pagination in APIs</summary></details>
+<details><summary>Rate Limiting in APIs</summary></details>
+<details><summary>CORS Configuration</summary></details>
+<details><summary>Caching Strategies in APIs</summary></details>
+<details><summary>Logging Architecture Design</summary></details>
+<details><summary>CQRS + Event Sourcing</summary></details>
+<details><summary>CAP Theorem</summary></details>
+<details><summary>Distributed Transactions</summary></details>
+<details><summary>Resiliency in Cloud Apps</summary></details>
+
+<!-- Microservices -->
+<h2 id="microservices">Microservices</h2>
+<details><summary>Service Discovery</summary></details>
+<details><summary>Circuit Breaker Pattern</summary></details>
+<details><summary>Distributed Logging</summary></details>
+<details><summary>Securing Inter-Service Communication</summary></details>
+<details><summary>API Gateway Role</summary></details>
+<details><summary>Eventual Consistency</summary></details>
+<details><summary>Duplicate Message Handling</summary></details>
+<details><summary>Distributed Tracing</summary></details>
+<details><summary>Service Mesh in Kubernetes</summary></details>
+<details><summary>Monitoring Microservices with Grafana & Kibana</summary></details>
+
+<!-- React -->
+<h2 id="react">React / Frontend</h2>
+<details><summary>Controlled vs Uncontrolled Components</summary></details>
+<details><summary>Virtual DOM Reconciliation</summary></details>
+<details><summary>useEffect vs useLayoutEffect</summary></details>
+<details><summary>useMemo vs useCallback</summary></details>
+<details><summary>Redux vs Context API</summary></details>
+<details><summary>SSR vs CSR</summary></details>
+<details><summary>Next.js vs React</summary></details>
+<details><summary>React Hydration</summary></details>
+<details><summary>React Suspense</summary></details>
+<details><summary>useRef vs createRef</summary></details>
+<details><summary>React Portals</summary></details>
+<details><summary>React Server Components</summary></details>
+<details><summary>Tailwind CSS vs Bootstrap</summary></details>
+
+<!-- Azure -->
+<h2 id="azure">Azure Cloud</h2>
+<details><summary>Azure Functions vs App Service</summary></details>
+<details><summary>AKS Clusters, Nodes, Pods, Containers</summary></details>
+<details><summary>Designing Scalability in AKS</summary></details>
+<details><summary>Cosmos DB Partitioning Strategy</summary></details>
+<details><summary>Cosmos DB Consistency Levels</summary></details>
+<details><summary>Azure SQL Elastic Pools</summary></details>
+<details><summary>Azure Traffic Manager vs Front Door</summary></details>
+<details><summary>Azure CDN Usage</summary></details>
+<details><summary>Azure Durable Functions</summary></details>
+<details><summary>Azure Logic Apps vs Power Automate</summary></details>
+<details><summary>Azure RBAC vs ABAC</summary></details>
+<details><summary>Azure AD B2C Usage</summary></details>
+<details><summary>Azure Hybrid Cloud Strategy</summary></details>
+<details><summary>Azure Cost Optimization</summary></details>
+<details><summary>Azure Backup Strategies</summary></details>
+<details><summary>Azure Disaster Recovery</summary></details>
+<details><summary>Azure Private Endpoints</summary></details>
+<details><summary>Azure Networking (VNet, Peering)</summary></details>
+<details><summary>Azure Service Bus vs Event Grid vs Event Hub</summary></details>
+<details><summary>Retries in Azure Functions with Polly</summary></details>
+<details><summary>Monitoring AKS Workloads</summary></details>
+<details><summary>Azure Storage Redundancy Options</summary></details>
+<details><summary>Managed Identity vs Service Principal</summary></details>
+<details><summary>Role-Based Access Control (RBAC) in Azure</summary></details>
+<details><summary>Scaling Strategies in Azure App Service</summary></details>
+<details><summary>Integrating GitHub Actions with Azure</summary></details>
+<details><summary>Multi-Region Deployments in Azure</summary></details>
+<details><summary>Securing Secrets in Azure Key Vault</summary></details>
+
+<!-- DevOps -->
+<h2 id="devops">DevOps / CI/CD & Code Quality</h2>
+<details><summary>CI vs CD</summary></details>
+<details><summary>Infrastructure as Code (IaC)</summary></details>
+<details><summary>Blue-Green vs Canary Deployments</summary></details>
+<details><summary>Rollback Strategies in CI/CD</summary></details>
+<details><summary>Securing CI/CD Pipelines</summary></details>
+<details><summary>Approvals in CI/CD Pipelines</summary></details>
+<details><summary>YAML Configuration in Azure DevOps</summary></details>
+<details><summary>PR Validation Pipeline</summary></details>
+<details><summary>Deployment Pipeline</summary></details>
+<details><summary>Developer Checklist for Local Validation</summary></details>
+<details><summary>Enforcing Coding Standards in CI/CD</summary></details>
+<details><summary>Static vs Dynamic Testing</summary></details>
+<details><summary>SonarCloud Quality Gates</summary></details>
+<details><summary>Roslyn Analyzers</summary></details>
+<details><summary>StyleCop.Analyzers</summary></details>
+<details><summary>SonarAnalyzer.CSharp</summary></details>
+<details><summary>Measuring Code Coverage</summary></details>
+<details><summary>Log Aggregation Strategies</summary></details>
+<details><summary>Alerting in Grafana</summary></details>
+
+<!-- Testing -->
+<h2 id="testing">Testing & Quality Assurance</h2>
+<details><summary>Unit vs Integration Tests</summary></details>
+<details><summary>Mocking Dependencies</summary></details>
+<details><summary>Mocking vs Stubbing</summary></details>
+<details><summary>Ensuring Test Coverage in CI/CD</summary></details>
+<details><summary>Role of TDD in Agile</summary></details>
+<details><summary>Testing Async Methods in .NET</summary></details>
+<details><summary>Designing Test Data Builders</summary></details>
+<details><summary>Implementing BDD (Behavior-Driven Development)</summary></details>
+<details><summary>Testing Microservices Interactions</summary></details>
+<details><summary>Designing Load Tests</summary></details>
+
+<!-- Leadership -->
+<h2 id="leadership">Leadership & Behavioral</h2>
+<details><summary>Handling Design Disagreements</summary></details>
+<details><summary>Mentoring Juniors in LINQ/SQL</summary></details>
+<details><summary>Balancing Technical Debt vs Deadlines</summary></details>
+<details><summary>Example of Performance Improvement</summary></details>
+<details><summary>Ensuring Code Quality Across Distributed Teams</summary></details>
+<details><summary>Offshore–Onsite Collaboration Challenges</summary></details>
+<details><summary>Handling Underperforming Team Members</summary></details>
+<details><summary>Balancing Innovation vs Stability</summary></details>
+<details><summary>Measuring Success as Tech Lead</summary></details>
+<details><summary>Managing Technical Debt Backlog</summary></details>
+<details><summary>Handling Production Outages During Peak Hours</summary></details>
+<details><summary>Managing Stakeholder Expectations When Deadlines Slip</summary></details>
+<details><summary>Leading a Team Through a Legacy Rewrite</summary></details>
+<details><summary>Handling Conflicts Between Product Managers and Developers</summary></details>
+<details><summary>Driving Adoption of New Technology</summary></details>
+<details><summary>Managing Distributed Teams Across Time Zones</summary></details>
+<details><summary>Handling Client Requests That Compromise Architecture</summary></details>
+<details><summary>Balancing Hands-On Coding vs Leadership</summary></details>
+<details><summary>Ensuring Knowledge Transfer When Seniors Leave</summary></details>
+<details><summary>Building a Culture of Continuous Improvement</summary></details>
+
+<!-- Newly Added Behavioral / Decision-Making -->
+<details><summary>Unpopular Technical Decision (Decision-Making & Influence)</summary></details>
+<details><summary>Stakeholder Conflict (Decision-Making & Influence)</summary></details>
+<details><summary>Mentorship & Growth (with Conflict Resolution in Team)</summary></details>
+<details><summary>Mentorship & Growth</summary></details>
+<details><summary>Communication & Stakeholder Management</summary></details>
+<details><summary>Resilience & Incident Management</summary></details>
+<details><summary>Balancing Technical Debt vs Delivery (Decision-Making & Influence)</summary></details>
+<details><summary>Conflict Resolution in Team</summary></details>
+<details><summary>Tech Lead Role — Weekly Balance</summary></details>
+
+<!-- Project Challenges -->
+<h2 id="scenarios">Project Challenges & Solutions</h2>
+<details><summary>.NET API Performance & Scalability</summary></details>
+<details><summary>SQL Server Deadlock in Production</summary></details>
+<details><summary>Microservices Resilience (Payment Gateway)</summary></details>
+<details><summary>Designing Web API for 10,000 Concurrent Requests</summary></details>
+<details><summary>Retry Logic in .NET Microservice Calling External APIs</summary></details>
+<details><summary>Optimizing Web API Returning 1M Records</summary></details>
+<details><summary>Securing .NET Web API with JWT & RBAC</summary></details>
+<details><summary>Efficient Bulk Insert of 100,000 Records</summary></details>
+<details><summary>Optimizing Slow LINQ Queries</summary></details>
+<details><summary>Processing 1000 Tasks in Parallel with Concurrency Limit</summary></details>
+<details><summary>Designing Event-Driven .NET Microservice</summary></details>
+<details><summary>Large File Uploads (2GB) in Web API</summary></details>
+<details><summary>Centralized Logging in Microservices</summary></details>
+<details><summary>Importing 1M Rows from CSV into SQL Server</summary></details>
+<details><summary>Transactional Consistency Across Multiple Tables</summary></details>
+<details><summary>Optimizing Slow Multi-Join SQL Query</summary></details>
+<details><summary>Choosing Between CTE, Temp Table, Table Variable</summary></details>
+<details><summary>Optimizing GROUP BY Queries on Millions of Rows</summary></details>
+<details><summary>Transaction Strategy for Multi-Table Inserts Without Deadlocks</summary></details>
+<details><summary>Handling Concurrent Updates in SQL Server</summary></details>
+<details><summary>Indexing Strategy for Large Transactional Tables</summary></details>
+<details><summary>Clustered vs Non-Clustered Indexes</summary></details>
+<details><summary>Covering Indexes for Query Performance</summary></details>
+<details><summary>Error Handling in Stored Procedures with Multi-Table Inserts</summary></details>
+<details><summary>Handling Partial Bulk Insert Failures</summary></details>
+<details><summary>Auditing Critical Tables in SQL Server</summary></details>
+<details><summary>Efficient Queries for Recent Orders</summary></details>
+<details><summary>Minimizing Impact When Dropping Columns Used in Procedures</summary></details>
+<details><summary>Shared Employee Schema Across Multiple Applications</summary></details>
+<details><summary>Analyzing and Fixing Deadlocks in Production</summary></details>
+
+<h2 id="designpatterns">Design Pattern Categories (C#/.NET)</h2>
+<details><summary>Design Patterns with Problem Solved</summary></details>
+<details><summary>Design Patterns and Problems Solved</summary></details>
+<details><summary>Factory Method Pattern - (Income Tax Calculator)</summary></details>
+<details><summary>Abstract Factory Pattern - (Income Tax + Social Security)</summary></details>
+<details><summary>Builder Pattern - (Building an Order)</summary></details>
+<details><summary>Singleton Pattern - (Logger Service)</summary></details>
+<details><summary>Adapter Design Pattern Example (Payment Gateway)</summary></details>
+<details><summary>Decorator Design Pattern Example (Coffee Shop)</summary></details>
+<details><summary>Composite Pattern Example (Shipping & Packaging - Logistics Domain)</summary></details>
+<details><summary>Strategy Pattern (Multi-Modal Transit - Transport Booking)</summary></details>
+<details><summary>Observer Pattern Example (Back-in-Stock Reminder - E-Commerce)</summary></details>
+<details><summary>Command Pattern with Queue (Education Example)</summary></details>
+<details><summary>Mediator Pattern Example (Classroom Chat Room)</summary></details>
+<details><summary>Template Method Pattern - (Online Exam Process)</summary></details>
+<details><summary>CQRS Design Pattern with MediatR</summary></details>
+<details><summary>OOP Concepts</summary></details>
+<details><summary>Polymorphism Types</summary></details>
+
+<h2 id="coding">Coding / LINQ Joins, Grouping, and Aggregation Guide</h2>
+<details><summary>Mental Map</summary></details>
+<details><summary>Sample Data Setup</summary></details>
+<details><summary>Number of employees in each department - Inner Join Example</summary></details>
+<details><summary>Left Join Example</summary></details>
+<details><summary>Calculate the average salary per department</summary></details>
+<details><summary>Aggregates in LINQ Method Syntax</summary></details>
+<details><summary>LINQ GroupBy Aggregates Example</summary></details>
+<details><summary>Three Table Join Example</summary></details>
+<details><summary>Method Syntax vs Query Syntax</summary></details>
+<details><summary>5th Highest Salary Example</summary></details>
+<details><summary>Highest Salary Example</summary></details>
+<details><summary>Nth Highest Salary Example</summary></details>
+<details><summary>Employees Without Department Example</summary></details>
+<details><summary>Find Duplicate Employees by Name</summary></details>
+<details><summary>Employees With Each Department (INNER JOIN)</summary></details>
+<details><summary>Employees With Each Department (LEFT JOIN)</summary></details>
+<details><summary>Employees Count Per Department Example</summary></details>
+<details><summary>Employees with Salary Greater than Average</summary></details>
+<details><summary>Top 3 Earning Employees</summary></details>
+<details><summary>Zip Example</summary></details>
+<details><summary>Aggregate Example</summary></details>
+<details><summary>SelectMany Example</summary></details>
+<details><summary>Simple Dependency Injection Example</summary></details>
+<details><summary>Thread-Safe Singleton Example</summary></details>
+<details><summary>Repository Pattern with Dependency Injection (GetAll)</summary></details>
+<details><summary>Async/Await with HttpClient</summary></details>
+<details><summary>Generic Class Example (UtilityName)</summary></details>
+<details><summary>Generic Method Example</summary></details>
+<details><summary>Extension Methods Example</summary></details>
+<details><summary>LINQ Methods Comparison</summary></details>
+
+</div> <!-- end of content -->
+
+<script>
+// Search functionality
+document.getElementById('searchBox').addEventListener('keyup', function() {
+  let query = this.value.toLowerCase();
+  document.querySelectorAll('details').forEach(function(detail) {
+    let text = detail.textContent.toLowerCase();
+    detail.style.display = text.includes(query) ? '' : 'none';
+  });
+});
+
+// Flashcard mode
+function toggleFlashcards() {
+  document.querySelectorAll('details').forEach(function(detail) {
+    detail.open = false;
+  });
+}
+</script>
+
+</body>
+</html>
