@@ -48,6 +48,43 @@
     }
     #content { margin-left:220px; }
 </style>
+<style>
+        /* Dark background container to match VS Code */
+        pre[class*="language-"] {
+            background-color: #1e1e1e !important;
+            color: #d4d4d4 !important;
+            padding: 1rem;
+            border-radius: 6px;
+        }
+
+        /* Blue: Keywords & Control Statements (public, static, void, class, return) */
+        .token.keyword, 
+        .token.class-name.keyword {
+            color: #569cd6 !important;
+        }
+
+        /* Green / Teal: Classes, Structs, Interfaces, & Types (Program, Console, String) */
+        .token.class-name, 
+        .token.type-definition,
+        .token.builtin {
+            color: #4ec9b0 !important;
+        }
+
+        /* Strings (Orange/Brown or Light Green) */
+        .token.string {
+            color: #ce9178 !important;
+        }
+
+        /* Comments (Muted Green) */
+        .token.comment {
+            color: #6a9955 !important;
+        }
+
+        /* Methods / Functions (Yellow) */
+        .token.function {
+            color: #dcdcaa !important;
+        }
+    </style>
 </head>
 <body>
 
@@ -83,92 +120,2276 @@
 
 <!-- Example Category -->
 <h2 id="csharp">C# / .NET</h2>
-<details><summary>Async/Await Internals in C#</summary></details>
-<details><summary>CancellationToken</summary></details>
-<details><summary>Task Lifecycle in .NET</summary></details>
-<details><summary>Difference between Task, ValueTask, and Thread</summary></details>
-<details><summary>IEnumerable vs IQueryable vs List</summary></details>
-<details><summary>LINQ Deferred Execution</summary></details>
-<details><summary>Dependency Injection in ASP.NET Core</summary></details>
-<details><summary>AddScoped vs AddTransient vs AddSingleton</summary></details>
-<details><summary>ASP.NET Core Middleware Overview</summary></details>
-<details><summary>Global Exception Handling in ASP.NET Core</summary></details>
-<details><summary>SignalR for Real-Time Communication</summary></details>
-<details><summary>MediatR Usage</summary></details>
-<details><summary>AutoMapper Usage</summary></details>
-<details><summary>Roslyn Analyzers</summary></details>
-<details><summary>StyleCop.Analyzers</summary></details>
-<details><summary>SonarAnalyzer.CSharp</summary></details>
+
+<details>
+<summary>Async/Await Internals in C#</summary>
+<p>
+<h2>1. What Async/Await Does</h2>
+<p>
+<code>async/await</code> is syntactic sugar that makes asynchronous code look synchronous. Internally, the C# compiler transforms an <code>async</code> method into a <b>state machine</b>. When you <code>await</code> a <code>Task</code>:
+</p>
+<ul>
+  <li>It checks if the task is complete.</li>
+  <li>If not, it returns control to the caller (freeing the thread).</li>
+  <li>It registers a continuation so that when the task completes, execution resumes after the <code>await</code>.</li>
+</ul>
+<p>
+This enables non-blocking I/O and allows servers to handle thousands of concurrent requests efficiently.
+</p>
+
+<h2>2. Real-World Example: Web API Calling External Services</h2>
+
+<h3>Without Async/Await (Blocking)</h3>
+<pre><code class="language-csharp">
+public ProductResponse GetProduct(int id)
+{
+    var details = productService.GetDetails(id);   // blocks thread
+    var price = pricingService.GetPrice(id);       // blocks thread
+
+    return new ProductResponse(details, price);
+}
+</code></pre>
+<p>
+Each call blocks a thread until the service responds. Under heavy load, threads get exhausted, leading to poor scalability.
+</p>
+
+<h3>With Async/Await (Non-Blocking)</h3>
+<pre><code class="language-csharp">
+public async Task&lt;ProductResponse&gt; GetProductAsync(int id)
+{
+    var detailsTask = productService.GetDetailsAsync(id);
+    var priceTask = pricingService.GetPriceAsync(id);
+
+    await Task.WhenAll(detailsTask, priceTask);
+
+    return new ProductResponse(detailsTask.Result, priceTask.Result);
+}</code>
+</pre>
+<p>
+Here, both service calls start concurrently. <code>await Task.WhenAll</code> frees the thread while waiting. When both tasks finish, the state machine resumes execution and combines results.
+</p>
+
+<h2>3. Internal Mechanics</h2>
+<ul>
+  <li>The compiler generates a hidden class implementing a state machine.</li>
+  <li>Each <code>await</code> point becomes a state transition.</li>
+  <li>Continuation delegates are registered with the awaited task.</li>
+  <li>When the task completes, the continuation resumes execution at the correct state.</li>
+</ul>
+
+<h2>4. Interview Insight</h2>
+<p>
+“<code>async/await</code> in C# compiles into a state machine that frees threads while waiting for tasks. When you <code>await</code> a task, the method returns control to the caller until the task completes, then resumes execution. For example, in a Web API, I can call <code>GetDetailsAsync</code> and <code>GetPriceAsync</code> concurrently, then <code>await Task.WhenAll</code>. This lets the server handle thousands of requests without blocking threads, improving scalability and responsiveness.”
+</p>
+</p>
+</details>
+
+<details>
+<summary>CancellationToken</summary>
+<p>
+
+<h2>1. What is CancellationToken?</h2>
+<p>
+<code>CancellationToken</code> is a mechanism in .NET for cooperative cancellation of asynchronous operations. It doesn’t force a task to stop; instead, it signals that the task should gracefully end if possible.
+</p>
+
+<h2>2. Why is it Important?</h2>
+<p>
+It prevents wasted resources when a client disconnects, cancels, or times out. For example, in file uploads, if the user closes the browser mid‑upload, the server can stop processing instead of continuing unnecessarily.
+</p>
+
+<h2>3. Code Example: File Upload</h2>
+<pre><code class="language-csharp">
+[HttpPost("upload")]
+public async Task<IActionResult> UploadFile(IFormFile file, CancellationToken cancellationToken)
+{
+    if (file == null || file.Length == 0)
+        return BadRequest("No file uploaded.");
+
+    var blobClient = new BlobClient(connectionString, containerName, file.FileName);
+
+    await using var stream = file.OpenReadStream();
+
+    try
+    {
+        // Pass cancellationToken to UploadAsync
+        await blobClient.UploadAsync(stream, cancellationToken);
+        return Ok("File uploaded successfully.");
+    }
+    catch (OperationCanceledException)
+    {
+        // Clean up partial blob if needed
+        await blobClient.DeleteIfExistsAsync();
+        return StatusCode(StatusCodes.Status499ClientClosedRequest,
+                          "Upload cancelled by client.");
+    }
+}
+</code></pre>
+
+<h2>4. Key Points</h2>
+<ul>
+  <li><code>HttpContext.RequestAborted</code> is automatically passed as the <code>CancellationToken</code>.</li>
+  <li>If the user closes the browser mid‑upload, the token is triggered.</li>
+  <li>The async method throws <code>OperationCanceledException</code>.</li>
+  <li>You can catch it, clean up partial files, and return a meaningful response.</li>
+</ul>
+
+<h2>5. Interview Insight</h2>
+<p>
+“In a file upload pipeline, passing <code>HttpContext.RequestAborted</code> down to async methods ensures that if the client cancels or disconnects, the upload stops gracefully with <code>OperationCanceledException</code>. This prevents wasted resources and allows us to clean up partial files.”
+</p>
+
+</p>
+</details>
+
+<details>
+<summary>Task Lifecycle in .NET</summary>
+<p>
+
+<h2>1. What is Task Lifecycle?</h2>
+<p>
+A <code>Task</code> in .NET represents an asynchronous operation.  
+Its lifecycle describes the different states a task can go through from creation to completion.
+</p>
+
+<h2>2. Task States</h2>
+<ul>
+  <li><b>Created:</b> Task is instantiated but not started.</li>
+  <li><b>WaitingForActivation:</b> Task is scheduled but not yet running.</li>
+  <li><b>Running:</b> Task is executing.</li>
+  <li><b>RanToCompletion:</b> Task finished successfully.</li>
+  <li><b>Faulted:</b> Task threw an exception (<code>IsFaulted == true</code>).</li>
+  <li><b>Canceled:</b> Task was canceled via <code>CancellationToken</code> (<code>IsCanceled == true</code>).</li>
+</ul>
+
+<h2>3. Code Example</h2>
+<pre><code class="language-csharp">
+public async Task DemoTaskLifecycle()
+{
+    var task = Task.Run(() =>
+    {
+        // Simulate work
+        Thread.Sleep(1000);
+        // Uncomment to simulate failure
+        // throw new Exception("Something went wrong!");
+    });
+
+    try
+    {
+        await task;
+        if (task.IsCompletedSuccessfully)
+            Console.WriteLine("Task completed successfully.");
+    }
+    catch
+    {
+        if (task.IsFaulted)
+            Console.WriteLine("Task failed: " + task.Exception?.Message);
+        else if (task.IsCanceled)
+            Console.WriteLine("Task was canceled.");
+    }
+}
+</code></pre>
+
+<h2>4. Key Properties</h2>
+<ul>
+  <li><code>IsCompleted</code> → Task finished (success, fault, or cancel).</li>
+  <li><code>IsCompletedSuccessfully</code> → Task finished without errors.</li>
+  <li><code>IsFaulted</code> → Task ended with exception.</li>
+  <li><code>IsCanceled</code> → Task was canceled.</li>
+  <li><code>Exception</code> → Holds exception details if faulted.</li>
+</ul>
+
+<h2>5. Why Lifecycle Matters</h2>
+<p>
+Understanding task states helps you:
+<ul>
+  <li>Handle errors gracefully with <code>IsFaulted</code>.</li>
+  <li>Support cancellation with <code>IsCanceled</code>.</li>
+  <li>Log task outcomes for observability.</li>
+  <li>Design retry strategies based on task results.</li>
+</ul>
+</p>
+
+<h2>6. Interview Insight</h2>
+<p>
+“A Task in .NET can be Created, Running, Completed, Faulted, or Canceled.  
+Properties like <code>IsFaulted</code>, <code>IsCanceled</code>, and <code>IsCompletedSuccessfully</code> let us check the outcome.  
+This lifecycle is crucial for building resilient async code, because it allows us to retry failed tasks, cancel long‑running ones, and log outcomes for monitoring.”
+</p>
+
+</p>
+</details>
+
+
+
+<details>
+  <summary>IEnumerable vs IQueryable vs List</summary>
+  <p><strong>IEnumerable</strong></p>
+  <ul>
+    <li><strong>Execution:</strong> In-memory (LINQ-to-Objects)</li>
+    <li><strong>Deferred:</strong> Yes — query runs only when iterated</li>
+    <li><strong>Use Case:</strong> Iterate/filter already-loaded collections</li>
+    <li><strong>Example:</strong>
+      <pre><code class="language-csharp">
+IEnumerable&lt;int&gt; evens = numbers.Where(n =&gt; n % 2 == 0);
+      </code></pre>
+    </li>
+  </ul>
+
+  <p><strong>IQueryable</strong></p>
+  <ul>
+    <li><strong>Execution:</strong> Translated into SQL / remote source</li>
+    <li><strong>Deferred:</strong> Yes — query built and executed on the database</li>
+    <li><strong>Use Case:</strong> Query large datasets efficiently (Entity Framework, LINQ-to-SQL)</li>
+    <li><strong>Example:</strong>
+      <pre><code class="language-csharp">
+IQueryable&lt;Product&gt; active = context.Products.Where(p =&gt; p.IsActive);
+var list = active.ToList(); // SQL executed here
+      </code></pre>
+    </li>
+  </ul>
+
+  <p><strong>List</strong></p>
+  <ul>
+    <li><strong>Execution:</strong> Immediate, in-memory</li>
+    <li><strong>Deferred:</strong> No — data already loaded</li>
+    <li><strong>Use Case:</strong> Store/manipulate concrete data</li>
+    <li><strong>Example:</strong>
+      <pre><code class="language-csharp">
+List&lt;int&gt; evens = numbers.Where(n =&gt; n % 2 == 0).ToList();
+      </code></pre>
+    </li>
+  </ul>
+
+  <p><strong>Comparison Table</strong></p>
+  <table border="1" cellpadding="6" cellspacing="0">
+    <tr>
+      <th>Aspect</th>
+      <th>IEnumerable</th>
+      <th>IQueryable</th>
+      <th>List</th>
+    </tr>
+    <tr>
+      <td>Execution</td>
+      <td>In-memory</td>
+      <td>Database / remote source</td>
+      <td>Immediate, in-memory</td>
+    </tr>
+    <tr>
+      <td>Deferred?</td>
+      <td>Yes</td>
+      <td>Yes</td>
+      <td>No</td>
+    </tr>
+    <tr>
+      <td>Use Case</td>
+      <td>Filter loaded data</td>
+      <td>Efficient DB queries</td>
+      <td>Mutable collection</td>
+    </tr>
+    <tr>
+      <td>Performance</td>
+      <td>Can be inefficient</td>
+      <td>Optimized, server-side</td>
+      <td>Fast local operations</td>
+    </tr>
+    <tr>
+      <td>Mutability</td>
+      <td>Read-only iteration</td>
+      <td>Read-only query abstraction</td>
+      <td>Fully mutable (Add/Remove)</td>
+    </tr>
+  </table>
+
+  <p><strong>Rule of Thumb:</strong></p>
+  <ul>
+    <li>Use <code>IEnumerable</code> for in-memory LINQ queries.</li>
+    <li>Use <code>IQueryable</code> for database queries (EF Core, LINQ-to-SQL).</li>
+    <li>Use <code>List</code> when you need the data fully materialized and mutable.</li>
+  </ul>
+</details>
+
+
+
+
+<details>
+  <summary>LINQ Deferred Execution</summary>
+  <p><strong>Definition:</strong> Deferred execution means a LINQ query is not executed when it is defined, but only when the results are actually enumerated (e.g., using <code>foreach</code>, <code>ToList()</code>, or <code>Count()</code>).</p>
+
+  <p><strong>How It Works:</strong></p>
+  <ul>
+    <li>Writing a LINQ query creates a query object, not the results.</li>
+    <li>The query executes only when you iterate over it.</li>
+    <li>This allows optimizations like combining filters and reflecting the latest state of the source.</li>
+  </ul>
+
+  <p><strong>Example:</strong></p>
+  <pre><code class="language-csharp">
+List&lt;int&gt; numbers = new List&lt;int&gt; { 1, 2, 3, 4, 5 };
+
+// Query defined but not executed yet
+var query = numbers.Where(n =&gt; n &gt; 2);
+
+// Modify the source before execution
+numbers.Add(6);
+
+// Execution happens here
+foreach (var n in query)
+{
+    Console.WriteLine(n);
+}
+// Output: 3, 4, 5, 6
+  </code></pre>
+
+  <p><strong>Immediate Execution:</strong></p>
+  <pre><code class="language-csharp">
+var result = numbers.Where(n =&gt; n &gt; 2).ToList(); // executes immediately
+  </code></pre>
+
+  <p><strong>Benefits:</strong></p>
+  <ul>
+    <li>Improves performance by delaying work until necessary.</li>
+    <li>Reflects the latest state of the data source.</li>
+    <li>Enables query composition before execution.</li>
+  </ul>
+
+  <p><strong>Risks:</strong></p>
+  <ul>
+    <li>Source data changes may lead to unexpected results.</li>
+    <li>Multiple iterations re-execute the query unless cached with <code>ToList()</code>.</li>
+  </ul>
+
+  <p><strong>Interview Insight:</strong> LINQ queries are <em>deferred by default</em>. Use <code>ToList()</code> or <code>ToArray()</code> to force immediate execution when needed. Highlight the trade-off between flexibility and performance.</p>
+</details>
+
+<details>
+  <summary>Dependency Injection in ASP.NET Core</summary>
+  
+
+<h2>1. What is Dependency Injection?</h2>
+<p>
+Dependency Injection (DI) is a design pattern that allows classes to declare their dependencies instead of creating them directly. 
+ASP.NET Core has a built-in DI container that manages object lifetimes and resolves dependencies automatically.
+</p>
+
+<h2>2. How It Works</h2>
+<ul>
+  <li><b>Registration:</b> Services are registered in the DI container inside <code>Program.cs</code> or <code>Startup.cs</code> using methods like <code>AddSingleton</code>, <code>AddScoped</code>, and <code>AddTransient</code>.</li>
+  <li><b>Resolution:</b> When a class (e.g., Controller, Service) requires a dependency, ASP.NET Core automatically provides it via constructor injection.</li>
+  <li><b>Lifetime Management:</b> The DI container controls how long a service instance lives (singleton, scoped, transient).</li>
+</ul>
+
+<h2>3. Service Lifetimes</h2>
+<ul>
+  <li><b>Singleton:</b> One instance for the entire application lifetime.</li>
+  <li><b>Scoped:</b> One instance per request (web request scope).</li>
+  <li><b>Transient:</b> A new instance every time it is requested.</li>
+</ul>
+
+<h2>4. Example</h2>
+<pre><code class="language-csharp">
+// Register services in Program.cs
+builder.Services.AddSingleton&lt;ILoggingService, LoggingService&gt;();
+builder.Services.AddScoped&lt;IRepository, Repository&gt;();
+builder.Services.AddTransient&lt;INotificationService, EmailNotificationService&gt;();
+
+// Use dependency injection in a Controller
+public class OrdersController : Controller
+{
+    private readonly IRepository _repository;
+    private readonly INotificationService _notification;
+
+    public OrdersController(IRepository repository, INotificationService notification)
+    {
+        _repository = repository;
+        _notification = notification;
+    }
+
+    public IActionResult CreateOrder(Order order)
+    {
+        _repository.Add(order);
+        _notification.Send("Order created successfully!");
+        return Ok();
+    }
+}
+</code></pre>
+
+<h2>5. Benefits</h2>
+<ul>
+  <li>Promotes loose coupling between classes.</li>
+  <li>Makes unit testing easier (dependencies can be mocked).</li>
+  <li>Centralizes configuration of services.</li>
+  <li>Improves maintainability and scalability of applications.</li>
+</ul>
+
+<h2>6. Interview Insight</h2>
+<p>
+👉 In ASP.NET Core, DI is <b>first-class and built-in</b>. You don’t need external frameworks like Autofac or Ninject unless you want advanced features. 
+Always mention lifetimes (Singleton, Scoped, Transient) and constructor injection when explaining DI in interviews.
+</p>
+</details>
+
+<details>
+  <summary>AddScoped vs AddTransient vs AddSingleton</summary>
+  
+
+<h2>1. AddTransient</h2>
+<p>
+<b>Lifetime:</b> A new instance is created every time it is requested.<br/>
+<b>Use Case:</b> Lightweight, stateless services where creating a new object is inexpensive.
+</p>
+<pre><code class="language-csharp">
+// Registration
+builder.Services.AddTransient&lt;IMailService, MailService&gt;();
+
+// Usage
+public class NotificationController : Controller
+{
+    private readonly IMailService _mailService;
+    public NotificationController(IMailService mailService)
+    {
+        _mailService = mailService; // new instance each time
+    }
+}
+</code></pre>
+
+<h2>2. AddScoped</h2>
+<p>
+<b>Lifetime:</b> One instance per request (scope). Within a single HTTP request, the same instance is reused.<br/>
+<b>Use Case:</b> Services that should maintain state during a request but not across requests.
+</p>
+<pre><code class="language-csharp">
+// Registration
+builder.Services.AddScoped&lt;IOrderService, OrderService&gt;();
+
+// Usage
+public class OrdersController : Controller
+{
+    private readonly IOrderService _orderService;
+    public OrdersController(IOrderService orderService)
+    {
+        _orderService = orderService; // same instance within one request
+    }
+}
+</code></pre>
+
+<h2>3. AddSingleton</h2>
+<p>
+<b>Lifetime:</b> A single instance is created and shared across the entire application lifetime.<br/>
+<b>Use Case:</b> Services that are expensive to create or need to maintain global state (e.g., caching, configuration).
+</p>
+<pre><code class="language-csharp">
+// Registration
+builder.Services.AddSingleton&lt;ICacheService, MemoryCacheService&gt;();
+
+// Usage
+public class ProductsController : Controller
+{
+    private readonly ICacheService _cacheService;
+    public ProductsController(ICacheService cacheService)
+    {
+        _cacheService = cacheService; // same instance for all requests
+    }
+}
+</code></pre>
+
+<h2>4. Comparison Table</h2>
+<table border="1" cellpadding="5" cellspacing="0">
+  <tr>
+    <th>Aspect</th>
+    <th>AddTransient</th>
+    <th>AddScoped</th>
+    <th>AddSingleton</th>
+  </tr>
+  <tr>
+    <td>Lifetime</td>
+    <td>New instance every time</td>
+    <td>One instance per request</td>
+    <td>One instance for entire app</td>
+  </tr>
+  <tr>
+    <td>Performance</td>
+    <td>Lightweight, stateless</td>
+    <td>Balanced, request-scoped</td>
+    <td>Best for heavy/global services</td>
+  </tr>
+  <tr>
+    <td>State</td>
+    <td>No state maintained</td>
+    <td>State maintained within request</td>
+    <td>State maintained globally</td>
+  </tr>
+  <tr>
+    <td>Examples</td>
+    <td>Utility services, helpers</td>
+    <td>Repository, Unit of Work</td>
+    <td>Configuration, caching, logging</td>
+  </tr>
+</table>
+
+<h2>5. Interview Insight</h2>
+<p>
+👉 In ASP.NET Core, <b>AddTransient</b> is for short-lived, stateless services, <b>AddScoped</b> is for request-specific services, and <b>AddSingleton</b> is for global services shared across the application. 
+Always emphasize that choosing the right lifetime is critical to avoid memory leaks, concurrency issues, or unintended shared state.
+</p>
+</details>
+<details>
+  <summary>ASP.NET Core Middleware Overview</summary>
+  <div>
+    <h3>🔹 What is Middleware?</h3>
+    <p><b>Definition:</b> Middleware in ASP.NET Core is software assembled into the request pipeline to handle requests and responses.</p>
+    <ul>
+      <li>Can perform work <b>before</b> passing the request to the next middleware.</li>
+      <li>Can perform work <b>after</b> the next middleware has executed.</li>
+      <li>Can <b>short-circuit</b> the pipeline by returning a response immediately.</li>
+    </ul>
+    <p><b>Registration:</b> Middleware is added in <code>Program.cs</code> using <code>app.UseMiddleware&lt;LoggingMiddleware&gt;();</code>.</p>
+
+    <h3>🔹 Why is Middleware Used?</h3>
+    <p>Middleware is used to handle <b>cross-cutting concerns</b> in a clean, modular way:</p>
+    <ul>
+      <li>Authentication & Authorization</li>
+      <li>Logging & Monitoring</li>
+      <li>Error Handling</li>
+      <li>Routing</li>
+      <li>Serving Static Files</li>
+      <li>Security (CORS, HTTPS redirection, headers)</li>
+      <li>Performance (Response compression, caching)</li>
+    </ul>
+
+    <h3>🔹 Middleware Pipeline Flow</h3>
+    <pre><code class="language-csharp">
+Incoming Request
+   ↓
+Middleware 1 (Logging)
+   ↓
+Middleware 2 (Authentication)
+   ↓
+Middleware 3 (Routing)
+   ↓
+Controller / Endpoint
+   ↑
+Middleware 3 (Routing)
+   ↑
+Middleware 2 (Authentication)
+   ↑
+Middleware 1 (Logging)
+   ↑
+Outgoing Response
+  </code>  </pre>
+    <p><b>Note:</b> Each middleware runs twice — once on the way <b>in</b> (request) and once on the way <b>out</b> (response).</p>
+
+    <h3>🔹 Example: Logging Middleware</h3>
+    <pre><code class="language-csharp">
+public class LoggingMiddleware
+{
+    private readonly RequestDelegate _next;
+
+    public LoggingMiddleware(RequestDelegate next)
+    {
+        _next = next;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        // Runs on the way IN (Request)
+        Console.WriteLine($"Incoming request: {context.Request.Path}");
+
+        await _next(context); // Pass control to next middleware
+
+        // Runs on the way OUT (Response)
+        Console.WriteLine($"Response status: {context.Response.StatusCode}");
+    }
+}
+    </code></pre>
+
+    <h3>🔹 Registration in Program.cs</h3>
+    <pre><code class="language-csharp">
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
+
+// Register custom middleware
+app.UseMiddleware&lt;LoggingMiddleware&gt;();
+
+app.MapControllers();
+app.Run();
+    </code></pre>
+
+    <p><b>Explanation:</b></p>
+    <ul>
+      <li>Before <code>_next(context)</code> → Logs the incoming request.</li>
+      <li>After <code>_next(context)</code> → Logs the outgoing response.</li>
+    </ul>
+    <p>This shows why middleware executes twice: it wraps logic around the request and response lifecycle.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Global Exception Handling in ASP.NET Core</summary>
+  
+
+<h2>1. Why Global Exception Handling?</h2>
+<p>
+Global exception handling ensures that unhandled errors are caught in one place, logged, and returned with a consistent response format. 
+This prevents application crashes and improves reliability, security, and user experience.
+</p>
+
+<h2>2. Approaches</h2>
+<ul>
+  <li><b>UseExceptionHandler Middleware:</b> Built-in middleware to handle exceptions globally.</li>
+  <li><b>DeveloperExceptionPage:</b> Shows detailed error info during development.</li>
+  <li><b>Custom Middleware:</b> Create your own middleware to catch and log exceptions.</li>
+  <li><b>Exception Filters:</b> In MVC/Web API, filters can handle exceptions at the controller/action level.</li>
+</ul>
+
+<h2>3. Using Built-in Middleware</h2>
+<pre><code class="language-csharp">
+// Program.cs
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error"); // Redirect to error page
+    app.UseHsts();
+}
+
+app.Run();
+</code></pre>
+
+<h2>4. Custom Middleware Example</h2>
+<pre><code class="language-csharp">
+public class GlobalExceptionMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger&lt;GlobalExceptionMiddleware&gt; _logger;
+
+    public GlobalExceptionMiddleware(RequestDelegate next, ILogger&lt;GlobalExceptionMiddleware&gt; logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
+        {
+            await _next(context); // Call next middleware
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unhandled exception occurred");
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(
+                $"{{\"error\":\"An unexpected error occurred.\"}}"
+            );
+        }
+    }
+}
+
+// Register custom middleware
+app.UseMiddleware&lt;GlobalExceptionMiddleware&gt;();
+</code></pre>
+
+<h2>5. Exception Filters (MVC/Web API)</h2>
+<pre><code class="language-csharp">
+public class GlobalExceptionFilter : IExceptionFilter
+{
+    private readonly ILogger&lt;GlobalExceptionFilter&gt; _logger;
+
+    public GlobalExceptionFilter(ILogger&lt;GlobalExceptionFilter&gt; logger)
+    {
+        _logger = logger;
+    }
+
+    public void OnException(ExceptionContext context)
+    {
+        _logger.LogError(context.Exception, "Unhandled exception");
+        context.Result = new ObjectResult("An error occurred")
+        {
+            StatusCode = 500
+        };
+    }
+}
+
+// Register filter globally
+services.AddControllers(options =>
+{
+    options.Filters.Add&lt;GlobalExceptionFilter&gt;();
+});
+</code></pre>
+
+<h2>6. Best Practices</h2>
+<ul>
+  <li>Log exceptions with sufficient context (user, request, stack trace).</li>
+  <li>Return generic error messages to clients (avoid exposing sensitive details).</li>
+  <li>Use structured logging (e.g., Serilog, NLog) for better observability.</li>
+  <li>Test exception handling paths during deployment.</li>
+</ul>
+
+<h2>7. Interview Insight</h2>
+<p>
+👉 In ASP.NET Core, global exception handling is typically implemented using <b>UseExceptionHandler</b> or custom middleware. 
+For APIs, exception filters provide fine-grained control. Always emphasize logging, consistent error responses, and security (no sensitive info in error messages).
+</p>
+</details>
+
+
+<details>
+  <summary>SignalR for Real-Time Communication</summary>
+  
+
+<h2>1. What is SignalR?</h2>
+<p>
+<b>SignalR</b> is a library in ASP.NET Core that enables real-time communication between server and clients. 
+It uses WebSockets (when available) and falls back to other techniques (like Server-Sent Events or Long Polling) if necessary.
+</p>
+
+<h2>2. How SignalR Works</h2>
+<ul>
+  <li><b>Hub:</b> A central class where server methods are defined and clients can connect.</li>
+  <li><b>Client Connection:</b> Clients (JavaScript, .NET, or others) connect to the hub and call server methods.</li>
+  <li><b>Real-Time Updates:</b> The server can push messages to all connected clients or specific groups.</li>
+</ul>
+
+<h2>3. Implementation Steps</h2>
+<ol>
+  <li><b>Install Package:</b> SignalR is included in ASP.NET Core, but for JavaScript clients you may need <code>@microsoft/signalr</code>.</li>
+  <li><b>Define a Hub:</b> Create a class inheriting from <code>Hub</code>.</li>
+  <li><b>Configure Middleware:</b> Register SignalR in <code>Program.cs</code> and map hub endpoints.</li>
+  <li><b>Connect Clients:</b> Use JavaScript or .NET clients to connect and listen for messages.</li>
+</ol>
+
+<h2>4. Example: Server-Side Hub</h2>
+<pre><code class="language-csharp">
+using Microsoft.AspNetCore.SignalR;
+
+public class ChatHub : Hub
+{
+    public async Task SendMessage(string user, string message)
+    {
+        await Clients.All.SendAsync("ReceiveMessage", user, message);
+    }
+}
+</code></pre>
+
+<h2>5. Configure in Program.cs</h2>
+<pre><code class="language-csharp">
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddSignalR();
+
+var app = builder.Build();
+app.MapHub&lt;ChatHub&gt;("/chatHub");
+app.Run();
+</code></pre>
+
+<h2>6. Example: JavaScript Client</h2>
+<pre><code class="language-csharp">
+// Install client library: npm install @microsoft/signalr
+
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/chatHub")
+    .build();
+
+connection.on("ReceiveMessage", (user, message) => {
+    console.log(`${user}: ${message}`);
+});
+
+connection.start().then(() => {
+    connection.invoke("SendMessage", "Alice", "Hello World!");
+});
+</code></pre>
+
+<h2>7. Features of SignalR</h2>
+<ul>
+  <li>Broadcast messages to all clients.</li>
+  <li>Send messages to specific users or groups.</li>
+  <li>Automatic reconnection handling.</li>
+  <li>Scales out with Azure SignalR Service for large applications.</li>
+</ul>
+
+<h2>8. Best Practices</h2>
+<ul>
+  <li>Use groups for targeted communication (e.g., chat rooms).</li>
+  <li>Secure hubs with authentication and authorization.</li>
+  <li>Handle reconnections gracefully on the client side.</li>
+  <li>Use Azure SignalR Service for scalability in production.</li>
+</ul>
+
+<h2>9. Interview Insight</h2>
+<p>
+👉 SignalR enables <b>real-time, bi-directional communication</b> in ASP.NET Core. 
+In interviews, emphasize the <b>Hub model</b>, <b>WebSocket fallback mechanism</b>, and <b>scalability with Azure SignalR Service</b>. 
+Demonstrating a simple chat application example is a great way to showcase your understanding.
+</p>
+</details>
+
+
+<details>
+  <summary>What is MediatR and how is it used?</summary>
+  <p><strong>Definition:</strong> MediatR is a lightweight .NET library that implements the <em>Mediator Pattern</em>. It helps decouple request senders from request handlers, promoting clean architecture and CQRS.</p>
+
+  <p><strong>Key Benefits:</strong></p>
+  <ul>
+    <li>Removes direct dependencies between controllers/services and handlers.</li>
+    <li>Centralizes request/response handling.</li>
+    <li>Supports CQRS (Command Query Responsibility Segregation).</li>
+    <li>Improves testability and maintainability.</li>
+  </ul>
+
+  <p><strong>Example Usage:</strong></p>
+  <pre><code class="language-csharp">
+// 1. Define a Request
+public record GetCustomerQuery(int Id) : IRequest&lt;Customer&gt;;
+
+// 2. Implement a Handler
+public class GetCustomerHandler : IRequestHandler&lt;GetCustomerQuery, Customer&gt;
+{
+    private readonly AppDbContext _context;
+    public GetCustomerHandler(AppDbContext context) =&gt; _context = context;
+
+    public async Task&lt;Customer&gt; Handle(GetCustomerQuery request, CancellationToken ct)
+    {
+        return await _context.Customers.FindAsync(request.Id);
+    }
+}
+
+// 3. Use MediatR in Controller
+public class CustomersController : ControllerBase
+{
+    private readonly IMediator _mediator;
+    public CustomersController(IMediator mediator) =&gt; _mediator = mediator;
+
+    [HttpGet("{id}")]
+    public async Task&lt;Customer&gt; Get(int id)
+    {
+        return await _mediator.Send(new GetCustomerQuery(id));
+    }
+}
+  </code></pre>
+
+  <p><strong>Pipeline Behaviors:</strong></p>
+  <ul>
+    <li>Logging</li>
+    <li>Validation</li>
+    <li>Retry / Resilience policies</li>
+  </ul>
+
+  <p><strong>Interview Insight:</strong> MediatR is widely used in CQRS and Clean Architecture. Emphasize how it enforces separation of concerns, improves testability, and supports cross-cutting concerns via pipeline behaviors.</p>
+</details>
+
+<details>
+  <summary>AutoMapper Usage</summary>
+  <p><strong>Definition:</strong> AutoMapper is a .NET library that automates object-to-object mapping. It reduces boilerplate code when converting between DTOs, ViewModels, and domain entities.</p>
+
+  <p><strong>Key Benefits:</strong></p>
+  <ul>
+    <li>Eliminates repetitive property assignments.</li>
+    <li>Supports complex mappings and flattening.</li>
+    <li>Improves maintainability and readability.</li>
+    <li>Centralizes mapping configuration.</li>
+  </ul>
+
+  <p><strong>Example Usage:</strong></p>
+  <pre><code class="language-csharp">
+// 1. Define source and destination classes
+public class Customer {
+    public int Id { get; set; }
+    public string Name { get; set; }
+}
+
+public class CustomerDto {
+    public int Id { get; set; }
+    public string Name { get; set; }
+}
+
+// 2. Configure AutoMapper profile
+public class MappingProfile : Profile {
+    public MappingProfile() {
+        CreateMap&lt;Customer, CustomerDto&gt;();
+    }
+}
+
+// 3. Register AutoMapper in Startup.cs or Program.cs
+services.AddAutoMapper(typeof(MappingProfile));
+
+// 4. Use AutoMapper
+public class CustomerService {
+    private readonly IMapper _mapper;
+    public CustomerService(IMapper mapper) {
+        _mapper = mapper;
+    }
+
+    public CustomerDto GetCustomerDto(Customer customer) {
+        return _mapper.Map&lt;CustomerDto&gt;(customer);
+    }
+}
+  </code></pre>
+
+  <p><strong>Advanced Features:</strong></p>
+  <ul>
+    <li>Custom value resolvers.</li>
+    <li>Conditional mappings.</li>
+    <li>Flattening nested objects.</li>
+    <li>ReverseMap for bidirectional mapping.</li>
+  </ul>
+
+  <p><strong>Interview Insight:</strong> AutoMapper is often used in Clean Architecture and CQRS to separate domain models from DTOs. Emphasize how it reduces boilerplate, centralizes mapping logic, and supports maintainable codebases.</p>
+</details>
+
 
 <h2 id="efcore">EF Core</h2>
-<details><summary>EF Core Concurrency Handling</summary></details>
-<details><summary>RowVersion in EF Core</summary></details>
-<details><summary>Loading Strategies in EF Core</summary></details>
-<details><summary>EF Core Migrations</summary></details>
-<details><summary>Optimizing EF Core Queries</summary></details>
+
+<details>
+<summary>EF Core Concurrency Handling</summary>
+<p>
+
+
+
+<h2>1. Optimistic Concurrency (Default Approach)</h2>
+<p>
+EF Core assumes conflicts are rare and doesn’t lock rows upfront. A property (often <code>RowVersion</code> or <code>[Timestamp]</code>) is marked as a concurrency token. When saving, EF Core includes this token in the <code>WHERE</code> clause of <code>UPDATE</code>/<code>DELETE</code>. If the token has changed (another user updated the row), the update fails, triggering a <code>DbUpdateConcurrencyException</code>.
+</p>
+<pre><code class="language-csharp">
+public class Person
+{
+    public int PersonId { get; set; }
+    public string FirstName { get; set; }
+    [Timestamp]
+    public byte[] Version { get; set; } // concurrency token
+}</code>
+</pre>
+<pre><code class="language-csharp">
+UPDATE [People]
+SET [FirstName] = @p0
+WHERE [PersonId] = @p1 AND [Version] = @p2;
+</code>
+</pre>
+
+<h2>2. Handling Concurrency Conflicts</h2>
+<p>
+You catch <code>DbUpdateConcurrencyException</code> and decide whether to retry, merge, or discard changes.
+</p>
+<pre><code class="language-csharp">
+try
+{
+    await context.SaveChangesAsync();
+}
+catch (DbUpdateConcurrencyException ex)
+{
+    foreach (var entry in ex.Entries)
+    {
+        var databaseValues = await entry.GetDatabaseValuesAsync();
+        entry.OriginalValues.SetValues(databaseValues); // Store wins
+    }
+    await context.SaveChangesAsync();
+}
+</code></pre>
+
+<h2>3. Pessimistic Concurrency (Locking)</h2>
+<p>
+EF Core does not provide built-in support for pessimistic concurrency. If required, use raw SQL or stored procedures with <code>SELECT ... FOR UPDATE</code>. This prevents conflicts but reduces scalability.
+</p>
+
+<h2>4. Best Practices</h2>
+<ul>
+  <li>Always use a <code>RowVersion</code>/<code>Timestamp</code> column for concurrency tokens in SQL Server.</li>
+  <li>Handle <code>DbUpdateConcurrencyException</code> gracefully — don’t just retry blindly.</li>
+  <li>Log conflicts for audit purposes in compliance-heavy systems.</li>
+  <li>Use optimistic concurrency for most scenarios; reserve pessimistic locking for critical workflows.</li>
+</ul>
+
+<h2>Interview Tip</h2>
+<p>
+“EF Core uses optimistic concurrency by default. We configure a <code>RowVersion</code> column as a concurrency token, so updates succeed only if the row hasn’t changed since it was read. If a conflict occurs, EF Core throws <code>DbUpdateConcurrencyException</code>, and we handle it by retrying, discarding, or merging changes depending on business rules. For critical workflows, we sometimes fall back to database-level locking via raw SQL.”
+</p>
+</p>
+</details>
+
+<details>
+<summary>RowVersion in EF Core</summary>
+<p>
+
+<h2>1. Database-Generated Value</h2>
+<p>
+In SQL Server, <code>RowVersion</code> (or <code>Timestamp</code>) is a special column type. The database automatically updates this value every time a row is modified. You don’t supply it from the client — EF Core reads it after an insert/update.
+</p>
+
+<h2>2. EF Core Usage</h2>
+<p>
+When marked with <code>[Timestamp]</code>, EF Core includes the property in the <code>WHERE</code> clause of updates/deletes. If another update has changed the row, the <code>RowVersion</code> no longer matches, and EF Core throws <code>DbUpdateConcurrencyException</code>.
+</p>
+
+<h2>3. Adding RowVersion to Model</h2>
+<p>
+Yes, you add a property in your entity class to represent the column.
+</p>
+<pre><code class="language-csharp">
+public class Person
+{
+    public int PersonId { get; set; }
+    public string FirstName { get; set; }
+
+    [Timestamp] // Marks as concurrency token
+    public byte[] RowVersion { get; set; }
+}
+</code>
+</pre>
+
+<h2>4. How It Is Populated</h2>
+<ul>
+  <li>On insert: SQL Server generates the initial <code>RowVersion</code>.</li>
+  <li>On update: SQL Server increments it.</li>
+  <li>EF Core retrieves the new value after <code>SaveChanges()</code> and updates your entity’s <code>RowVersion</code> property.</li>
+  <li>You never manually set it — it’s always database-driven.</li>
+</ul>
+
+<h2>Interview Tip</h2>
+<p>
+“We use a <code>RowVersion</code> column as a concurrency token. EF Core includes it in the <code>WHERE</code> clause during updates. If the value has changed, EF Core throws a <code>DbUpdateConcurrencyException</code>. The database generates and updates the <code>RowVersion</code> automatically, and EF Core refreshes the property after each save. This way, we don’t rely on the client to supply concurrency values.”
+</p>
+</p>
+</details>
+
+
+<details>
+  <summary>Loading Strategies in EF Core: </summary>
+  
+
+<h2>1. Eager Loading</h2>
+<p>
+Eager loading retrieves related data <b>immediately</b when the main entity is queried. It uses the <code>Include()</code> method to specify related entities.
+</p>
+<pre><code class="language-csharp">
+var orders = context.Orders
+    .Include(o => o.Customer)
+    .Include(o => o.Items)
+    .ToList();
+	</code>
+</pre>
+<p>
+<b>Pros:</b> Reduces round-trips to the database, good for scenarios where related data is always needed.<br>
+<b>Cons:</b> Can load unnecessary data, impacting performance if relationships are large.
+</p>
+
+<h2>2. Lazy Loading</h2>
+<p>
+Lazy loading retrieves related data <b>only when it is accessed</b in code. EF Core supports lazy loading via proxies or manual navigation property access.
+</p>
+<pre><code class="language-csharp">
+var order = context.Orders.First();
+var customer = order.Customer; // triggers a query only when accessed
+</code>
+</pre>
+<p>
+<b>Pros:</b> Loads data only when needed, reducing initial query cost.<br>
+<b>Cons:</b> Can cause the "N+1 query problem" if related entities are accessed in loops.
+</p>
+
+<h2>3. Explicit Loading</h2>
+<p>
+Explicit loading retrieves related data <b>on demand</b using the <code>Entry()</code> API. It gives full control over when related entities are loaded.
+</p>
+<pre><code class="language-csharp">
+var order = context.Orders.First();
+context.Entry(order)
+       .Collection(o => o.Items)
+       .Load();
+</code>
+</pre>
+<p>
+<b>Pros:</b> Fine-grained control, avoids unnecessary data loading.<br>
+<b>Cons:</b> Requires more code and careful handling to avoid multiple queries.
+</p>
+
+<h2>Interview Insight</h2>
+<p>
+“Eager loading uses <code>Include()</code> to fetch related data upfront, lazy loading fetches it only when accessed, and explicit loading gives manual control via <code>Entry().Load()</code>. I choose eager loading when related data is always required, lazy loading for occasional access, and explicit loading when I need precise control over queries.”
+</p>
+</details>
+<details>
+  <summary>EF Core Migrations</summary>
+  
+
+<h2>1. What Are EF Core Migrations?</h2>
+<p>
+Migrations in <b>Entity Framework Core</b> provide a way to evolve the database schema alongside your application’s data model. 
+They track changes in your entity classes and generate code to update the database schema without losing existing data.
+</p>
+
+<h2>2. Why Use Migrations?</h2>
+<ul>
+  <li>Keep the database schema in sync with the domain model.</li>
+  <li>Version control for schema changes.</li>
+  <li>Automated updates instead of manual SQL scripts.</li>
+  <li>Supports rollback and forward migration paths.</li>
+</ul>
+
+<h2>3. Workflow</h2>
+<ol>
+  <li><b>Add Migration:</b> Generates migration files based on model changes.</li>
+  <li><b>Update Database:</b> Applies migration changes to the database.</li>
+  <li><b>Rollback:</b> Revert to a previous migration if needed.</li>
+</ol>
+
+<h2>4. Commands</h2>
+<pre><code class="language-csharp">
+// Add a new migration
+dotnet ef migrations add InitialCreate
+
+// Apply migrations to the database
+dotnet ef database update
+
+// Remove last migration (if not applied)
+dotnet ef migrations remove
+
+// Rollback to a specific migration
+dotnet ef database update MigrationName
+</code></pre>
+
+<h2>5. Migration File Example</h2>
+<pre><code class="language-csharp">
+public partial class InitialCreate : Migration
+{
+    protected override void Up(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.CreateTable(
+            name: "Customers",
+            columns: table => new
+            {
+                Id = table.Column&lt;int&gt;(nullable: false)
+                    .Annotation("SqlServer:Identity", "1, 1"),
+                Name = table.Column&lt;string&gt;(nullable: true)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("PK_Customers", x => x.Id);
+            });
+    }
+
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropTable(name: "Customers");
+    }
+}
+</code></pre>
+
+<h2>6. Best Practices</h2>
+<ul>
+  <li>Always review generated migration code before applying.</li>
+  <li>Use meaningful names for migrations (e.g., <code>AddCustomerTable</code>).</li>
+  <li>Apply migrations in CI/CD pipelines to keep environments consistent.</li>
+  <li>Test rollback paths to ensure safe recovery.</li>
+  <li>Avoid destructive changes (like dropping columns) without data migration strategies.</li>
+</ul>
+
+<h2>7. Interview Insight</h2>
+<p>
+👉 EF Core migrations provide a <b>code-first schema evolution mechanism</b>. 
+They allow developers to manage database changes in a controlled, versioned way. 
+In interviews, emphasize the workflow (<i>add → update → rollback</i>), lifecycles, and best practices like reviewing migration scripts and handling backward compatibility.
+</p>
+</details>
+<details>
+  <summary>Optimizing EF Core Queries</summary>
+  
+
+<h2>1. Use Indexes Properly</h2>
+<p>
+Indexes are critical for query performance. Ensure that frequently queried columns have appropriate indexes. Use composite indexes for multi-column filters and consider filtered indexes for subsets of data.
+</p>
+<pre><code class="language-csharp">
+// Good: Uses index
+var posts1 = await context.Posts
+    .Where(p => p.Title.StartsWith("A"))
+    .ToListAsync();
+
+// Bad: May not use index
+var posts2 = await context.Posts
+    .Where(p => p.Title.EndsWith("A"))
+    .ToListAsync();
+</code></pre>
+
+<h2>2. Project Only Needed Properties</h2>
+<p>
+Avoid fetching entire entities when only a subset of columns is required. Use <code>Select()</code> to project specific fields.
+</p>
+<pre><code class="language-csharp">
+var customers = await context.Customers
+    .Select(c => new { c.Id, c.Name })
+    .ToListAsync();
+</code></pre>
+
+<h2>3. Limit Result Set Size</h2>
+<p>
+Use <code>Take()</code>, <code>Skip()</code>, and filtering to avoid loading large datasets unnecessarily.
+</p>
+<pre><code class="language-csharp">
+var top10Orders = await context.Orders
+    .OrderByDescending(o => o.Date)
+    .Take(10)
+    .ToListAsync();
+</code></pre>
+
+<h2>4. Efficient Loading Strategies</h2>
+<ul>
+  <li><b>Eager Loading:</b> Use <code>Include()</code> when related data is always needed.</li>
+  <li><b>Explicit Loading:</b> Use <code>Entry().Load()</code> for precise control.</li>
+  <li><b>Lazy Loading:</b> Avoid in high-performance scenarios to prevent N+1 queries.</li>
+</ul>
+
+<h2>5. Compiled Queries</h2>
+<p>
+Pre-compile queries that run frequently to reduce overhead of query translation.
+</p>
+<pre><code class="language-csharp">
+static readonly Func<MyContext, int, Task<Customer>> GetCustomerById =
+    EF.CompileAsyncQuery((MyContext ctx, int id) =>
+        ctx.Customers.FirstOrDefault(c => c.Id == id));
+</code></pre>
+
+<h2>6. DbContext Pooling</h2>
+<p>
+Use <code>AddDbContextPool</code> to reuse DbContext instances and reduce setup overhead in high-throughput applications.
+</p>
+<pre><code class="language-csharp">
+builder.Services.AddDbContextPool<MyContext>(
+    options => options.UseSqlServer(connectionString));
+</code></pre>
+
+<h2>7. Pagination & Batching</h2>
+<p>
+Implement efficient pagination with <code>Skip()</code> and <code>Take()</code>. For bulk operations, use batching to reduce round-trips.
+</p>
+
+<h2>8. Measure & Diagnose</h2>
+<p>
+Always profile queries using SQL Server Profiler or <code>ToQueryString()</code> in EF Core to see the generated SQL. Optimize based on actual execution plans.
+</p>
+
+<h2>Interview Insight</h2>
+<p>
+“EF Core query optimization involves using indexes correctly, projecting only needed fields, limiting result sets, and choosing the right loading strategy. For high-throughput scenarios, I use compiled queries and DbContext pooling. I always profile queries with <code>ToQueryString()</code> and database execution plans to ensure efficiency.”
+</p>
+</details>
 
 <h2 id="sql">SQL Interview Questions</h2>
-<details><summary>Difference between DELETE, TRUNCATE, DROP</summary></details>
-<details><summary>Primary Key vs Unique Key vs Foreign Key</summary></details>
-<details><summary>WHERE vs HAVING</summary></details>
-<details><summary>INNER JOIN vs LEFT JOIN vs FULL JOIN</summary></details>
-<details><summary>Second Highest Salary Query</summary></details>
-<details><summary>Find Duplicate Records</summary></details>
-<details><summary>Subquery vs CTE</summary></details>
-<details><summary>GROUP BY & Aggregates</summary></details>
-<details><summary>CHAR vs VARCHAR</summary></details>
-<details><summary>NULL Handling</summary></details>
-<details><summary>Clustered vs Non‑Clustered Index</summary></details>
-<details><summary>Covering Index</summary></details>
-<details><summary>Query Execution Plan</summary></details>
-<details><summary>UNION vs UNION ALL</summary></details>
-<details><summary>Window Functions</summary></details>
-<details><summary>Nth Highest Salary</summary></details>
-<details><summary>Transactions & ACID</summary></details>
-<details><summary>Isolation Levels</summary></details>
-<details><summary>Deadlocks</summary></details>
-<details><summary>Optimistic vs Pessimistic Locking</summary></details>
-<details><summary>Partitioning</summary></details>
-<details><summary>Sharding vs Partitioning</summary></details>
-<details><summary>Materialized Views</summary></details>
-<details><summary>OLTP vs OLAP Schema</summary></details>
-<details><summary>Audit Logging</summary></details>
-<details><summary>Schema for Ride‑Sharing App</summary></details>
-<details><summary>Scaling Queries for 200M Row Orders Table</summary></details>
-<details><summary>Fact & Dimension Tables</summary></details>
-<details><summary>Troubleshooting Slow Query</summary></details>
-<details><summary>Index Fragmentation</summary></details>
-<details><summary>Heap vs Clustered Tables</summary></details>
-<details><summary>Soft Deletes</summary></details>
-<details><summary>Change Data Capture (CDC)</summary></details>
-<details><summary>Replication vs Log Shipping</summary></details>
-<details><summary>Data Consistency Across Microservices</summary></details>
-<details><summary>CQRS Pattern</summary></details>
-<details><summary>Multi‑Tenant Database</summary></details>
-<details><summary>Horizontal vs Vertical Scaling</summary></details>
-<details><summary>Securing Sensitive Data</summary></details>
-<details><summary>Row‑Level Security</summary></details>
-<details><summary>High Availability in SQL Server</summary></details>
-<details><summary>Temp Tables vs Table Variables</summary></details>
-<details><summary>Large Batch Inserts</summary></details>
-<details><summary>Query Hints</summary></details>
-<details><summary>Monitoring SQL Server Performance</summary></details>
-<details><summary>Index Seek vs Index Scan</summary></details>
-<details><summary>Schema for Event Sourcing</summary></details>
-<details><summary>Denormalization</summary></details>
-<details><summary>Legacy Database Migration</summary></details>
-<details><summary>Best Practices for Schema Versioning in Enterprise Systems</summary></details>
-<details><summary>SQL with CTE: Employee and Manager</summary></details>
+
+<!-- Question 1 -->
+<details>
+  <summary>Difference between DELETE, TRUNCATE, DROP</summary>
+  <div class="answer-content">
+    <b>DELETE</b>: Removes rows, can use WHERE, logged, rollback possible.<br>
+    <b>TRUNCATE</b>: Removes all rows, faster, minimal logging, resets identity.<br>
+    <b>DROP</b>: Removes entire table (structure + data).
+  </div>
+</details>
+
+<!-- Question 2 -->
+<details>
+  <summary>Primary Key vs Unique Key vs Foreign Key</summary>
+  <div class="answer-content">
+    <b>Primary Key</b>: Unique, no NULLs, one per table.<br>
+    <b>Unique Key</b>: Ensures uniqueness, allows one NULL, multiple per table.<br>
+    <b>Foreign Key</b>: Enforces referential integrity.
+  </div>
+</details>
+
+<!-- Question 3 -->
+<details>
+  <summary>WHERE vs HAVING</summary>
+  <div class="answer-content">
+<pre><code class="language-sql">
+-- WHERE filters rows before grouping
+SELECT name, salary
+FROM employees
+WHERE salary > 50000;
+</code></pre>
+
+<pre><code class="language-sql">
+-- HAVING filters groups after aggregation
+SELECT dept_id, AVG(salary) AS avg_salary
+FROM employees
+GROUP BY dept_id
+HAVING AVG(salary) > 60000;
+</code></pre>
+  </div>
+</details>
+
+<!-- Question 4 -->
+<details>
+  <summary>INNER JOIN vs LEFT JOIN vs FULL JOIN</summary>
+  <div class="answer-content">
+    INNER JOIN – Matching rows only
+    <pre><code class="language-sql">
+SELECT e.name, d.dept_name
+FROM employees e
+INNER JOIN departments d
+ON e.dept_id = d.id;
+    </code></pre>
+  
+    LEFT JOIN – All rows from left + matches
+    <pre><code class="language-sql">
+SELECT e.name, d.dept_name
+FROM employees e
+LEFT JOIN departments d
+ON e.dept_id = d.id;
+    </code></pre>
+    
+    FULL JOIN – All rows from both sides
+    <pre><code class="language-sql">
+SELECT e.name, d.dept_name
+FROM employees e
+FULL OUTER JOIN departments d
+ON e.dept_id = d.id;
+    </code></pre>
+  </div>
+</details>
+
+<!-- Question 5 -->
+<details>
+  <summary>Second Highest Salary Query</summary>
+  <div class="answer-content">
+ <pre><code class="language-sql">
+WITH SalaryRank AS (
+    SELECT salary,
+           DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
+    FROM employees
+)
+SELECT salary
+FROM SalaryRank
+WHERE rnk = 2;
+    </code></pre>
+  </div>
+</details>
+
+<!-- Question 6 -->
+<details>
+  <summary>Find Duplicate Records</summary>
+  <div class="answer-content">
+<pre><code class="language-sql">
+SELECT column_name, COUNT(*)
+FROM table_name
+GROUP BY column_name
+HAVING COUNT(*) > 1;
+</code></pre>
+  </div>
+</details>
+
+<!-- Question 7 -->
+<details>
+  <summary>Subquery vs CTE</summary>
+  <div class="answer-content">
+    <b>Subquery</b>: Nested inline.<br>
+    <b>CTE</b>: Defined with WITH, reusable, supports recursion.
+  </div>
+</details>
+
+<!-- Question 8 -->
+<details>
+  <summary>GROUP BY & Aggregates</summary>
+  <div class="answer-content">
+    Groups rows and applies aggregate functions.<br>
+    <code>
+      SELECT department, AVG(salary)<br>
+      FROM employees<br>
+      GROUP BY department;
+    </code>
+  </div>
+</details>
+
+<!-- Question 9 -->
+<details>
+  <summary>CHAR vs VARCHAR</summary>
+  <div class="answer-content">
+    <b>CHAR(n)</b>: Fixed length, pads with spaces.<br>
+    <b>VARCHAR(n)</b>: Variable length, saves space.
+  </div>
+</details>
+
+<!-- Question 10 -->
+<details>
+  <summary>NULL Handling</summary>
+  <div class="answer-content">
+    Use <code>IS NULL</code> / <code>IS NOT NULL</code>.<br>
+    Replace with <code>COALESCE()</code> or <code>ISNULL()</code>.<br>
+    Example: <code>SELECT COALESCE(middle_name, 'N/A') FROM employees;</code>
+  </div>
+</details>
+
+<!-- Question 11 -->
+<details>
+  <summary>Clustered vs Non‑Clustered Index</summary>
+  <div class="answer-content">
+    <b>Clustered</b>: Sorts and stores data rows physically, one per table.<br>
+    <b>Non‑Clustered</b>: Separate structure with pointers to data, multiple allowed.<br>
+    Example: Clustered on <code>OrderID</code>, Non‑Clustered on <code>CustomerID</code>.
+  </div>
+</details>
+
+<!-- Question 12 -->
+<details>
+  <summary>Covering Index</summary>
+  <div class="answer-content">
+    An index that contains all columns needed by a query, avoiding lookups.<br>
+    Example: <code>CREATE INDEX idx_orders ON Orders(CustomerID, OrderDate, TotalAmount)</code>.
+  </div>
+</details>
+
+<!-- Question 13 -->
+<details>
+  <summary>Query Execution Plan</summary>
+  <div class="answer-content">
+    Shows how SQL Server executes a query (scans, seeks, joins).<br>
+    Used to identify bottlenecks like table scans or missing indexes.
+  </div>
+</details>
+
+<!-- Question 14 -->
+<details>
+  <summary>UNION vs UNION ALL</summary>
+  <div class="answer-content">
+    <b>UNION</b>: Removes duplicates, adds sorting overhead.<br>
+    <b>UNION ALL</b>: Keeps duplicates, faster.<br>
+    Example: Reporting queries often use <code>UNION ALL</code> for performance.
+  </div>
+</details>
+
+<!-- Question 15 -->
+<details>
+  <summary>Window Functions</summary>
+  <div class="answer-content">
+    Functions like <code>ROW_NUMBER()</code>, <code>RANK()</code>, <code>DENSE_RANK()</code>.<br>
+    Example: 
+    <code>
+      SELECT Name, Salary, RANK() OVER (ORDER BY Salary DESC) AS Rank<br>
+      FROM Employees;
+    </code>
+  </div>
+</details>
+
+<!-- Question 16 -->
+<details>
+  <summary>Nth Highest Salary</summary>
+  <div class="answer-content">
+    <code>
+      SELECT Salary FROM (SELECT Salary, DENSE_RANK() OVER (ORDER BY Salary DESC) AS rnk<br>
+      FROM Employees) t WHERE rnk = N;
+    </code>
+  </div>
+</details>
+
+<!-- Question 17 -->
+<details>
+  <summary>Transactions & ACID</summary>
+  <div class="answer-content">
+    Ensures <b>Atomicity, Consistency, Isolation, Durability</b>.<br>
+    Example: Bank transfer = debit + credit in one transaction.
+  </div>
+</details>
+
+<!-- Question 18 -->
+<details>
+  <summary>Isolation Levels</summary>
+  <div class="answer-content">
+    <b>Read Uncommitted</b>: Dirty reads.<br>
+    <b>Read Committed</b>: Prevents dirty reads.<br>
+    <b>Repeatable Read</b>: Prevents non‑repeatable reads.<br>
+    <b>Serializable</b>: Prevents phantom reads, strictest.
+  </div>
+</details>
+
+<!-- Question 19 -->
+<details>
+  <summary>Deadlocks</summary>
+  <div class="answer-content">
+    Occur when two transactions wait on each other’s locks.<br>
+    Prevention: Consistent locking order, shorter transactions, use <code>WITH (NOLOCK)</code> carefully.
+  </div>
+</details>
+
+<!-- Question 20 -->
+<details>
+  <summary>Optimistic vs Pessimistic Locking</summary>
+  <div class="answer-content">
+    <b>Optimistic</b>: Assume no conflict, check at commit.<br>
+    <b>Pessimistic</b>: Lock resources immediately.<br>
+    Example: High‑concurrency systems prefer optimistic.
+  </div>
+</details>
+
+<!-- Question 21 -->
+<details>
+  <summary>Partitioning</summary>
+  <div class="answer-content">
+    Splits large tables into smaller partitions for performance.<br>
+    Example: Partition sales data by year.
+  </div>
+</details>
+
+<!-- Question 22 -->
+<details>
+  <summary>Sharding vs Partitioning</summary>
+  <div class="answer-content">
+    <b>Partitioning</b>: Within one DB instance.<br>
+    <b>Sharding</b>: Across multiple DB servers.<br>
+    Example: Global apps shard by region.
+  </div>
+</details>
+
+<!-- Question 23 -->
+<details>
+  <summary>Materialized Views</summary>
+  <div class="answer-content">
+    Precomputed query results stored physically.<br>
+    Speeds up reporting but needs refresh.<br>
+    Example: Monthly sales summary.
+  </div>
+</details>
+
+<!-- Question 24 -->
+<details>
+  <summary>OLTP vs OLAP Schema</summary>
+  <div class="answer-content">
+    <b>OLTP</b>: Normalized, fast inserts/updates.<br>
+    <b>OLAP</b>: Denormalized, star/snowflake schema for analytics.
+  </div>
+</details>
+
+<!-- Question 25 -->
+<details>
+  <summary>Audit Logging</summary>
+  <div class="answer-content">
+    Track changes for compliance.<br>
+    Example: Use triggers to insert into <code>AuditLog</code> table on UPDATE/DELETE.
+  </div>
+</details>
+
+<!-- Question 26 -->
+<details>
+  <summary>Schema for Ride‑Sharing App</summary>
+  <div class="answer-content">
+    Tables: <b>Drivers</b>, <b>Riders</b>, <b>Trips</b>, <b>Payments</b>.<br>
+    Example: Trips table links DriverID, RiderID, StartLocation, EndLocation, Fare.
+  </div>
+</details>
+
+<!-- Question 27 -->
+<details>
+  <summary>Scaling Queries for 200M Row Orders Table</summary>
+  <div class="answer-content">
+    Use <b>partitioning</b> by date, <b>indexes</b> on CustomerID/OrderDate, and <b>covering indexes</b>.<br>
+    Example: <code>CREATE INDEX idx_orders ON Orders(CustomerID, OrderDate)</code>.
+  </div>
+</details>
+
+<!-- Question 28 -->
+<details>
+  <summary>Fact & Dimension Tables</summary>
+  <div class="answer-content">
+    <b>Fact</b>: Transactional data (Sales, Orders).<br>
+    <b>Dimension</b>: Descriptive attributes (Customer, Product, Time).<br>
+    Example: Star schema for sales reporting.
+  </div>
+</details>
+
+<!-- Question 29 -->
+<details>
+  <summary>Troubleshooting Slow Query</summary>
+  <div class="answer-content">
+    Steps: Check execution plan → Index usage → Statistics → Locks → Hardware bottlenecks.<br>
+    Example: Add missing index to avoid table scan.
+  </div>
+</details>
+
+<!-- Question 30 -->
+<details>
+  <summary>Index Fragmentation</summary>
+  <div class="answer-content">
+    Caused by frequent inserts/updates.<br>
+    Fix: <code>ALTER INDEX REBUILD</code> or <code>ALTER INDEX REORGANIZE</code>.
+  </div>
+</details>
+
+<!-- Question 31 -->
+<details>
+  <summary>Heap vs Clustered Tables</summary>
+  <div class="answer-content">
+    <b>Heap</b>: No clustered index, unordered.<br>
+    <b>Clustered</b>: Ordered by clustered key.<br>
+    Example: Heap for staging, clustered for production.
+  </div>
+</details>
+
+<!-- Question 32 -->
+<details>
+  <summary>Soft Deletes</summary>
+  <div class="answer-content">
+    Add <code>IsDeleted BIT</code> column instead of removing rows.<br>
+    Example: <code>UPDATE Users SET IsDeleted = 1 WHERE UserID = 10;</code>
+  </div>
+</details>
+
+<!-- Question 33 -->
+<details>
+  <summary>Change Data Capture (CDC)</summary>
+  <div class="answer-content">
+    Tracks inserts/updates/deletes for auditing or ETL.<br>
+    Example: Enable CDC on Orders table for downstream reporting.
+  </div>
+</details>
+
+<!-- Question 34 -->
+<details>
+  <summary>Replication vs Log Shipping</summary>
+  <div class="answer-content">
+    <b>Replication</b>: Real‑time copy for reporting.<br>
+    <b>Log Shipping</b>: Periodic backup/restore for disaster recovery.
+  </div>
+</details>
+
+<!-- Question 35 -->
+<details>
+  <summary>Data Consistency Across Microservices</summary>
+  <div class="answer-content">
+    Use <b>distributed transactions</b>, <b>event sourcing</b>, or <b>outbox pattern</b>.<br>
+    Example: Outbox table ensures reliable message publishing.
+  </div>
+</details>
+
+<!-- Question 36 -->
+<details>
+  <summary>CQRS Pattern</summary>
+  <div class="answer-content">
+    Separate <b>Command</b> (writes) and <b>Query</b> (reads).<br>
+    Example: Commands update DB, Queries use read‑optimized schema.
+  </div>
+</details>
+
+<!-- Question 37 -->
+<details>
+  <summary>Multi‑Tenant Database</summary>
+  <div class="answer-content">
+    Approaches: Shared schema with TenantID, separate schema per tenant, or separate DB per tenant.<br>
+    Example: SaaS apps often use TenantID column.
+  </div>
+</details>
+
+<!-- Question 38 -->
+<details>
+  <summary>Horizontal vs Vertical Scaling</summary>
+  <div class="answer-content">
+    <b>Horizontal</b>: Add more servers (sharding).<br>
+    <b>Vertical</b>: Increase server resources (CPU, RAM).
+  </div>
+</details>
+
+<!-- Question 39 -->
+<details>
+  <summary>Securing Sensitive Data</summary>
+  <div class="answer-content">
+    Use <b>encryption</b> (TDE, Always Encrypted), masking, and role‑based access.<br>
+    Example: Encrypt SSN column.
+  </div>
+</details>
+
+<!-- Question 40 -->
+<details>
+  <summary>Row‑Level Security</summary>
+  <div class="answer-content">
+    Restrict access based on user context.<br>
+    Example: Sales reps see only their region’s data.
+  </div>
+</details>
+
+<!-- Question 41 -->
+<details>
+  <summary>High Availability in SQL Server</summary>
+  <div class="answer-content">
+    Options: Failover clustering, AlwaysOn Availability Groups, Log Shipping.<br>
+    Example: AlwaysOn for mission‑critical apps.
+  </div>
+</details>
+
+<!-- Question 42 -->
+<details>
+  <summary>Temp Tables vs Table Variables</summary>
+  <div class="answer-content">
+    <b>Temp Tables</b>: Support indexes, statistics, better for large sets.<br>
+    <b>Table Variables</b>: In‑memory, lightweight, no stats.
+  </div>
+</details>
+
+<!-- Question 43 -->
+<details>
+  <summary>Large Batch Inserts</summary>
+  <div class="answer-content">
+    Use <code>BULK INSERT</code>, <code>BCP</code>, or batching with transactions.<br>
+    Example: Insert 10k rows per batch.
+  </div>
+</details>
+
+<!-- Question 44 -->
+<details>
+  <summary>Query Hints</summary>
+  <div class="answer-content">
+    Force optimizer behavior (e.g., <code>OPTION (FORCE INDEX)</code>).<br>
+    Use cautiously, only when optimizer misbehaves.
+  </div>
+</details>
+
+<!-- Question 45 -->
+<details>
+  <summary>Monitoring SQL Server Performance</summary>
+  <div class="answer-content">
+    Tools: Profiler, Extended Events, DMVs.<br>
+    Example: DMV query for top CPU‑consuming queries.
+  </div>
+</details>
+
+<!-- Question 46 -->
+<details>
+  <summary>Index Seek vs Index Scan</summary>
+  <div class="answer-content">
+    <b>Seek</b>: Efficient, uses index key.<br>
+    <b>Scan</b>: Reads entire index/table.<br>
+    Example: Seek on <code>WHERE CustomerID = 100</code>.
+  </div>
+</details>
+
+<!-- Question 47 -->
+<details>
+  <summary>Schema for Event Sourcing</summary>
+  <div class="answer-content">
+    Store events instead of state.<br>
+    Example: Orders table replaced by Events table (OrderCreated, OrderShipped).
+  </div>
+</details>
+
+<!-- Question 48 -->
+<details>
+  <summary>Denormalization</summary>
+  <div class="answer-content">
+    Add redundancy for performance.<br>
+    Example: Store CustomerName in Orders table to avoid join.
+  </div>
+</details>
+
+<!-- Question 49 -->
+<details>
+  <summary>Legacy Database Migration</summary>
+  <div class="answer-content">
+    <ul>
+      <li><b>Assessment:</b> Analyze existing schema, dependencies, and data quality.</li>
+      <li><b>ETL Process:</b> Extract, Transform, Load using tools like SSIS or custom scripts.</li>
+      <li><b>Validation:</b> Compare row counts, checksums, and sample queries to ensure accuracy.</li>
+      <li><b>Optimization:</b> Add indexes, constraints, and normalize/denormalize as needed.</li>
+      <li><b>Rollback Plan:</b> Always prepare backups and rollback scripts before migration.</li>
+    </ul>
+    <p><b>Example:</b> Use <code>SQL Server Integration Services (SSIS)</code> to migrate data from Oracle to SQL Server, applying transformations during the load.</p>
+  </div>
+</details>
+
+<!-- Question 50 -->
+<details>
+  <summary>Best Practices for Schema Versioning in Enterprise Systems</summary>
+  <div class="answer-content">
+    <ul>
+      <li><b>Use Version Control:</b> Keep all schema changes in source control (e.g., Git).</li>
+      <li><b>Migration Scripts:</b> Apply changes via incremental scripts (CREATE/ALTER), not manual edits.</li>
+      <li><b>Automated Deployment:</b> Use CI/CD pipelines to apply schema changes consistently.</li>
+      <li><b>Backward Compatibility:</b> Ensure changes don’t break existing applications (e.g., add columns instead of dropping).</li>
+      <li><b>Documentation:</b> Maintain clear change logs for auditing and rollback.</li>
+      <li><b>Testing:</b> Validate schema changes in staging before production.</li>
+    </ul>
+    <p><b>Example:</b> Use tools like <code>Flyway</code> or <code>Liquibase</code> to manage schema migrations with version tags.</p>
+  </div>
+</details>
+
+ <details>
+  <summary>SQL with CTE: Employee and Manager</summary>
+  <div>
+    <pre><code class="language-sql">
+WITH EmployeeManager AS (
+    SELECT e.Id AS EmployeeId,
+           e.Name AS EmployeeName,
+           e.ManagerId,
+           m.Name AS ManagerName
+    FROM Employees e
+    LEFT JOIN Employees m
+           ON e.ManagerId = m.Id
+)
+SELECT EmployeeName, ManagerName
+FROM EmployeeManager;
+  </code> </pre>
+
+    <p><strong>Output:</strong></p>
+    <table border="1" cellpadding="5" cellspacing="0">
+      <tr>
+        <th>Employee</th>
+        <th>Manager</th>
+      </tr>
+      <tr><td>Alice</td><td>NULL</td></tr>
+      <tr><td>Bob</td><td>Alice</td></tr>
+      <tr><td>Carol</td><td>Alice</td></tr>
+      <tr><td>David</td><td>Bob</td></tr>
+      <tr><td>Eve</td><td>Bob</td></tr>
+    </table>
+  </div>
+</details>
+
 
 
 <!-- Architecture -->
 <h2 id="architecture">Architecture & Design</h2>
-<details><summary>SOLID Principles in Large Codebases</summary></details>
-<details><summary>Repository vs Unit of Work</summary></details>
-<details><summary>Monolith vs Microservices Trade-offs</summary></details>
-<details><summary>Idempotent REST API Design</summary></details>
-<details><summary>Backward Compatibility in APIs</summary></details>
-<details><summary>API Versioning in ASP.NET Core</summary></details>
+<details>
+  <summary>Designing Multi-Region Deployments</summary>
+  
+
+<h2>1. Goals of Multi-Region Architecture</h2>
+<ul>
+  <li><b>High Availability:</b> Survive regional outages by failing over to another region.</li>
+  <li><b>Disaster Recovery:</b> Ensure business continuity with RTO (Recovery Time Objective) and RPO (Recovery Point Objective) targets.</li>
+  <li><b>Low Latency:</b> Serve users from the nearest region to reduce response times.</li>
+  <li><b>Compliance:</b> Meet data residency requirements by storing data in specific regions.</li>
+</ul>
+
+<h2>2. Core Design Patterns</h2>
+<ul>
+  <li><b>Active-Passive:</b> One primary region handles traffic, another region is on standby for failover.</li>
+  <li><b>Active-Active:</b> Multiple regions serve traffic simultaneously, often with global load balancing.</li>
+  <li><b>Pilot Light:</b> Minimal infrastructure in secondary region, scaled up only during disaster recovery.</li>
+</ul>
+
+<h2>3. Key Components</h2>
+<ul>
+  <li><b>Global Load Balancing:</b> Use Azure Front Door, AWS Route 53, or GCP Cloud Load Balancing to route traffic to the nearest healthy region.</li>
+  <li><b>Data Replication:</b> 
+    <ul>
+      <li>Relational DB: Use geo-replication (Azure SQL, Amazon RDS).</li>
+      <li>NoSQL DB: Use multi-region replication (Cosmos DB, DynamoDB).</li>
+      <li>Blob/Object Storage: Enable geo-redundant storage (GRS, S3 Cross-Region Replication).</li>
+    </ul>
+  </li>
+  <li><b>State Management:</b> Design stateless services; store session state in distributed caches (Redis, DynamoDB, Cosmos DB).</li>
+  <li><b>CI/CD Pipelines:</b> Deploy consistently across regions using Infrastructure as Code (Terraform, Bicep, CloudFormation).</li>
+</ul>
+
+<h2>4. Cross-Cutting Concerns</h2>
+<ul>
+  <li><b>Security:</b> Apply Zero-Trust principles, private endpoints, and region-specific compliance policies.</li>
+  <li><b>Observability:</b> Centralized logging and monitoring across regions (Azure Monitor, AWS CloudWatch, Grafana).</li>
+  <li><b>Resilience:</b> Implement health probes, automatic failover, and chaos testing to validate recovery.</li>
+  <li><b>Cost Optimization:</b> Balance redundancy with cost; active-active is more expensive than active-passive.</li>
+</ul>
+
+<h2>5. Example Flow</h2>
+<ol>
+  <li>User request hits global DNS/load balancer.</li>
+  <li>Traffic routed to nearest region (e.g., East US, West Europe, Southeast Asia).</li>
+  <li>Microservices deployed in AKS/EKS clusters in each region handle requests.</li>
+  <li>Data replicated across regions using geo-replication.</li>
+  <li>If a region fails, traffic automatically reroutes to another healthy region.</li>
+</ol>
+
+<h2>Interview Insight</h2>
+<p>
+“In multi-region deployments, I design for high availability and disaster recovery using active-active or active-passive patterns. I rely on global load balancing, geo-replication for databases, and stateless microservices to ensure resilience. Observability and Zero-Trust security are enforced across all regions. The trade-off is cost versus availability, so I align the architecture with business RTO/RPO requirements.”
+</p>
+</details>
+
+<details>
+  <summary>Repository vs Unit of Work Patterns</summary>
+  
+
+<h2>Repository Pattern</h2>
+<p>
+<b>Purpose:</b> Abstracts data access logic, providing a clean API for the domain layer to interact with persistence.<br/>
+<b>Focus:</b> Encapsulates queries and CRUD operations for a specific aggregate or entity.
+</p>
+<ul>
+  <li>Decouples business logic from data access.</li>
+  <li>Makes unit testing easier (repositories can be mocked).</li>
+  <li>Centralizes query logic for consistency.</li>
+</ul>
+<pre><code class="language-csharp">
+public interface ICustomerRepository
+{
+    Customer GetById(int id);
+    IEnumerable&lt;Customer&gt; GetAll();
+    void Add(Customer customer);
+    void Remove(Customer customer);
+}
+
+public class CustomerRepository : ICustomerRepository
+{
+    private readonly AppDbContext _context;
+    public CustomerRepository(AppDbContext context) => _context = context;
+
+    public Customer GetById(int id) => _context.Customers.Find(id);
+    public IEnumerable&lt;Customer&gt; GetAll() => _context.Customers.ToList();
+    public void Add(Customer customer) => _context.Customers.Add(customer);
+    public void Remove(Customer customer) => _context.Customers.Remove(customer);
+}
+</code>
+</pre>
+
+<h2>Unit of Work Pattern</h2>
+<p>
+<b>Purpose:</b> Coordinates changes across multiple repositories, ensuring they are committed as a single transaction.<br/>
+<b>Focus:</b> Manages the lifecycle of a transaction and aggregates repository operations.
+</p>
+<ul>
+  <li>Ensures consistency when multiple repositories are involved.</li>
+  <li>Provides a single <code>Commit()</code> or <code>SaveChanges()</code> method to persist changes.</li>
+  <li>Reduces the risk of partial updates.</li>
+</ul>
+<pre><code class="language-csharp">
+public interface IUnitOfWork : IDisposable
+{
+    ICustomerRepository Customers { get; }
+    IOrderRepository Orders { get; }
+    int Complete();
+}
+
+public class UnitOfWork : IUnitOfWork
+{
+    private readonly AppDbContext _context;
+    public ICustomerRepository Customers { get; }
+    public IOrderRepository Orders { get; }
+
+    public UnitOfWork(AppDbContext context)
+    {
+        _context = context;
+        Customers = new CustomerRepository(_context);
+        Orders = new OrderRepository(_context);
+    }
+
+    public int Complete() => _context.SaveChanges();
+    public void Dispose() => _context.Dispose();
+}
+</code>
+</pre>
+
+<h2>Key Differences</h2>
+<table border="1" cellpadding="5" cellspacing="0">
+  <tr>
+    <th>Aspect</th>
+    <th>Repository</th>
+    <th>Unit of Work</th>
+  </tr>
+  <tr>
+    <td>Scope</td>
+    <td>Single entity/aggregate</td>
+    <td>Multiple repositories/transaction</td>
+  </tr>
+  <tr>
+    <td>Responsibility</td>
+    <td>Encapsulates CRUD/query logic</td>
+    <td>Coordinates repositories + commits</td>
+  </tr>
+  <tr>
+    <td>Transaction</td>
+    <td>Not responsible</td>
+    <td>Ensures atomic commits across repos</td>
+  </tr>
+  <tr>
+    <td>Usage</td>
+    <td>Access data in a clean way</td>
+    <td>Manage consistency across operations</td>
+  </tr>
+</table>
+
+<p>
+👉 Think of <b>Repository</b> as the <i>data access abstraction</i> and <b>Unit of Work</b> as the <i>transaction manager</i>. Together, they form a powerful combination: repositories handle entity-specific operations, while the unit of work ensures everything is committed consistently.
+</p>
+</details>
+
+<details>
+  <summary>Monolith vs Microservices: Trade-offs</summary>
+  
+
+<h2>1. Monolithic Architecture</h2>
+<p>
+A <b>monolith</b> is a single, unified codebase where all modules (UI, business logic, data access) are tightly coupled and deployed together.
+</p>
+
+<h3>Advantages</h3>
+<ul>
+  <li><b>Simplicity:</b> Easier to develop, test, and deploy initially.</li>
+  <li><b>Performance:</b> Direct function calls, no network overhead between modules.</li>
+  <li><b>Tooling:</b> Mature frameworks and simpler CI/CD pipelines.</li>
+  <li><b>Consistency:</b> Shared memory and state across modules.</li>
+</ul>
+
+<h3>Disadvantages</h3>
+<ul>
+  <li><b>Scalability:</b> Cannot scale individual components independently.</li>
+  <li><b>Maintainability:</b> Large codebase becomes hard to manage over time.</li>
+  <li><b>Deployment:</b> Any change requires redeploying the entire application.</li>
+  <li><b>Reliability:</b> A bug in one module can crash the whole system.</li>
+</ul>
+
+<h2>2. Microservices Architecture</h2>
+<p>
+<b>Microservices</b> break the application into small, independent services that communicate via APIs (REST, gRPC, messaging).
+</p>
+
+<h3>Advantages</h3>
+<ul>
+  <li><b>Scalability:</b> Scale services independently based on demand.</li>
+  <li><b>Flexibility:</b> Different services can use different technologies.</li>
+  <li><b>Deployment:</b> Deploy and update services independently.</li>
+  <li><b>Resilience:</b> Failures are isolated to individual services.</li>
+  <li><b>Team Autonomy:</b> Teams can own and manage services independently.</li>
+</ul>
+
+<h3>Disadvantages</h3>
+<ul>
+  <li><b>Complexity:</b> Requires service discovery, API gateways, and orchestration.</li>
+  <li><b>Performance:</b> Network latency and serialization overhead.</li>
+  <li><b>Data Management:</b> Distributed data consistency is harder to achieve.</li>
+  <li><b>DevOps Overhead:</b> Requires CI/CD, monitoring, logging, and scaling infrastructure.</li>
+</ul>
+
+<h2>3. Comparison Table</h2>
+<table border="1" cellpadding="5" cellspacing="0">
+  <tr>
+    <th>Aspect</th>
+    <th>Monolith</th>
+    <th>Microservices</th>
+  </tr>
+  <tr>
+    <td>Deployment</td>
+    <td>Single unit</td>
+    <td>Independent services</td>
+  </tr>
+  <tr>
+    <td>Scalability</td>
+    <td>Whole app only</td>
+    <td>Per-service scaling</td>
+  </tr>
+  <tr>
+    <td>Complexity</td>
+    <td>Low</td>
+    <td>High (distributed system)</td>
+  </tr>
+  <tr>
+    <td>Performance</td>
+    <td>Fast (in-process calls)</td>
+    <td>Slower (network calls)</td>
+  </tr>
+  <tr>
+    <td>Maintainability</td>
+    <td>Difficult as app grows</td>
+    <td>Easier with modular services</td>
+  </tr>
+  <tr>
+    <td>Team Structure</td>
+    <td>Single team focus</td>
+    <td>Multiple autonomous teams</td>
+  </tr>
+</table>
+
+<h2>4. Interview Insight</h2>
+<p>
+👉 Monoliths are <b>simple and performant</b early on but become hard to scale and maintain. 
+Microservices offer <b>scalability, resilience, and team autonomy</b but introduce distributed system complexity. 
+In interviews, emphasize trade-offs: monoliths are ideal for small teams/startups, while microservices suit large, evolving systems with complex scaling needs.
+</p>
+</details>
+
+<details>
+  <summary>Designing an Idempotent REST API</summary>
+  
+
+<h2>1. What Does Idempotent Mean?</h2>
+<p>
+An operation is <b>idempotent</b> if performing it multiple times has the same effect as performing it once. 
+In REST APIs, this ensures that repeated requests (due to retries, network issues, or client errors) do not cause unintended side effects.
+</p>
+
+<h2>2. HTTP Methods and Idempotency</h2>
+<ul>
+  <li><b>GET:</b> Always idempotent. Fetching the same resource multiple times does not change state.</li>
+  <li><b>PUT:</b> Idempotent. Updating a resource with the same data repeatedly results in the same final state.</li>
+  <li><b>DELETE:</b> Idempotent. Deleting a resource multiple times leaves the system in the same state (resource gone).</li>
+  <li><b>POST:</b> <i>Not idempotent by default</i>. Each call usually creates a new resource, but can be designed to be idempotent using unique identifiers or idempotency keys.</li>
+</ul>
+
+<h2>3. Design Strategies</h2>
+<ul>
+  <li><b>Use Resource Identifiers:</b> Ensure clients provide unique IDs (e.g., order ID) so repeated requests update the same resource instead of creating duplicates.</li>
+  <li><b>Idempotency Keys:</b> Accept a unique key in headers (e.g., <code>Idempotency-Key</code>) to detect duplicate requests and return the same response.</li>
+  <li><b>PUT vs POST:</b> Use <code>PUT</code> for updates (idempotent) and design <code>POST</code> carefully if retries are expected.</li>
+  <li><b>Safe Deletes:</b> Implement soft deletes or return consistent responses when a resource is already deleted.</li>
+  <li><b>Consistent Responses:</b> Always return the same result for repeated identical requests.</li>
+</ul>
+
+<h2>4. Example: Idempotent Order Creation</h2>
+<pre><code class="language-csharp">
+// Client sends POST with Idempotency-Key
+POST /orders
+Headers: Idempotency-Key: abc123
+
+{
+  "orderId": "ORD001",
+  "productId": "P100",
+  "quantity": 2
+}
+
+// Server checks if Idempotency-Key already processed
+// If yes, return same response without creating duplicate
+</code></pre>
+
+<h2>5. Benefits</h2>
+<ul>
+  <li>Prevents duplicate resource creation.</li>
+  <li>Improves reliability in distributed systems.</li>
+  <li>Supports retry logic in clients and API gateways.</li>
+  <li>Ensures predictable outcomes for consumers.</li>
+</ul>
+
+<h2>6. Interview Insight</h2>
+<p>
+👉 In REST API design, <b>idempotency ensures safe retries</b>. 
+Highlight that GET, PUT, DELETE are naturally idempotent, while POST requires special handling (unique IDs or idempotency keys). 
+Emphasize that idempotent APIs are critical in distributed systems where network failures and retries are common.
+</p>
+</details>
+<details>
+  <summary>Strategies to Ensure Backward Compatibility in APIs</summary>
+  
+
+<h2>1. Why Backward Compatibility Matters</h2>
+<p>
+Backward compatibility ensures that existing API consumers continue to function correctly even after new versions or changes are introduced. 
+It prevents breaking changes that could disrupt client applications and guarantees a stable integration experience.
+</p>
+
+<h2>2. Key Strategies</h2>
+<ul>
+  <li><b>Versioning:</b> Introduce new versions (e.g., <code>/v1/orders</code>, <code>/v2/orders</code>) instead of modifying existing endpoints.</li>
+  <li><b>Additive Changes:</b> Add new fields or endpoints rather than removing or renaming existing ones.</li>
+  <li><b>Default Values:</b> Provide sensible defaults for new fields so older clients can continue without modification.</li>
+  <li><b>Deprecation Policy:</b> Mark features as deprecated before removal, and give clients time to migrate.</li>
+  <li><b>Contract Testing:</b> Use schema validation (JSON Schema, OpenAPI) to ensure responses remain compatible.</li>
+  <li><b>Feature Flags:</b> Introduce new behavior behind flags so clients can opt-in gradually.</li>
+  <li><b>Graceful Error Handling:</b> Return consistent error formats and avoid introducing new mandatory fields suddenly.</li>
+</ul>
+
+<h2>3. Example: Adding a New Field</h2>
+<pre><code class="language-csharp">
+// Old response
+{
+  "orderId": "ORD001",
+  "status": "Pending"
+}
+
+// New response (backward compatible)
+{
+  "orderId": "ORD001",
+  "status": "Pending",
+  "estimatedDelivery": "2026-06-15" // new optional field
+}
+</code></pre>
+<p>
+👉 Older clients ignore <code>estimatedDelivery</code>, while newer clients can use it.
+</p>
+
+<h2>4. Example: API Versioning</h2>
+<pre><code class="language-csharp">
+// Version 1
+GET /api/v1/orders/ORD001
+
+// Version 2 (new fields, improved response)
+GET /api/v2/orders/ORD001
+</code></pre>
+
+<h2>5. Best Practices</h2>
+<ul>
+  <li>Document changes clearly and provide migration guides.</li>
+  <li>Automate regression tests to catch breaking changes early.</li>
+  <li>Communicate deprecation timelines to consumers.</li>
+  <li>Prefer additive, non-breaking changes over destructive ones.</li>
+</ul>
+
+<h2>6. Interview Insight</h2>
+<p>
+👉 In API design, backward compatibility is achieved through <b>versioning, additive changes, and careful deprecation</b>. 
+Always emphasize that breaking changes should be avoided, and new features should be introduced in a way that does not disrupt existing clients.
+</p>
+</details>
+<details>
+  <summary>Handling API Versioning in ASP.NET Core</summary>
+  
+
+<h2>1. Why API Versioning?</h2>
+<p>
+API versioning ensures that existing clients continue to work when new features or breaking changes are introduced. 
+It allows developers to evolve APIs without disrupting consumers and provides a clear upgrade path.
+</p>
+
+<h2>2. Strategies for API Versioning</h2>
+<ul>
+  <li><b>URI Versioning:</b> Include version in the URL (e.g., <code>/api/v1/orders</code>, <code>/api/v2/orders</code>).</li>
+  <li><b>Query String Versioning:</b> Pass version as a query parameter (e.g., <code>/api/orders?version=2</code>).</li>
+  <li><b>Header Versioning:</b> Specify version in a custom header (e.g., <code>api-version: 2</code>).</li>
+  <li><b>Content Negotiation:</b> Use media type versioning (e.g., <code>Accept: application/json; version=2</code>).</li>
+</ul>
+
+<h2>3. ASP.NET Core Implementation</h2>
+<p>
+ASP.NET Core provides the <b>Microsoft.AspNetCore.Mvc.Versioning</b> package to manage API versions easily.
+</p>
+<pre><code class="language-csharp">
+// Step 1: Install NuGet package
+dotnet add package Microsoft.AspNetCore.Mvc.Versioning
+
+// Step 2: Configure versioning in Program.cs
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+});
+
+// Step 3: Apply version attributes in controllers
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/orders")]
+public class OrdersV1Controller : ControllerBase
+{
+    [HttpGet]
+    public IActionResult Get() => Ok("Orders from V1");
+}
+
+[ApiVersion("2.0")]
+[Route("api/v{version:apiVersion}/orders")]
+public class OrdersV2Controller : ControllerBase
+{
+    [HttpGet]
+    public IActionResult Get() => Ok("Orders from V2 with new fields");
+}
+</code></pre>
+
+<h2>4. Best Practices</h2>
+<ul>
+  <li>Always document versioning strategy clearly for consumers.</li>
+  <li>Use semantic versioning (major.minor) to indicate breaking vs non-breaking changes.</li>
+  <li>Deprecate old versions gradually and communicate timelines.</li>
+  <li>Prefer additive changes (new fields, endpoints) over destructive ones.</li>
+  <li>Automate regression testing across versions to avoid breaking clients.</li>
+</ul>
+
+<h2>5. Interview Insight</h2>
+<p>
+👉 In ASP.NET Core, API versioning can be handled via <b>URL, query string, headers, or content negotiation</b>. 
+The recommended approach is to use the <b>ApiVersioning package</b with attributes, as it provides flexibility and clear separation of versions. 
+Always emphasize backward compatibility and clear communication with API consumers.
+</p>
+</details>
+
 <details><summary>Pagination in APIs</summary></details>
 <details><summary>Rate Limiting in APIs</summary></details>
 <details><summary>CORS Configuration</summary></details>
@@ -342,55 +2563,2519 @@
 <details><summary>Analyzing and Fixing Deadlocks in Production</summary></details>
 
 <h2 id="designpatterns">Design Pattern Categories (C#/.NET)</h2>
-<details><summary>Design Patterns with Problem Solved</summary></details>
-<details><summary>Design Patterns and Problems Solved</summary></details>
-<details><summary>Factory Method Pattern - (Income Tax Calculator)</summary></details>
-<details><summary>Abstract Factory Pattern - (Income Tax + Social Security)</summary></details>
-<details><summary>Builder Pattern - (Building an Order)</summary></details>
-<details><summary>Singleton Pattern - (Logger Service)</summary></details>
-<details><summary>Adapter Design Pattern Example (Payment Gateway)</summary></details>
-<details><summary>Decorator Design Pattern Example (Coffee Shop)</summary></details>
-<details><summary>Composite Pattern Example (Shipping & Packaging - Logistics Domain)</summary></details>
-<details><summary>Strategy Pattern (Multi-Modal Transit - Transport Booking)</summary></details>
-<details><summary>Observer Pattern Example (Back-in-Stock Reminder - E-Commerce)</summary></details>
-<details><summary>Command Pattern with Queue (Education Example)</summary></details>
-<details><summary>Mediator Pattern Example (Classroom Chat Room)</summary></details>
-<details><summary>Template Method Pattern - (Online Exam Process)</summary></details>
-<details><summary>CQRS Design Pattern with MediatR</summary></details>
-<details><summary>OOP Concepts</summary></details>
-<details><summary>Polymorphism Types</summary></details>
+
+<details>
+  <summary>Enforcing SOLID Principles in a Large Codebase</summary>
+  
+
+<h2>1. Single Responsibility Principle (SRP)</h2>
+<ul>
+  <li><b>Code Reviews:</b> Ensure classes have one clear responsibility. Split classes that mix business logic, persistence, and UI concerns.</li>
+  <li><b>Service Layering:</b> Separate domain logic, application services, and infrastructure code.</li>
+  <li><b>Static Analysis:</b> Use SonarCloud to detect classes with excessive dependencies, high complexity, or large lines of code. It integrates directly into CI/CD pipelines and PR workflows, providing automated feedback on maintainability, reliability, and security hotspots.</li>
+</ul>
+
+<h2>2. Open/Closed Principle (OCP)</h2>
+<ul>
+  <li><b>Design Patterns:</b> Apply Strategy, Factory, and Decorator patterns to extend behavior without modifying existing code.</li>
+  <li><b>Interfaces & Abstractions:</b> Define abstractions for extensible modules (e.g., payment providers, notification channels).</li>
+  <li><b>Plug-in Architecture:</b> Use dependency injection to register new implementations without touching core logic.</li>
+</ul>
+
+<h2>3. Liskov Substitution Principle (LSP)</h2>
+<ul>
+  <li><b>Inheritance Checks:</b> Ensure derived classes honor base class contracts (no unexpected exceptions or altered semantics).</li>
+  <li><b>Unit Tests:</b> Write polymorphism tests to confirm substitutability of derived classes.</li>
+  <li><b>Code Reviews:</b> Flag violations where subclasses weaken preconditions or strengthen postconditions.</li>
+</ul>
+
+<h2>4. Interface Segregation Principle (ISP)</h2>
+<ul>
+  <li><b>Modular Interfaces:</b> Avoid “fat” interfaces. Split them into smaller, role-specific contracts.</li>
+  <li><b>Dependency Injection:</b> Inject only the interfaces needed by a class.</li>
+  <li><b>Static Analysis:</b> Detect unused interface members to identify bloated contracts.</li>
+</ul>
+
+<h2>5. Dependency Inversion Principle (DIP)</h2>
+<ul>
+  <li><b>Abstractions First:</b> High-level modules depend on interfaces, not concrete classes.</li>
+  <li><b>IoC Containers:</b> Use DI frameworks (e.g., Microsoft.Extensions.DependencyInjection, Autofac) to wire dependencies.</li>
+  <li><b>Testing:</b> Mock abstractions in unit tests to decouple from infrastructure.</li>
+</ul>
+
+<h2>Cross-Cutting Enforcement Strategies</h2>
+<ul>
+  <li><b>Automated Code Quality:</b> StyleCop, Roslyn analyzers, and SonarCloud enforce coding standards aligned with SOLID principles, detect code smells, and highlight maintainability/security issues directly in CI/CD pipelines and pull requests.</li>
+  <li><b>Architecture Governance:</b> Define clear layering rules (Domain → Application → Infrastructure) and enforce them via tools like ArchUnit.NET.</li>
+  <li><b>Continuous Integration:</b> Integrate static analysis and unit tests into CI/CD pipelines to catch violations early.</li>
+  <li><b>Mentorship & Reviews:</b> Senior developers guide juniors during design reviews, ensuring adherence to SOLID principles.</li>
+</ul>
+
+<h2>Interview Insight</h2>
+<p>
+“In a large codebase, enforcing SOLID principles requires a mix of technical tools and cultural practices. We use static analysis and CI/CD pipelines to detect violations, design patterns and abstractions to enable extensibility, and code reviews plus mentorship to ensure developers consistently apply SRP, OCP, LSP, ISP, and DIP. This combination keeps the system maintainable, testable, and scalable.”
+</p>
+</details>
+
+<details>
+  <summary>Design Pattern Categories (C#/.NET)</summary>
+  <table style="border-collapse: collapse; width: 100%; border: 1px solid #ccc; border-radius: 8px;">
+    <thead style="background-color: #4CAF50; color: white;">
+      <tr>
+        <th style="padding: 8px; border: 1px solid #ccc;">Category</th>
+        <th style="padding: 8px; border: 1px solid #ccc;">Focus Area</th>
+        <th style="padding: 8px; border: 1px solid #ccc;">Common Patterns</th>
+        <th style="padding: 8px; border: 1px solid #ccc;">Purpose</th>
+        <th style="padding: 8px; border: 1px solid #ccc;">.NET Example</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ccc;"><b>Creational</b></td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Object Creation</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Singleton, Factory, Builder, Prototype</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Control instantiation, improve flexibility</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">DbProviderFactory, StringBuilder</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ccc;"><b>Structural</b></td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Object Composition</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Adapter, Decorator, Facade, Proxy, Composite</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Simplify structure, extend functionality</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">ASP.NET Middleware, UI Controls</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ccc;"><b>Behavioral</b></td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Object Communication</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Strategy, Observer, Command, State, Mediator</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Manage communication, runtime behavior changes</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">Events/Delegates, MediatR (CQRS)</td>
+      </tr>
+    </tbody>
+  </table>
+</details>
+
+<details>
+  <summary>Design Patterns with Problem Solved</summary>
+  <table style="border-collapse: collapse; width: 100%; border: 2px solid black;">
+    <thead style="background-color: #4CAF50; color: white;">
+      <tr>
+        <th style="border: 2px solid black; padding: 8px;">Pattern</th>
+        <th style="border: 2px solid black; padding: 8px;">Category</th>
+        <th style="border: 2px solid black; padding: 8px;">Definition</th>
+        <th style="border: 2px solid black; padding: 8px;">Problem Solved</th>
+		<th style="border: 2px solid black; padding: 8px;">Example</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Factory Method</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Creational</td>
+        <td style="border: 1px solid black; padding: 8px;">Lets subclasses decide which object to create.</td>
+        <td style="border: 1px solid black; padding: 8px;">Removes hardcoded object creation logic.</td>
+		<td style="border: 1px solid black; padding: 8px;">Income Tax Calculator</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Abstract Factory</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Creational</td>
+        <td style="border: 1px solid black; padding: 8px;">Creates families of related objects together.</td>
+        <td style="border: 1px solid black; padding: 8px;">Ensures consistency across related objects (e.g., UI themes).</td>
+		<td style="border: 1px solid black; padding: 8px;">Income Tax + Social Security</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Builder</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Creational</td>
+        <td style="border: 1px solid black; padding: 8px;">Builds complex objects step by step.</td>
+        <td style="border: 1px solid black; padding: 8px;">Simplifies construction of complex objects with many parts.</td>
+		<td style="border: 1px solid black; padding: 8px;">Building an Order - Burger</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Singleton</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Creational</td>
+        <td style="border: 1px solid black; padding: 8px;">Ensures only one instance exists globally.</td>
+        <td style="border: 1px solid black; padding: 8px;">Prevents multiple conflicting instances (e.g., config manager).</td>
+		<td style="border: 1px solid black; padding: 8px;">Logger Service</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Adapter</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Structural</td>
+        <td style="border: 1px solid black; padding: 8px;">Makes incompatible interfaces work together.</td>
+        <td style="border: 1px solid black; padding: 8px;">Integrates legacy or third‑party code without rewriting.</td>
+		<td style="border: 1px solid black; padding: 8px;">Payment Gateway</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Decorator</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Structural</td>
+        <td style="border: 1px solid black; padding: 8px;">Adds extra features without changing the original class.</td>
+        <td style="border: 1px solid black; padding: 8px;">Extends functionality dynamically at runtime.</td>
+		<td style="border: 1px solid black; padding: 8px;">Coffee Shop</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Composite</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Structural</td>
+        <td style="border: 1px solid black; padding: 8px;">Treats groups and single objects the same way.</td>
+        <td style="border: 1px solid black; padding: 8px;">Handles hierarchies uniformly (e.g., UI trees).</td>
+		<td style="border: 1px solid black; padding: 8px;">Shipping & Packaging - Logistics Domain</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Strategy</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Behavioral</td>
+        <td style="border: 1px solid black; padding: 8px;">Switches between different algorithms easily.</td>
+        <td style="border: 1px solid black; padding: 8px;">Avoids hardcoded conditional logic for algorithms.</td>
+		<td style="border: 1px solid black; padding: 8px;">Multi-Modal Transit - Transport Booking</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Observer</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Behavioral</td>
+        <td style="border: 1px solid black; padding: 8px;">Notifies subscribers when something changes.</td>
+        <td style="border: 1px solid black; padding: 8px;">Keeps dependent objects updated automatically.</td>
+		<td style="border: 1px solid black; padding: 8px;">Back-in-Stock Reminder - E-Commerce</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Command</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Behavioral</td>
+        <td style="border: 1px solid black; padding: 8px;">Wraps a request as an object.</td>
+        <td style="border: 1px solid black; padding: 8px;">Supports undo/redo and request queuing.</td>
+		<td style="border: 1px solid black; padding: 8px;">Students Submitting Assignments</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Mediator</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Behavioral</td>
+        <td style="border: 1px solid black; padding: 8px;">Centralizes communication between components.</td>
+        <td style="border: 1px solid black; padding: 8px;">Reduces direct coupling between classes.</td>
+		<td style="border: 1px solid black; padding: 8px;">Classroom Chat Room</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>Template Method</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Behavioral</td>
+        <td style="border: 1px solid black; padding: 8px;">Defines a skeleton algorithm with customizable steps.</td>
+        <td style="border: 1px solid black; padding: 8px;">Ensures consistent process while allowing variation.</td>
+		<td style="border: 1px solid black; padding: 8px;">Online Exam Process</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid black; padding: 8px;"><b>CQRS</b></td>
+        <td style="border: 1px solid black; padding: 8px;">Architectural</td>
+        <td style="border: 1px solid black; padding: 8px;">Separates read and write models.</td>
+        <td style="border: 1px solid black; padding: 8px;">Improves scalability and clarity in data handling.</td>
+		<td style="border: 1px solid black; padding: 8px;">Create/Get a new student</td>
+      </tr>
+    </tbody>
+  </table>
+</details>
+
+
+<details>
+  <summary>Design Patterns and Problems Solved</summary>
+  <table border="1" cellpadding="6" cellspacing="0">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Pattern</th>
+        <th>Category</th>
+        <th>Problem Solved</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Factory Method</td>
+        <td>Creational</td>
+        <td>Decouples object creation from client code; lets subclasses decide which class to instantiate.</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Abstract Factory</td>
+        <td>Creational</td>
+        <td>Creates families of related objects without binding client code to concrete classes.</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Builder</td>
+        <td>Creational</td>
+        <td>Separates construction of complex objects from representation; builds step by step.</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Singleton</td>
+        <td>Creational</td>
+        <td>Ensures only one instance of a class exists and provides global access.</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Adapter</td>
+        <td>Structural</td>
+        <td>Bridges incompatible interfaces so they can work together.</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Decorator</td>
+        <td>Structural</td>
+        <td>Dynamically adds responsibilities/behavior to objects without altering their structure.</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>Composite</td>
+        <td>Structural</td>
+        <td>Treats individual objects and groups uniformly; supports tree-like hierarchies.</td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td>Strategy</td>
+        <td>Behavioral</td>
+        <td>Encapsulates interchangeable algorithms; avoids hardcoded conditional logic.</td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td>Observer</td>
+        <td>Behavioral</td>
+        <td>Defines one-to-many dependency; notifies dependents automatically when state changes.</td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td>Command</td>
+        <td>Behavioral</td>
+        <td>Encapsulates requests as objects; supports queuing, logging, undo/redo.</td>
+      </tr>
+      <tr>
+        <td>11</td>
+        <td>Mediator</td>
+        <td>Behavioral</td>
+        <td>Centralizes communication between components; reduces direct dependencies.</td>
+      </tr>
+      <tr>
+        <td>12</td>
+        <td>Template Method</td>
+        <td>Behavioral</td>
+        <td>Defines skeleton of an algorithm; lets subclasses override specific steps.</td>
+      </tr>
+      <tr>
+        <td>13</td>
+        <td>CQRS</td>
+        <td>Architectural</td>
+        <td>Separates read (query) and write (command) models; improves scalability, performance, and clarity in complex systems.</td>
+      </tr>
+    </tbody>
+  </table>
+</details>
+
+
+<details>
+<summary>Factory Method Pattern - (Income Tax Calculator)</summary>
+<p>
+<h2>Definition</h2>
+<p>Provides an interface for creating a single product object, but lets subclasses decide which concrete class to instantiate.</p>
+
+<h2>Description</h2>
+<p>Use Factory Method when you want to delegate the instantiation of <b>one type of object</b> to subclasses. It focuses on creating a single product at a time.</p>
+
+<h2>Real-Time Example: Income Tax Calculator</h2>
+<pre><code class="language-csharp">
+public interface IIncomeTaxCalculator {
+    decimal Calculate(decimal amount);
+}
+
+public class IndiaIncomeTax : IIncomeTaxCalculator {
+    public decimal Calculate(decimal amount) => amount * 0.30m;
+}
+
+public class USAIncomeTax : IIncomeTaxCalculator {
+    public decimal Calculate(decimal amount) => amount * 0.25m;
+}
+
+public abstract class TaxFactory {
+    public abstract IIncomeTaxCalculator CreateIncomeTax();
+}
+
+public class IndiaTaxFactory : TaxFactory {
+    public override IIncomeTaxCalculator CreateIncomeTax() => new IndiaIncomeTax();
+}
+
+public class USATaxFactory : TaxFactory {
+    public override IIncomeTaxCalculator CreateIncomeTax() => new USAIncomeTax();
+}
+
+// Client
+TaxFactory factory = new IndiaTaxFactory();
+var taxCalc = factory.CreateIncomeTax();
+Console.WriteLine(taxCalc.Calculate(1000)); // Output: 300
+</code></pre>
+</p>
+</details>
+
+<details>
+<summary>Abstract Factory Pattern - (Income Tax + Social Security)</summary>
+<p>
+<h2>Definition</h2>
+<p>Provides an interface for creating families of related or dependent objects without specifying their concrete classes.</p>
+
+<h2>Description</h2>
+<p>Use Abstract Factory when you need a set of related objects that must work together consistently. It focuses on creating <b>families of products</b>.</p>
+
+<h2>Real-Time Example: Tax Calculators (Income Tax + Social Security)</h2>
+<pre><code class="language-csharp">
+public interface IIncomeTaxCalculator { decimal Calculate(decimal amount); }
+public interface ISocialSecurityCalculator { decimal Calculate(decimal amount); }
+
+public class IndiaIncomeTax : IIncomeTaxCalculator {
+    public decimal Calculate(decimal amount) => amount * 0.30m;
+}
+public class IndiaSocialSecurity : ISocialSecurityCalculator {
+    public decimal Calculate(decimal amount) => amount * 0.12m;
+}
+
+public class USAIncomeTax : IIncomeTaxCalculator {
+    public decimal Calculate(decimal amount) => amount * 0.25m;
+}
+public class USASocialSecurity : ISocialSecurityCalculator {
+    public decimal Calculate(decimal amount) => amount * 0.062m;
+}
+
+public interface ITaxFactory {
+    IIncomeTaxCalculator CreateIncomeTax();
+    ISocialSecurityCalculator CreateSocialSecurity();
+}
+
+public class IndiaTaxFactory : ITaxFactory {
+    public IIncomeTaxCalculator CreateIncomeTax() => new IndiaIncomeTax();
+    public ISocialSecurityCalculator CreateSocialSecurity() => new IndiaSocialSecurity();
+}
+
+public class USATaxFactory : ITaxFactory {
+    public IIncomeTaxCalculator CreateIncomeTax() => new USAIncomeTax();
+    public ISocialSecurityCalculator CreateSocialSecurity() => new USASocialSecurity();
+}
+
+// Client
+ITaxFactory factory = new USATaxFactory();
+var incomeTax = factory.CreateIncomeTax();
+var socialSecurity = factory.CreateSocialSecurity();
+
+Console.WriteLine(incomeTax.Calculate(1000));       // 250
+Console.WriteLine(socialSecurity.Calculate(1000));  // 62
+</code></pre>
+</p>
+</details>
+
+<details>
+<summary>Builder Pattern - (Building an Order)</summary>
+<p>
+<h2>Definition</h2>
+<p>Separates the construction of a complex object from its representation, allowing the same construction process to create different representations.</p>
+
+<h2>Description</h2>
+<p>Use the Builder Pattern when you need to create complex objects step by step. It helps avoid telescoping constructors (constructors with too many parameters) and makes object creation more readable and flexible.</p>
+
+<h2>Real-Time Example: Building an Order</h2>
+<pre><code class="language-csharp">
+// Product
+public class Burger
+{
+    public string Bun { get; set; }
+    public string Patty { get; set; }
+    public string Sauce { get; set; }
+
+    public override string ToString() => $"{Bun} Burger with {Patty} and {Sauce}";
+}
+
+// Builder
+public class BurgerBuilder
+{
+    private Burger _burger = new Burger();
+
+    public BurgerBuilder WithBun(string bun)
+    {
+        _burger.Bun = bun;
+        return this;
+    }
+
+    public BurgerBuilder WithPatty(string patty)
+    {
+        _burger.Patty = patty;
+        return this;
+    }
+
+    public BurgerBuilder WithSauce(string sauce)
+    {
+        _burger.Sauce = sauce;
+        return this;
+    }
+
+    public Burger Build() => _burger;
+}
+
+// Client
+var burger = new BurgerBuilder()
+    .WithBun("Sesame")
+    .WithPatty("Chicken")
+    .WithSauce("Mayo")
+    .Build();
+
+Console.WriteLine(burger);
+
+</code></pre>
+
+<h2>Output</h2>
+<p><code>Sesame Burger with Chicken and Mayo</code></p>
+
+<h2>Interview Insight</h2>
+<ul>
+  <li>Creating complex DTOs or domain objects with optional fields.</li>
+  <li>Constructing configuration objects step by step.</li>
+  <li>Test Data Builders in unit testing.</li>
+</ul>
+</p>
+</details>
+
+<details>
+<summary>Singleton Pattern - (Logger Service)</summary>
+<p>
+<h2>Definition</h2>
+<p>Ensures a class has only one instance and provides a global point of access to it.</p>
+
+<h2>Description</h2>
+<p>Use the Singleton Pattern when exactly one object is needed to coordinate actions across the system. It restricts instantiation of a class to a single object and provides a way to access that instance globally.</p>
+
+<h2>Real-Time Example: Logger Service</h2>
+<pre><code class="language-csharp">
+public sealed class Logger
+{
+    private static readonly Logger _instance = new Logger();
+
+    // Private constructor ensures no external instantiation
+    private Logger() { }
+
+    public static Logger Instance => _instance;
+
+    public void Log(string message)
+    {
+        Console.WriteLine($"[LOG]: {message}");
+    }
+}
+
+// Client
+class Program
+{
+    static void Main()
+    {
+        Logger.Instance.Log("Application started");
+        Logger.Instance.Log("Processing data...");
+        Logger.Instance.Log("Application finished");
+    }
+}
+</code></pre>
+
+<h2>Output</h2>
+<p><code>[LOG]: Application started<br>[LOG]: Processing data...<br>[LOG]: Application finished</code></p>
+
+<h2>Interview Insight</h2>
+<ul>
+  <li>Commonly used for logging, configuration settings, caching, or thread pools.</li>
+  <li>Ensures only one instance exists, avoiding conflicts or inconsistent state.</li>
+  <li>In C#, thread-safe singletons are often implemented using <code>static readonly</code> fields.</li>
+</ul>
+</p>
+</details>
+
+
+<details>
+  <summary>Adapter Design Pattern Example (Payment Gateway)</summary>
+  <div style="margin-top: 15px; font-family: sans-serif; line-height: 1.6;">
+
+    <p>Think of the <b>Adapter Design Pattern</b> like a physical <b>travel adapter</b>. If you travel with a US laptop to Europe, your plug won't fit into the wall outlet. The power is there, but the <i>interfaces</i> don't match. You use an adapter to translate your plug into the shape the wall expects.</p>
+    
+    <p>In software, the Adapter pattern lets two incompatible interfaces work together. This is incredibly common when integrating third-party SDKs into an existing codebase.</p>
+
+    <hr />
+
+    <h3>Scenario: E-Commerce Payment Processing</h3>
+    <p>Imagine your application processes payments using an internal interface (<code>ILocalPayment</code>). You want to integrate a third-party SDK (<b>Stripe</b>), but Stripe's SDK uses entirely different method names and data structures. Instead of rewriting your entire core application, you build an <b>Adapter</b>.</p>
+
+    <h3>1. The Existing System (What your app expects)</h3>
+    <p>This is the current target interface your application relies on.</p>
+    <pre><code class="language-csharp">// The 'Target' interface
+public interface ILocalPayment
+{
+    // Expects payment details as a string and amount as a double
+    void ProcessPayment(string accountDetails, double amount);
+}
+
+// Our existing internal payment processor
+public class LocalPaymentProcessor : ILocalPayment
+{
+    public void ProcessPayment(string accountDetails, double amount)
+    {
+        Console.WriteLine($"Processing local payment of ${amount} to account {accountDetails}.");
+    }
+}</code></pre>
+
+    <h3>2. The Third-Party Service (The Incompatible Class)</h3>
+    <p>This is the external Stripe SDK. It has the features you need, but its signatures are completely different.</p>
+    <pre><code class="language-csharp">// The 'Adaptee' class (Incompatible third-party SDK)
+public class StripePaymentSdk
+{
+    // It uses different parameter types and a different method name
+    public void MakeStripeTransaction(int customerId, double amountInUsd, string currencyToken)
+    {
+        Console.WriteLine($"Stripe successfully charged Customer #{customerId} {amountInUsd} {currencyToken}.");
+    }
+}</code></pre>
+
+    <h3>3. The Adapter (The Translator)</h3>
+    <p>This class implements your existing <code>ILocalPayment</code> interface, wraps the <code>StripePaymentSdk</code>, and handles the data translation internally.</p>
+    <pre><code class="language-csharp">// The 'Adapter' class
+public class StripeAdapter : ILocalPayment
+{
+    private readonly StripePaymentSdk _stripeSdk;
+
+    public StripeAdapter(StripePaymentSdk stripeSdk)
+    {
+        _stripeSdk = stripeSdk;
+    }
+
+    public void ProcessPayment(string accountDetails, double amount)
+    {
+        // 1. Translate the incoming data to what Stripe expects
+        // (Extracting the numeric ID from a string format like "Cust5542")
+        int stripeCustomerId = int.Parse(accountDetails.Replace("Cust", ""));
+        
+        // 2. Route the request to the incompatible Stripe method
+        _stripeSdk.MakeStripeTransaction(stripeCustomerId, amount, "USD");
+    }
+}</code></pre>
+
+    <h3>4. Client Code Execution</h3>
+    <p>The client application seamlessly interacts with both systems using the exact same interface code.</p>
+    <pre><code class="language-csharp">class Program
+{
+    static void Main()
+    {
+        // 1. Using our old, standard local payment system
+        ILocalPayment standardProcessor = new LocalPaymentProcessor();
+        standardProcessor.ProcessPayment("Account-9928", 150.00);
+
+        Console.WriteLine(new string('-', 40));
+
+        // 2. Using Stripe via the Adapter
+        // The core application code doesn't change; it still targets ILocalPayment!
+        StripePaymentSdk stripeSdk = new StripePaymentSdk();
+        ILocalPayment stripeAdapter = new StripeAdapter(stripeSdk);
+        
+        // The application passes standard local data, and the adapter handles the translation
+        stripeAdapter.ProcessPayment("Cust5542", 299.99);
+    }
+}</code></pre>
+
+    <hr />
+
+    <blockquote style="background: #f9f9f9; border-left: 10px solid #ccc; margin: 1.5em 10px; padding: 0.5em 10px;">
+        <b>Real .NET Ecosystem Example:</b> ADO.NET uses this pattern heavily. Classes like <code>SqlDataAdapter</code> act as adapters between physical database structures (SQL Server tables) and abstract memory objects (<code>DataSet</code> / <code>DataTable</code>) that your C# application interacts with.
+    </blockquote>
+
+  </div>
+</details>
+
+
+
+<details>
+  <summary>Decorator Design Pattern Example (Coffee Shop)</summary>
+  <div style="margin-top: 15px; font-family: sans-serif; line-height: 1.6;">
+
+    <p>Think of the <b>Decorator Design Pattern</b> like ordering a coffee. You start with a basic coffee (the base component). If you want milk, you wrap it with milk. If you want caramel, you wrap that milk-coffee with caramel. Each ingredient "decorates" the beverage, adding behavior and cost dynamically at runtime without creating a massive inheritance tree.</p>
+
+    <hr />
+
+    <h3>1. The Core Interface & Base Component</h3>
+    <p>First, we define what a <code>ICoffee</code> is, and create a concrete implementation for a simple black coffee.</p>
+    <pre><code class="language-csharp">// The 'Component' interface
+public interface ICoffee
+{
+    string GetDescription();
+    double GetCost();
+}
+
+// The 'ConcreteComponent' - the basic object we will decorate
+public class BlackCoffee : ICoffee
+{
+    public string GetDescription() => "Simple Black Coffee";
+    public double GetCost() => 2.00;
+}</code></pre>
+
+    <h3>2. The Decorator Base Class</h3>
+    <p>The decorator implements the same interface but also <b>holds a reference</b> to an <code>ICoffee</code> object. It delegates the work to that object while allowing subclasses to modify the result.</p>
+    <pre><code class="language-csharp">// The 'Decorator' abstract class
+public abstract class CoffeeDecorator : ICoffee
+{
+    protected readonly ICoffee _coffee;
+
+    protected CoffeeDecorator(ICoffee coffee)
+    {
+        _coffee = coffee;
+    }
+
+    public virtual string GetDescription() => _coffee.GetDescription();
+    public virtual double GetCost() => _coffee.GetCost();
+}</code></pre>
+
+    <h3>3. Concrete Decorators</h3>
+    <p>Now, we create specific ingredients (Milk and Caramel) that add their own descriptions and costs to the underlying coffee.</p>
+    <pre><code class="language-csharp">// Concrete Decorator A
+public class MilkDecorator : CoffeeDecorator
+{
+    public MilkDecorator(ICoffee coffee) : base(coffee) { }
+
+    public override string GetDescription() => $"{base.GetDescription()}, with Milk";
+    public override double GetCost() => base.GetCost() + 0.50;
+}
+
+// Concrete Decorator B
+public class CaramelDecorator : CoffeeDecorator
+{
+    public CaramelDecorator(ICoffee coffee) : base(coffee) { }
+
+    public override string GetDescription() => $"{base.GetDescription()}, with Caramel";
+    public override double GetCost() => base.GetCost() + 0.75;
+}</code></pre>
+
+    <h3>4. Putting It Together (The Runtime Wrapping)</h3>
+    <p>The beauty of this pattern is that you can stack these decorators in any order or combination at runtime.</p>
+    <pre><code class="language-csharp">class Program
+{
+    static void Main()
+    {
+        // 1. Order a plain black coffee
+        ICoffee myCoffee = new BlackCoffee();
+        Console.WriteLine($"{myCoffee.GetDescription()} -> ${myCoffee.GetCost():F2}");
+        // Output: Simple Black Coffee -> $2.00
+
+        // 2. Wrap it with Milk
+        myCoffee = new MilkDecorator(myCoffee);
+        Console.WriteLine($"{myCoffee.GetDescription()} -> ${myCoffee.GetCost():F2}");
+        // Output: Simple Black Coffee, with Milk -> $2.50
+
+        // 3. Wrap it again with Caramel
+        myCoffee = new CaramelDecorator(myCoffee);
+        Console.WriteLine($"{myCoffee.GetDescription()} -> ${myCoffee.GetCost():F2}");
+        // Output: Simple Black Coffee, with Milk, with Caramel -> $3.25
+    }
+}</code></pre>
+
+    <hr />
+
+    <blockquote style="background: #f9f9f9; border-left: 10px solid #ccc; margin: 1.5em 10px; padding: 0.5em 10px;">
+        <b>Real .NET Ecosystem Example:</b> You actually use this in C# all the time with file streams! <code>BufferedStream</code> and <code>CryptoStream</code> are decorators that wrap around a standard <code>FileStream</code> to add buffering or encryption capabilities dynamically.
+    </blockquote>
+
+  </div>
+</details>
+
+<details>
+  <summary>Composite Pattern Example (Shipping & Packaging - Logistics Domain )</summary>
+  <div style="margin-top: 15px; font-family: sans-serif; line-height: 1.6;">
+
+    <p>In supply chain and logistics systems, shipments are often nested. A large shipping container contains pallets, which contain boxes, which contain retail products. The <b>Composite Pattern</b> allows us to compute shipping metrics (like weight or price) uniformly for a single product or an entire multi-tiered freight shipment.</p>
+
+    <hr />
+
+    <h3>1. The Component Interface</h3>
+    <p>This defines the unified operation (<code>CalculateWeight()</code>) that both standalone products and shipping containers must implement.</p>
+    <pre><code class="language-csharp">// The 'Component'
+public interface IShippable
+{
+    string Name { get; }
+    double CalculateWeight(); // Returns weight in kilograms
+}</code></pre>
+
+    <h3>2. The Leaf Node (Individual Product)</h3>
+    <p>This represents the actual items being purchased. They have a fixed weight and cannot contain other items.</p>
+    <pre><code class="language-csharp">// The 'Leaf'
+public class Product : IShippable
+{
+    public string Name { get; }
+    private double _weight;
+
+    public Product(string name, double weight)
+    {
+        Name = name;
+        _weight = weight;
+    }
+
+    public double CalculateWeight() => _weight;
+}</code></pre>
+
+    <h3>3. The Composite Node (The Box / Container)</h3>
+    <p>This represents a container. It has its own structural weight (the empty box itself) plus the weight of any products or smaller boxes packed inside it.</p>
+    <pre><code class="language-csharp">// The 'Composite'
+public class ParcelBox : IShippable
+{
+    public string Name { get; }
+    private double _boxEmptyWeight;
+    private readonly List&lt;IShippable&gt; _contents = new List&lt;IShippable&gt;();
+
+    public ParcelBox(string name, double boxEmptyWeight)
+    {
+        Name = name;
+        _boxEmptyWeight = boxEmptyWeight;
+    }
+
+    public void Pack(IShippable item)
+    {
+        _contents.Add(item);
+    }
+
+    public void Unpack(IShippable item)
+    {
+        _contents.Remove(item);
+    }
+
+    // Recursively calculates total weight: Box Weight + Weight of everything inside
+    public double CalculateWeight()
+    {
+        double totalWeight = _boxEmptyWeight;
+        foreach (var item in _contents)
+        {
+            totalWeight += item.CalculateWeight();
+        }
+        return totalWeight;
+    }
+}</code></pre>
+
+    <h3>4. Client Code Execution</h3>
+    <p>The logistics application can measure the weight of the entire delivery manifest automatically.</p>
+    <pre><code class="language-csharp">class Program
+{
+    static void Main()
+    {
+        // 1. Individual items (Leafs)
+        IShippable laptop = new Product("Pro Laptop", 2.2);
+        IShippable mouse = new Product("Wireless Mouse", 0.15);
+        IShippable keyboard = new Product("Mechanical Keyboard", 0.9);
+        IShippable coffeeMug = new Product("Ceramic Mug", 0.4);
+
+        // 2. Pack tech accessories into a small inner box (Composite 1)
+        ParcelBox accessoriesBox = new ParcelBox("Accessories Box", 0.2); // Box weighs 0.2kg empty
+        accessoriesBox.Pack(mouse);
+        accessoriesBox.Pack(keyboard);
+
+        // 3. Pack the laptop, the accessories box, and a mug into the main shipping crate (Composite 2)
+        ParcelBox masterCrate = new ParcelBox("Master Shipping Crate", 1.5); // Crate weighs 1.5kg empty
+        masterCrate.Pack(laptop);
+        masterCrate.Pack(accessoriesBox); // Nested composite!
+        masterCrate.Pack(coffeeMug);
+
+        // 4. Uniform processing
+        Console.WriteLine($"--- Logistics Weight Manifest ---");
+        Console.WriteLine($"{laptop.Name} individual weight: {laptop.CalculateWeight()} kg");
+        Console.WriteLine($"{accessoriesBox.Name} total weight: {accessoriesBox.CalculateWeight()} kg");
+        
+        Console.WriteLine(new string('-', 40));
+        
+        // The manifest system handles the master container seamlessly
+        Console.WriteLine($"TOTAL SHIPMENT FREIGHT WEIGHT: {masterCrate.CalculateWeight()} kg");
+        // Calculation: 1.5 (Crate) + 2.2 (Laptop) + [0.2 (Box) + 0.15 (Mouse) + 0.9 (Keyboard)] + 0.4 (Mug) = 5.35 kg
+    }
+}</code></pre>
+
+  </div>
+</details>
+
+<details>
+  <summary>Strategy Pattern (Multi-Modal Transit - Transport Booking )</summary>
+  <div style="margin-top: 15px; font-family: sans-serif; line-height: 1.6;">
+
+    <p>When booking a trip, the core goal remains the same: get the user to their destination. However, the calculation logic for pricing and time changes dynamically based on the chosen vehicle type. Using the Strategy pattern, we can add new transit methods (like Scooters or Helicopters) later without changing the core booking engine.</p>
+
+    <hr />
+
+    <h3>1. The Strategy Interface</h3>
+    <p>This defines the common contract that every transportation algorithm must fulfill.</p>
+    <pre><code class="language-csharp">// The 'Strategy' interface
+public interface ITravelStrategy
+{
+    double CalculateFare(double distanceInKm);
+    int CalculateDurationMinutes(double distanceInKm);
+}</code></pre>
+
+    <h3>2. Concrete Strategies</h3>
+    <p>Each class encapsulates the specific rules, speeds, and base rates for that unique mode of transport.</p>
+    <pre><code class="language-csharp">// Concrete Strategy A: Cab (High price, dependent on traffic)
+public class CabStrategy : ITravelStrategy
+{
+    public double CalculateFare(double distance) => 5.00 + (distance * 1.50); // $5 base + $1.50/km
+    public int CalculateDurationMinutes(double distance) => (int)(distance * 3); // ~3 mins per km
+}
+
+// Concrete Strategy B: Bike (Low price, unaffected by traffic jams)
+public class BikeStrategy : ITravelStrategy
+{
+    public double CalculateFare(double distance) => 1.00 + (distance * 0.40); // $1 base + $0.40/km
+    public int CalculateDurationMinutes(double distance) => (int)(distance * 5); // ~5 mins per km
+}
+
+// Concrete Strategy C: Metro Train (Fixed pricing tiers, very fast)
+public class MetroStrategy : ITravelStrategy
+{
+    public double CalculateFare(double distance) => distance < 10 ? 2.50 : 4.50; // Flat tier pricing
+    public int CalculateDurationMinutes(double distance) => (int)(distance * 1.5) + 5; // Fast, but includes station waiting time
+}
+
+// Concrete Strategy D: Bus (Economy price, scheduled stops)
+public class BusStrategy : ITravelStrategy
+{
+    public double CalculateFare(double distance) => 2.00; // Flat fare regardless of distance
+    public int CalculateDurationMinutes(double distance) => (int)(distance * 4) + 10; // Slower due to routine stops
+}</code></pre>
+
+    <h3>3. The Context Class</h3>
+    <p>The <code>TripBookingEngine</code> manages the trip's metadata and utilizes the currently selected travel strategy to give the user dynamic updates.</p>
+    <pre><code class="language-csharp">// The 'Context'
+public class TripBookingEngine
+{
+    private readonly double _distanceInKm;
+    private ITravelStrategy _travelStrategy;
+
+    public TripBookingEngine(double distanceInKm)
+    {
+        _distanceInKm = distanceInKm;
+    }
+
+    // Change strategy at runtime when the user clicks a different vehicle icon
+    public void SetTravelMode(ITravelStrategy travelStrategy)
+    {
+        _travelStrategy = travelStrategy;
+    }
+
+    public void DisplayTripQuote()
+    {
+        if (_travelStrategy == null)
+        {
+            throw new InvalidOperationException("Please select a mode of transport.");
+        }
+
+        double fare = _travelStrategy.CalculateFare(_distanceInKm);
+        int duration = _travelStrategy.CalculateDurationMinutes(_distanceInKm);
+
+        Console.WriteLine($"Mode: {_travelStrategy.GetType().Name.Replace("Strategy", "")}");
+        Console.WriteLine($"Est. Travel Time: {duration} mins");
+        Console.WriteLine($"Total Cost: ${fare:F2}");
+    }
+}</code></pre>
+
+    <h3>4. Client Code Execution</h3>
+    <p>Simulating a user switching tabs on a mobile app to compare different options for a 12-kilometer journey.</p>
+    <pre><code class="language-csharp">class Program
+{
+    static void Main()
+    {
+        double distanceToDestination = 12.0; // 12 km trip
+        
+        // Initialize booking engine for the route
+        TripBookingEngine bookingApp = new TripBookingEngine(distanceToDestination);
+
+        Console.WriteLine($"--- Route Options for a {distanceToDestination}km Trip ---\n");
+
+        // 1. User checks Cab option
+        bookingApp.SetTravelMode(new CabStrategy());
+        bookingApp.DisplayTripQuote();
+        Console.WriteLine(new string('-', 35));
+
+        // 2. User checks Metro Train option
+        bookingApp.SetTravelMode(new MetroStrategy());
+        bookingApp.DisplayTripQuote();
+        Console.WriteLine(new string('-', 35));
+
+        // 3. User checks economic Bus option
+        bookingApp.SetTravelMode(new BusStrategy());
+        bookingApp.DisplayTripQuote();
+        Console.WriteLine(new string('-', 35));
+        
+        // 4. User checks a Bike option
+        bookingApp.SetTravelMode(new BikeStrategy());
+        bookingApp.DisplayTripQuote();
+    }
+}</code></pre>
+
+  </div>
+</details>
+
+<details>
+  <summary>Observer Pattern Example (Back-in-Stock Reminder - E-Commerce)</summary>
+  <div style="margin-top: 15px; font-family: sans-serif; line-height: 1.6;">
+
+    <p>When a popular item sells out, customers want to be alerted the moment inventory returns. By using the <b>Observer Pattern</b>, the product object keeps a list of customer emails. When a restock occurs, it loops through that list to send alerts, then clears the list since the event has passed.</p>
+
+    <hr />
+
+    <h3>1. The Observer Interface</h3>
+    <p>This defines the interface for the subscribers waiting for the stock alert.</p>
+    <pre><code class="language-csharp">// The 'Observer' interface
+public interface ICustomerObserver
+{
+    string Email { get; }
+    void Update(string productName);
+}</code></pre>
+
+    <h3>2. The Concrete Observer (Customer)</h3>
+    <p>Each customer instance tracks their email and defines how they want to handle the alert notification.</p>
+    <pre><code class="language-csharp">// Concrete Observer
+public class Customer : ICustomerObserver
+{
+    public string Name { get; }
+    public string Email { get; }
+
+    public Customer(string name, string email)
+    {
+        Name = name;
+        Email = email;
+    }
+
+    public void Update(string productName)
+    {
+        Console.WriteLine($"[Email Sent to {Email}]: Hi {Name}! '{productName}' is back in stock! Order now before it sells out again.");
+    }
+}</code></pre>
+
+    <h3>3. The Subject (The Product)</h3>
+    <p>The product class maintains its current stock level and an internal list of waiting customers.</p>
+    <pre><code class="language-csharp">// The 'Subject'
+public class Product
+{
+    public string Name { get; }
+    private int _stockLevel = 0;
+    private readonly List&lt;ICustomerObserver&gt; _waitingCustomers = new List&lt;ICustomerObserver&gt;();
+
+    public Product(string name)
+    {
+        Name = name;
+    }
+
+    // Equivalent to clicking the "Notify Me When Available" button
+    public void RegisterForRestockAlert(ICustomerObserver customer)
+    {
+        if (!_waitingCustomers.Contains(customer))
+        {
+            _waitingCustomers.Add(customer);
+            Console.WriteLine($"System: {customer.Email} subscribed to alerts for '{Name}'.");
+        }
+    }
+
+    public void RemoveRestockAlert(ICustomerObserver customer)
+    {
+        _waitingCustomers.Remove(customer);
+    }
+
+    // Restock method that updates inventory and triggers notifications if items become available
+    public void Restock(int newInventoryCount)
+    {
+        _stockLevel += newInventoryCount;
+        Console.WriteLine($"\nLogistics: '{Name}' has been restocked with {newInventoryCount} units. Total Stock: {_stockLevel}");
+
+        if (_stockLevel &gt; 0)
+        {
+            NotifyWaitingCustomers();
+        }
+    }
+
+    // Broadcast notifications to all observers on the list
+    private void NotifyWaitingCustomers()
+    {
+        Console.WriteLine($"System: Pushing alerts to all {_waitingCustomers.Count} subscribers...\n");
+        
+        // Loop backwards or copy list if observers will unsubscribe immediately upon notification
+        var subscribers = new List&lt;ICustomerObserver&gt;(_waitingCustomers);
+        foreach (var customer in subscribers)
+        {
+            customer.Update(Name);
+            _waitingCustomers.Remove(customer); // Remove them since they've been notified
+        }
+    }
+}</code></pre>
+
+    <h3>4. Client Code Execution</h3>
+    <p>Simulating multiple users joining a waitlist for a sold-out next-gen gaming console, followed by a warehouse shipment delivery.</p>
+    <pre><code class="language-csharp">class Program
+{
+    static void Main()
+    {
+        // 1. Create a highly demanded, out-of-stock product
+        Product playstation = new Product("PlayStation 5 Pro");
+
+        // 2. Create customer profiles
+        ICustomerObserver customer1 = new Customer("Alice", "alice@email.com");
+        ICustomerObserver customer2 = new Customer("Bob", "bob@example.com");
+        ICustomerObserver customer3 = new Customer("Charlie", "charlie@gmail.com");
+
+        Console.WriteLine("--- Users Sign Up For In-Stock Alerts ---");
+        // 3. Customers sign up via the e-commerce UI
+        playstation.RegisterForRestockAlert(customer1);
+        playstation.RegisterForRestockAlert(customer2);
+        playstation.RegisterForRestockAlert(customer3);
+
+        Console.WriteLine("\n-----------------------------------------");
+
+        // 4. Time passes... a shipment arrives at the fulfillment center
+        // This automatically triggers the alerts to fire
+        playstation.Restock(15);
+        
+        Console.WriteLine("\n-----------------------------------------");
+        
+        // 5. A late customer signs up after the reset
+        ICustomerObserver customer4 = new Customer("Diana", "diana@outlook.com");
+        playstation.RegisterForRestockAlert(customer4);
+    }
+}</code></pre>
+
+  </div>
+</details>
+
+<details>
+<summary>Command Pattern with Queue (Education Example)</summary>
+<p>
+<h2>Definition</h2>
+<p>Encapsulates a request as an object, allowing it to be queued, logged, or executed later. Useful for asynchronous processing in systems like education portals.</p>
+
+<h2>Description</h2>
+<p>In an education system, students submit assignments online. Each submission is encapsulated as a command and placed into a queue. The system processes these commands in order, ensuring fairness and reliability.</p>
+
+<h2>Real-Time Example: Students Submitting Assignments</h2>
+<pre><code class="language-csharp">
+// Command interface
+public interface ICommand
+{
+    void Execute();
+}
+
+// Concrete command: Submit Assignment
+public class SubmitAssignmentCommand : ICommand
+{
+    private string _studentName;
+    private string _assignment;
+
+    public SubmitAssignmentCommand(string studentName, string assignment)
+    {
+        _studentName = studentName;
+        _assignment = assignment;
+    }
+
+    public void Execute()
+    {
+        Console.WriteLine($"{_studentName} submitted {_assignment}");
+    }
+}
+
+// Queue (Invoker)
+public class AssignmentQueue
+{
+    private Queue<ICommand> _commands = new Queue<ICommand>();
+
+    public void Enqueue(ICommand command)
+    {
+        _commands.Enqueue(command);
+        Console.WriteLine("Assignment queued.");
+    }
+
+    public void ProcessAll()
+    {
+        Console.WriteLine("\nProcessing assignments in order...");
+        while (_commands.Count > 0)
+        {
+            var cmd = _commands.Dequeue();
+            cmd.Execute();
+        }
+    }
+}
+
+// Client
+class Program
+{
+    static void Main()
+    {
+        AssignmentQueue queue = new AssignmentQueue();
+
+        // Students submit assignments asynchronously
+        queue.Enqueue(new SubmitAssignmentCommand("Alice", "Math Homework"));
+        queue.Enqueue(new SubmitAssignmentCommand("Bob", "Science Project"));
+        queue.Enqueue(new SubmitAssignmentCommand("Charlie", "History Essay"));
+
+        // Later, the system processes them in order
+        queue.ProcessAll();
+    }
+}
+</code></pre>
+
+<h2>Output</h2>
+<p><code>
+Assignment queued.<br>
+Assignment queued.<br>
+Assignment queued.<br><br>
+Processing assignments in order...<br>
+Alice submitted Math Homework<br>
+Bob submitted Science Project<br>
+Charlie submitted History Essay
+</code></p>
+
+<h2>Interview Insight</h2>
+<ul>
+  <li>Queue ensures assignments are processed in the order they were submitted.</li>
+  <li>Command encapsulates each submission, making it reusable and easy to log.</li>
+  <li>In real systems, this pattern maps to message queues like Azure Service Bus, RabbitMQ, or Kafka.</li>
+</ul>
+</p>
+</details>
+
+
+
+<details>
+  <summary>Mediator Pattern Example (Classroom Chat Room)</summary>
+  <div style="margin-top: 15px; font-family: sans-serif; line-height: 1.6;">
+
+    <h3>Definition</h3>
+    <p>The <b>Mediator Design Pattern</b> defines an object that encapsulates how a set of objects interact. This pattern promotes loose coupling by keeping objects from referring to each other explicitly, allowing their interactions to be modified independently.</p>
+
+    <h3>How this Classroom Chat Fits the Pattern</h3>
+    <ul>
+      <li><b>The Mediator (<code>IChatRoomMediator</code>):</b> The communication contract that defines how users register with a room and send messages.</li>
+      <li><b>The Concrete Mediator (<code>ClassroomChatServer</code>):</b> The central chat server hub. It maintains a dictionary list of all connected students and teachers, managing the routing rules of who receives what text message.</li>
+      <li><b>The Colleagues (<code>User</code>):</b> The human participants (Students or Teachers). They only know their own name and their central chat mediator. They never hold references to their classmates' objects.</li>
+    </ul>
+
+    <hr />
+
+    <h3>1. The Mediator Interface</h3>
+    <p>This defines the methods required to manage participants and broadcast communications.</p>
+    <pre><code class="language-csharp">// The 'Mediator' interface
+public interface IChatRoomMediator
+{
+    void RegisterUser(User user);
+    void SendMessage(string message, User sender);
+}</code></pre>
+
+    <h3>2. The Base Colleague Component</h3>
+    <p>This represents a abstract participant in the school portal chat system.</p>
+    <pre><code class="language-csharp">// The 'Colleague' abstract base
+public abstract class User
+{
+    protected IChatRoomMediator _chatMediator;
+    public string Name { get; }
+
+    public User(IChatRoomMediator chatMediator, string name)
+    {
+        _chatMediator = chatMediator;
+        Name = name;
+    }
+
+    public abstract void Receive(string from, string message);
+}</code></pre>
+
+    <h3>3. Concrete Colleague Components</h3>
+    <p>These represent the real roles in the system. Notice that sending a message doesn't target a specific person; it is simply passed up to the mediator engine.</p>
+    <pre><code class="language-csharp">// Concrete Colleague A: Student Participant
+public class StudentUser : User
+{
+    public StudentUser(IChatRoomMediator mediator, string name) : base(mediator, name) { }
+
+    public void Send(string message)
+    {
+        Console.WriteLine($"\n[UI Action] Student '{Name}' types: \"{message}\"");
+        _chatMediator.SendMessage(message, this); // Delegate to mediator
+    }
+
+    public override void Receive(string from, string message)
+    {
+        Console.WriteLine($"[{Name}'s Screen] Chat from {from}: {message}");
+    }
+}
+
+// Concrete Colleague B: Teacher Participant
+public class TeacherUser : User
+{
+    public TeacherUser(IChatRoomMediator mediator, string name) : base(mediator, name) { }
+
+    public void Send(string message)
+    {
+        Console.WriteLine($"\n[UI Action] Teacher **{Name}** announces: \"{message}\"");
+        _chatMediator.SendMessage(message, this); // Delegate to mediator
+    }
+
+    public override void Receive(string from, string message)
+    {
+        Console.WriteLine($"[Teacher {Name}'s Screen] Chat from {from}: {message}");
+    }
+}</code></pre>
+
+    <h3>4. The Concrete Mediator (The Chat Server)</h3>
+    <p>This central point holds the master list of active connections and dynamically loops through them to broadcast text updates.</p>
+    <pre><code class="language-csharp">// The 'Concrete Mediator'
+public class ClassroomChatServer : IChatRoomMediator
+{
+    private readonly List&lt;User&gt; _connectedUsers = new List&lt;User&gt;();
+
+    public void RegisterUser(User user)
+    {
+        if (!_connectedUsers.Contains(user))
+        {
+            _connectedUsers.Add(user);
+            Console.WriteLine($"System Log: '{user.Name}' joined the live classroom chat.");
+        }
+    }
+
+    // Central distribution: When someone sends a message, loop and update everyone else
+    public void SendMessage(string message, User sender)
+    {
+        foreach (var user in _connectedUsers)
+        {
+            // Don't send the message back to the person who typed it!
+            if (user != sender)
+            {
+                user.Receive(sender.Name, message);
+            }
+        }
+    }
+}</code></pre>
+
+    <h3>5. Client Code Execution</h3>
+    <p>Simulating a teacher starting an online lecture session and interacting with students inside a unified chat channel.</p>
+    <pre><code class="language-csharp">class Program
+{
+    static void Main()
+    {
+        // 1. Initialize the central chat room server routing infrastructure (Mediator)
+        ClassroomChatServer cs101ChatServer = new ClassroomChatServer();
+
+        // 2. Create users and hook them into our mediator network
+        User professor = new TeacherUser(cs101ChatServer, "Dr. Einstein");
+        User student1 = new StudentUser(cs101ChatServer, "Alice");
+        User student2 = new StudentUser(cs101ChatServer, "Bob");
+
+        // 3. Register users to the central server list
+        Console.WriteLine("--- Classroom Chatroom Initializing ---");
+        cs101ChatServer.RegisterUser(professor);
+        cs101ChatServer.RegisterUser(student1);
+        cs101ChatServer.RegisterUser(student2);
+        Console.WriteLine(new string('-', 45));
+
+        // 4. Simulate sending messages
+        // Notice how clean the interaction remains. Subsystem objects remain fully blind to each other.
+        professor.Send("Welcome to class, everyone! Please take out your assignments.");
+        
+        student1.Send("Is the homework due at midnight or noon today?");
+        
+        student2.Send("I think it is due at midnight, Alice.");
+    }
+}</code></pre>
+
+  </div>
+</details>
+
+<details>
+<summary>Template Method Pattern - (Online Exam Process)</summary>
+<p>
+<h2>Definition</h2>
+<p>Defines the skeleton of an algorithm in a base class, deferring some steps to subclasses. Template Method lets subclasses redefine certain steps without changing the overall algorithm’s structure.</p>
+
+<h2>Description</h2>
+<p>Use the Template Method Pattern when you want to enforce a fixed sequence of steps in an algorithm, but allow subclasses to customize specific parts. It promotes code reuse and consistency across variations of the process.</p>
+
+<h2>Real-Time Example: Online Exam Process</h2>
+<pre><code class="language-csharp">
+// Abstract class (Template)
+public abstract class OnlineExam
+{
+    // Template method
+    public void ConductExam()
+    {
+        Login();
+        StartExam();
+        EvaluateAnswers();
+        ShowResult();
+    }
+
+    protected abstract void Login();
+    protected abstract void StartExam();
+    protected abstract void EvaluateAnswers();
+
+    // Common step
+    protected void ShowResult()
+    {
+        Console.WriteLine("Result displayed to student.");
+    }
+}
+
+// Concrete classes
+public class MathExam : OnlineExam
+{
+    protected override void Login()
+    {
+        Console.WriteLine("Math student logged in.");
+    }
+
+    protected override void StartExam()
+    {
+        Console.WriteLine("Math exam started.");
+    }
+
+    protected override void EvaluateAnswers()
+    {
+        Console.WriteLine("Math answers evaluated.");
+    }
+}
+
+public class ScienceExam : OnlineExam
+{
+    protected override void Login()
+    {
+        Console.WriteLine("Science student logged in.");
+    }
+
+    protected override void StartExam()
+    {
+        Console.WriteLine("Science exam started.");
+    }
+
+    protected override void EvaluateAnswers()
+    {
+        Console.WriteLine("Science answers evaluated.");
+    }
+}
+
+// Client
+class Program
+{
+    static void Main()
+    {
+        OnlineExam mathExam = new MathExam();
+        mathExam.ConductExam();
+
+        Console.WriteLine();
+
+        OnlineExam scienceExam = new ScienceExam();
+        scienceExam.ConductExam();
+    }
+}
+</code></pre>
+
+<h2>Output</h2>
+<p><code>
+Math student logged in.<br>
+Math exam started.<br>
+Math answers evaluated.<br>
+Result displayed to student.<br><br>
+Science student logged in.<br>
+Science exam started.<br>
+Science answers evaluated.<br>
+Result displayed to student.
+</code></p>
+
+<h2>Interview Insight</h2>
+<ul>
+  <li>Template Method enforces a fixed algorithm structure while allowing customization of steps.</li>
+  <li>Useful in education systems (exam workflows), document generation, or data processing pipelines.</li>
+  <li>Promotes code reuse and consistency across different implementations.</li>
+</ul>
+</p>
+</details>
+
+<details>
+  <summary>CQRS Design Pattern with MediatR</summary>
+
+  <h2>Definition</h2>
+  <p>
+    <b>CQRS (Command Query Responsibility Segregation)</b> is an architectural pattern that separates 
+    <b>read operations (queries)</b> from <b>write operations (commands)</b>.
+  </p>
+  <ul>
+    <li><b>Command side</b> → Handles state changes (create, update, delete).</li>
+    <li><b>Query side</b> → Optimized for reading data.</li>
+  </ul>
+  <p><b>Benefits:</b> Scalability, flexibility (different models for reads vs writes), and clear separation of concerns.</p>
+
+  <h2>MediatR and IMediator</h2>
+  <p>
+    <code>IMediator</code> is an interface provided by the <b>MediatR</b> NuGet package. 
+    It is not part of your own code — you install it and register it in dependency injection.
+  </p>
+  <ol>
+    <li>Install NuGet packages:
+      <pre><code>dotnet add package MediatR
+dotnet add package MediatR.Extensions.Microsoft.DependencyInjection</code></pre>
+    </li>
+    <li>Register MediatR in <code>Program.cs</code>:
+      <pre><code class="language-csharp">builder.Services.AddMediatR(cfg => 
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));</code></pre>
+    </li>
+    <li>Inject into your controller:
+      <pre><code class="language-csharp">private readonly IMediator _mediator;
+public StudentsController(IMediator mediator)
+{
+    _mediator = mediator;
+}</code></pre>
+    </li>
+  </ol>
+  <p>
+    The <code>IMediator</code> interface provides methods like <code>Send()</code> and <code>Publish()</code> 
+    to dispatch commands, queries, and notifications to their handlers.
+  </p>
+
+  <h2>Code Example (C# with MediatR)</h2>
+  <pre><code class="language-csharp">
+// Command: Create a new student
+public record CreateStudentCommand(string Name, int Age) : IRequest<StudentResult>;
+
+// Command Handler
+public class CreateStudentHandler : IRequestHandler<CreateStudentCommand, StudentResult>
+{
+    public Task<StudentResult> Handle(CreateStudentCommand cmd, CancellationToken ct)
+    {
+        var student = new Student { Id = Guid.NewGuid(), Name = cmd.Name, Age = cmd.Age };
+        // Save to DB (write side)
+        return Task.FromResult(new StudentResult(student.Id, "Created"));
+    }
+}
+
+// Query: Get student by Id
+public record GetStudentQuery(Guid Id) : IRequest<Student>;
+
+// Query Handler
+public class GetStudentHandler : IRequestHandler<GetStudentQuery, Student>
+{
+    public Task<Student> Handle(GetStudentQuery query, CancellationToken ct)
+    {
+        // Fetch from DB (read side)
+        return Task.FromResult(new Student { Id = query.Id, Name = "Alice", Age = 20 });
+    }
+}
+
+// Controller
+[ApiController]
+[Route("api/students")]
+public class StudentsController : ControllerBase
+{
+    private readonly IMediator _mediator;
+    public StudentsController(IMediator mediator) => _mediator = mediator;
+
+    [HttpPost]
+    public async Task<IActionResult> Create(CreateStudentCommand cmd)
+    {
+        var result = await _mediator.Send(cmd);
+        return Ok(result);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get(Guid id)
+    {
+        var student = await _mediator.Send(new GetStudentQuery(id));
+        return Ok(student);
+    }
+}
+
+// Result DTO
+public record StudentResult(Guid Id, string Status);
+public class Student { public Guid Id { get; set; } public string Name { get; set; } public int Age { get; set; } }
+  </code></pre>
+
+  <h2>Takeaway</h2>
+  <ul>
+    <li><b>Commands</b> → Change system state (writes).</li>
+    <li><b>Queries</b> → Retrieve data (reads).</li>
+    <li><b>MediatR</b> → Decouples controllers from handlers using <code>IMediator</code>.</li>
+  </ul>
+</details>
+
+<details>
+  <summary>OOP Concepts</summary>
+  <div>
+      <h3>1. Abstraction</h3>
+    <p>Hiding implementation details, showing only essential features.</p>
+    <pre><code class="language-csharp">
+abstract class Shape {
+    public abstract double Area();
+}
+class Circle : Shape {
+    public double Radius { get; set; }
+    public override double Area() => Math.PI * Radius * Radius;
+}
+   </code> </pre>
+    <p><b>Memory hook:</b> Abstract = show what, hide how.</p>
+	
+    <h3>2. Encapsulation</h3>
+    <p>Wrapping data (fields) and behavior (methods) together inside a class. Protects data and controls access.</p>
+    <pre><code class="language-csharp">
+class BankAccount {
+    private decimal balance; // hidden data
+    public void Deposit(decimal amount) => balance += amount;
+    public decimal GetBalance() => balance; // controlled access
+}
+    </code></pre>
+    <p><b>Memory hook:</b> Capsule = protect + control access.</p>
+
+
+
+    <h3>3. Inheritance</h3>
+    <p>One class derives from another, reusing its properties and methods.</p>
+    <pre><code class="language-csharp">
+class Animal {
+    public void Eat() => Console.WriteLine("Eating...");
+}
+class Dog : Animal {
+    public void Bark() => Console.WriteLine("Barking...");
+}
+   </code> </pre>
+    <p><b>Memory hook:</b> Inheritance = reuse parent features.</p>
+
+    <h3>4. Polymorphism</h3>
+    <p>Same interface, different implementations. Two main types:</p>
+    <ul>
+      <li><b>Compile-time (Overloading):</b> Same method name, different signatures.</li>
+      <li><b>Runtime (Overriding):</b> Subclass changes base method behavior.</li>
+    </ul>
+    <pre><code class="language-csharp">
+class Shape {
+    public virtual void Draw() => Console.WriteLine("Drawing shape");
+}
+class Circle : Shape {
+    public override void Draw() => Console.WriteLine("Drawing circle");
+}
+    </code></pre>
+    <p><b>Memory hook:</b> Poly = many forms.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Polymorphism Types</summary>
+  <div>
+    <h3>1. Compile-time Polymorphism (Static Binding)</h3>
+    <p>Achieved via method overloading or operator overloading. Decided at compile time.</p>
+    <pre><code class="language-csharp">
+class Calculator {
+    public int Add(int a, int b) => a + b;
+    public double Add(double a, double b) => a + b;
+}
+  </code>  </pre>
+
+    <h3>2. Runtime Polymorphism (Dynamic Binding)</h3>
+    <p>Achieved via method overriding using virtual/override. Decided at runtime.</p>
+    <pre><code class="language-csharp">
+class Animal {
+    public virtual void Speak() => Console.WriteLine("Animal sound");
+}
+class Dog : Animal {
+    public override void Speak() => Console.WriteLine("Bark");
+}
+   </code> </pre>
+
+    <h3>3. Interface Polymorphism</h3>
+    <p>Multiple classes implement the same interface differently.</p>
+    <pre><code class="language-csharp">
+interface IPayment { void Pay(decimal amount); }
+class CreditCard : IPayment {
+    public void Pay(decimal amount) => Console.WriteLine($"Paid {amount} via Credit Card");
+}
+class PayPal : IPayment {
+    public void Pay(decimal amount) => Console.WriteLine($"Paid {amount} via PayPal");
+}
+   </code> </pre>
+
+
+    <h3>4. Polymorphism with Inheritance Levels</h3>
+    <ul>
+      <li><b>Single Inheritance:</b> One base → one derived (Animal → Dog).</li>
+      <li><b>Multilevel Inheritance:</b> Chain of classes (LivingBeing → Animal → Dog).</li>
+      <li><b>Hierarchical Inheritance:</b> Multiple derived classes from one base (Shape → Circle, Rectangle).</li>
+      <li><b>Hybrid:</b> Combination of multilevel + interfaces (Employee : Person, IWorker).</li>
+    </ul>
+    <p><b>Key Idea:</b> Runtime polymorphism shines in inheritance chains — same base call, different derived outputs.</p>
+  </div>
+</details>
+
 
 <h2 id="coding">Coding / LINQ Joins, Grouping, and Aggregation Guide</h2>
-<details><summary>Mental Map</summary></details>
-<details><summary>Sample Data Setup</summary></details>
-<details><summary>Number of employees in each department - Inner Join Example</summary></details>
-<details><summary>Left Join Example</summary></details>
-<details><summary>Calculate the average salary per department</summary></details>
-<details><summary>Aggregates in LINQ Method Syntax</summary></details>
-<details><summary>LINQ GroupBy Aggregates Example</summary></details>
-<details><summary>Three Table Join Example</summary></details>
-<details><summary>Method Syntax vs Query Syntax</summary></details>
-<details><summary>5th Highest Salary Example</summary></details>
-<details><summary>Highest Salary Example</summary></details>
-<details><summary>Nth Highest Salary Example</summary></details>
-<details><summary>Employees Without Department Example</summary></details>
-<details><summary>Find Duplicate Employees by Name</summary></details>
-<details><summary>Employees With Each Department (INNER JOIN)</summary></details>
-<details><summary>Employees With Each Department (LEFT JOIN)</summary></details>
-<details><summary>Employees Count Per Department Example</summary></details>
-<details><summary>Employees with Salary Greater than Average</summary></details>
-<details><summary>Top 3 Earning Employees</summary></details>
-<details><summary>Zip Example</summary></details>
-<details><summary>Aggregate Example</summary></details>
-<details><summary>SelectMany Example</summary></details>
-<details><summary>Simple Dependency Injection Example</summary></details>
-<details><summary>Thread-Safe Singleton Example</summary></details>
-<details><summary>Repository Pattern with Dependency Injection (GetAll)</summary></details>
-<details><summary>Async/Await with HttpClient</summary></details>
-<details><summary>Generic Class Example (UtilityName)</summary></details>
-<details><summary>Generic Method Example</summary></details>
-<details><summary>Extension Methods Example</summary></details>
-<details><summary>LINQ Methods Comparison</summary></details>
+
+<details>
+  <summary>Mental Map</summary>
+  <div style="background:#f6f8fa; padding:15px; border-left:4px solid #0078d4;">
+    <h2>🧠 Mental Map</h2>
+    <p><strong>Question:</strong> What is the logical order of operations when writing complex LINQ queries involving multiple tables and calculations?</p>
+    <ol>
+        <li><strong>Join</strong> → Combine related collections (like Employees + Departments).</li>
+        <li><strong>GroupBy</strong> → Organize the combined data into buckets (e.g., by Department).</li>
+        <li><strong>Aggregate</strong> → Apply calculations inside each group (<code>Sum</code>, <code>Average</code>, <code>Count</code>).</li>
+        <li><strong>Select</strong> → Shape the final result into the form you want (e.g., Department + AverageSalary).</li>
+    </ol>
+    <p><em>Shortcut mental model:</em> <code>Join → GroupBy → Aggregate → Select</code></p>
+  </div>
+</details>
+
+<details>
+  <summary>Sample Data Setup (Employees, Departments, Locations, Customers, Orders)</summary>
+  <p><strong>Question:</strong> What sample data are we using for the LINQ examples, including Customers and Orders?</p>
+  <p><strong>Answer:</strong> Below are simple C# collections for Employees, Departments, Locations, Customers, and Orders.</p>
+
+  <pre><code class="language-csharp">
+// Employee class
+public class Employee
+{
+    public int EmployeeId { get; set; }
+    public string Name { get; set; }
+    public int? DepartmentId { get; set; }
+    public decimal Salary { get; set; }
+}
+
+// Department class
+public class Department
+{
+    public int DepartmentId { get; set; }
+    public string DepartmentName { get; set; }
+    public int LocationId { get; set; }
+}
+
+// Location class
+public class Location
+{
+    public int LocationId { get; set; }
+    public string LocationName { get; set; }
+}
+
+// Customer class
+public class Customer
+{
+    public int CustomerId { get; set; }
+    public string CustomerName { get; set; }
+}
+
+// Order class
+public class Order
+{
+    public int OrderId { get; set; }
+    public int CustomerId { get; set; }
+    public decimal Amount { get; set; }
+}
+
+// Sample Data
+var employees = new List&lt;Employee&gt;
+{
+    new Employee { EmployeeId = 1, Name = "Alice", DepartmentId = 1, Salary = 60000 },
+    new Employee { EmployeeId = 2, Name = "Bob", DepartmentId = 2, Salary = 75000 },
+    new Employee { EmployeeId = 3, Name = "Charlie", DepartmentId = 1, Salary = 50000 },
+    new Employee { EmployeeId = 4, Name = "David", DepartmentId = null, Salary = 40000 },
+    new Employee { EmployeeId = 5, Name = "Eva", DepartmentId = 3, Salary = 90000 },
+    new Employee { EmployeeId = 6, Name = "Frank", DepartmentId = 2, Salary = 120000 }
+};
+
+var departments = new List&lt;Department&gt;
+{
+    new Department { DepartmentId = 1, DepartmentName = "HR", LocationId = 1 },
+    new Department { DepartmentId = 2, DepartmentName = "IT", LocationId = 2 },
+    new Department { DepartmentId = 3, DepartmentName = "Finance", LocationId = 1 }
+};
+
+var locations = new List&lt;Location&gt;
+{
+    new Location { LocationId = 1, LocationName = "New York" },
+    new Location { LocationId = 2, LocationName = "London" }
+};
+
+var customers = new List&lt;Customer&gt;
+{
+    new Customer { CustomerId = 1, CustomerName = "Alice" },
+    new Customer { CustomerId = 2, CustomerName = "Bob" },
+    new Customer { CustomerId = 3, CustomerName = "Charlie" }
+};
+
+var orders = new List&lt;Order&gt;
+{
+    new Order { OrderId = 1, CustomerId = 1, Amount = 250 },
+    new Order { OrderId = 2, CustomerId = 2, Amount = 400 },
+    new Order { OrderId = 3, CustomerId = 1, Amount = 150 },
+    new Order { OrderId = 4, CustomerId = 3, Amount = 300 }
+};
+  </code></pre>
+
+  <div class="tip">Tip: Keeping Customers in a separate table makes joins cleaner and avoids duplication of customer names in Orders.</div>
+</details>
+
+<details>
+  <summary>Number of employees in each department - Inner Join Example</summary>
+  <p><strong>Question:</strong> How can we find the number of employees in each department using LINQ (Employees + Departments)?</p>
+  <p><strong>What this does:</strong> Joins Employees with Departments, groups by department name, and counts how many employees are in each department.</p>
+  <pre><code class="language-csharp">
+var result = employees
+    .Join(departments,
+          e => e.DepartmentId,
+          d => d.DepartmentId,
+          (e, d) => new { e.Name, d.DepartmentName })
+    .GroupBy(x => x.DepartmentName)
+    .Select(g => new { Department = g.Key, Count = g.Count() });
+  </code></pre>
+  <div class="tip">Tip: LINQ <code>Join</code> is always an INNER JOIN by default.</div>
+</details>
+
+<details>
+  <summary>Left Join Example</summary>
+  <p><strong>Question:</strong> How can we list all employees along with their department names, ensuring employees without a department are still included?</p>
+  <p><strong>What this does:</strong> Ensures all employees are listed, even if they don’t belong to any department. Missing departments show as "No Department".</p>
+  <pre><code class="language-csharp">
+var leftJoin = employees
+    .GroupJoin(departments,
+        e => e.DepartmentId,
+        d => d.DepartmentId,
+        (e, deptGroup) => new { e, deptGroup })
+    .SelectMany(
+        x => x.deptGroup.DefaultIfEmpty(),
+        (x, d) => new 
+        {
+            EmployeeName = x.e.Name,
+            DepartmentName = d?.DepartmentName ?? "No Department"
+        });
+
+  </code></pre>
+  <div class="tip">Tip: Use <code>GroupJoin + DefaultIfEmpty()</code> to simulate a LEFT JOIN in LINQ.</div>
+</details>
+<details>
+  <summary>Calculate the average salary per department</summary>
+  <p><strong>Question:</strong> How can we calculate the average salary per department per location using Employees, Departments, and Locations tables?</p>
+  <p><strong>What this does:</strong> Joins Employees → Departments → Locations, then groups by department and location, and calculates the average salary per group.</p>
+  <pre><code class="language-csharp">
+var avgSalaryPerDept = employees
+    .Join(departments,
+          e => e.DepartmentId,
+          d => d.DepartmentId,
+          (e, d) => new { e.Salary, d.DepartmentName })
+    .GroupBy(ed => ed.DepartmentName)
+    .Select(g => new 
+    { 
+        Department = g.Key, 
+        AverageSalary = g.Average(x => x.Salary) 
+    });
+
+  </code></pre>
+  
+</details>
+<details>
+  <summary>Aggregates in LINQ Method Syntax</summary>
+  <div>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <tr><th>Aggregate</th><th>Example</th><th>Description</th></tr>
+      <tr><td><b>Count</b></td><td>g.Count()</td><td>Number of elements in the group</td></tr>
+      <tr><td><b>Sum</b></td><td>g.Sum(x => x.Salary)</td><td>Total of a numeric field</td></tr>
+      <tr><td><b>Average</b></td><td>g.Average(x => x.Salary)</td><td>Mean value of a numeric field</td></tr>
+      <tr><td><b>Min</b></td><td>g.Min(x => x.Salary)</td><td>Smallest value in the group</td></tr>
+      <tr><td><b>Max</b></td><td>g.Max(x => x.Salary)</td><td>Largest value in the group</td></tr>
+      <tr><td><b>First</b></td><td>g.OrderBy(x => x.HireDate).First()</td><td>First element (ordered for deterministic result)</td></tr>
+      <tr><td><b>Last</b></td><td>g.OrderBy(x => x.HireDate).Last()</td><td>Last element (ordered for deterministic result)</td></tr>
+      <tr><td><b>Aggregate</b></td><td>g.Aggregate(0, (acc, x) => acc + x.Salary)</td><td>Custom aggregation logic (like fold/reduce)</td></tr>
+    </table>
+  </div>
+</details>
+
+<details>
+  <summary>LINQ GroupBy Aggregates Example</summary>
+  <div>
+    <pre><code class="language-csharp">
+var deptStats = employees
+    .GroupBy(e => e.DepartmentId)
+    .Select(g => new 
+    {
+        DepartmentId   = g.Key,
+        EmployeeCount  = g.Count(),
+        TotalSalary    = g.Sum(x => x.Salary),
+        AverageSalary  = g.Average(x => x.Salary),
+        MinSalary      = g.Min(x => x.Salary),
+        MaxSalary      = g.Max(x => x.Salary),
+        FirstEmployee  = g.OrderBy(x => x.HireDate).First().Name,
+        LastEmployee   = g.OrderBy(x => x.HireDate).Last().Name
+    });
+
+foreach (var dept in deptStats)
+{
+    Console.WriteLine(
+        $"Dept {dept.DepartmentId}: " +
+        $"Count={dept.EmployeeCount}, Sum={dept.TotalSalary}, " +
+        $"Avg={dept.AverageSalary}, Min={dept.MinSalary}, Max={dept.MaxSalary}, " +
+        $"First={dept.FirstEmployee}, Last={dept.LastEmployee}");
+}
+    </code></pre>
+  </div>
+</details>
+
+<details>
+  <summary>Three Table Join Example</summary>
+  <p><strong>Question:</strong> How can we calculate the average salary per department per location using Employees, Departments, and Locations tables?</p>
+  <p><strong>What this does:</strong> Joins Employees → Departments → Locations, then groups by department and location, and calculates the average salary per group.</p>
+  <pre><code class="language-csharp">
+var avgSalaryPerDeptLocation = employees
+    .Join(departments,
+          e => e.DepartmentId,
+          d => d.DepartmentId,
+          (e, d) => new { e.Salary, d.DepartmentName, d.LocationId })
+    .Join(locations,
+          ed => ed.LocationId,
+          l => l.LocationId,
+          (ed, l) => new { ed.Salary, ed.DepartmentName, l.LocationName })
+    .GroupBy(x => new { x.DepartmentName, x.LocationName })
+    .Select(g => new
+    {
+        Department = g.Key.DepartmentName,
+        Location = g.Key.LocationName,
+        AverageSalary = g.Average(x => x.Salary)
+    });
+  </code></pre>
+  <div class="tip">Tip: For multiple tables, chain multiple <code>Join</code> calls before grouping and aggregating.</div>
+</details>
+
+<details>
+  <summary>Method Syntax vs Query Syntax</summary>
+  <p><strong>Question:</strong> How can the same join between Employees and Departments be written in both LINQ method syntax and query syntax?</p>
+  <p><strong>What this shows:</strong> The same join written in two styles — method syntax (fluent chaining) and query syntax (SQL-like). Both produce identical results.</p>
+  <pre><code class="language-csharp">
+// Method Syntax
+var result = employees.Join(departments,
+    e => e.DepartmentId,
+    d => d.DepartmentId,
+    (e, d) => new { e.Name, d.DepartmentName });
+
+// Query Syntax
+var result = from e in employees
+             join d in departments
+             on e.DepartmentId equals d.DepartmentId
+             select new { e.Name, d.DepartmentName };
+  </code></pre>
+  <div class="tip">Tip: Both styles compile to the same thing. Method syntax is more common in production code, while query syntax feels closer to SQL.</div>
+</details>
+
+<details>
+  <summary>5th Highest Salary Example</summary>
+  <p><strong>Question:</strong> How can we find the 5th highest salary of any employee using LINQ with method syntax?</p>
+  <p><strong>What this does:</strong> Orders the employees by salary in descending order, skips the top 4, and selects the next one — which is the 5th highest salary.</p>
+  <pre><code class="language-csharp">
+var fifthHighestSalary = employees
+    .OrderByDescending(e => e.Salary)   // sort salaries high → low
+    .Select(e => e.Salary)              // project salary only
+    .Distinct()                         // remove duplicates
+    .Skip(4)                            // skip top 4 salaries
+    .FirstOrDefault();                  // take the 5th highest
+
+Console.WriteLine($"5th Highest Salary: {fifthHighestSalary}");
+  </code></pre>
+  <div class="tip">Tip: Use <code>Skip(N-1)</code> with <code>FirstOrDefault()</code> to get the Nth highest salary. Add <code>Distinct()</code> if you want to ignore duplicate salaries.</div>
+</details>
+
+<details>
+  <summary>Highest Salary Example</summary>
+  <p><strong>Question:</strong> How can we find the highest salary of any employee using LINQ?</p>
+  <p><strong>What this does:</strong> Orders employees by salary descending and selects the first one — the highest salary.</p>
+  <pre><code class="language-csharp">
+var highestSalary = employees
+    .OrderByDescending(e => e.Salary)
+    .Select(e => e.Salary)
+    .FirstOrDefault();
+
+Console.WriteLine($"Highest Salary: {highestSalary}");
+  </code></pre>
+  <div class="tip">Tip: Use <code>OrderByDescending()</code> with <code>FirstOrDefault()</code> to get the maximum value.</div>
+</details>
+
+<details>
+  <summary>Nth Highest Salary Example</summary>
+  <p><strong>Question:</strong> How can we find the Nth highest salary (e.g., 5th highest) using LINQ?</p>
+  <p><strong>What this does:</strong> Sorts salaries descending, skips the top N-1, and takes the next one.</p>
+  <pre><code class="language-csharp">
+int n = 5;
+var nthHighestSalary = employees
+    .OrderByDescending(e => e.Salary)
+    .Select(e => e.Salary)
+    .Distinct()
+    .Skip(n - 1)
+    .FirstOrDefault();
+
+Console.WriteLine($"{n}th Highest Salary: {nthHighestSalary}");
+  </code></pre>
+  <div class="tip">Tip: Add <code>Distinct()</code> if you want to ignore duplicate salaries.</div>
+</details>
+
+<details>
+  <summary>Employees Without Department Example</summary>
+  <p><strong>Question:</strong> How can we list employees who do not belong to any department?</p>
+  <p><strong>What this does:</strong> Performs a LEFT JOIN between Employees and Departments, then filters where department is null.</p>
+  <pre><code class="language-csharp">
+var employeesWithoutDept = employees
+    .GroupJoin(departments,
+        e => e.DepartmentId,
+        d => d.DepartmentId,
+        (e, deptGroup) => new { e, deptGroup })
+    .SelectMany(
+        x => x.deptGroup.DefaultIfEmpty(),
+        (x, d) => new 
+        {
+            EmployeeName = x.e.Name,
+            DepartmentName = d?.DepartmentName
+        })
+    .Where(result => result.DepartmentName == null);
+
+  </code></pre>
+  <div class="tip">Tip: Use <code>DefaultIfEmpty()</code> to simulate LEFT JOIN and check for nulls.</div>
+</details>
+
+<details>
+  <summary>Find Duplicate Employees by Name</summary>
+  <div>
+    <pre><code class="language-csharp">
+	var duplicateEmployees = employees
+		.GroupBy(e => e.Name)
+		.Where(g => g.Count() > 1)
+		.Select(g => new 
+		{ 
+			EmployeeName = g.Key, 
+			Count = g.Count() 
+		});
+
+    </code></pre>
+  </div>
+</details>
+
+<details>
+  <summary>Employees With Each Department (INNER JOIN)</summary>
+  <div>
+    <pre><code class="language-csharp">
+var employeesWithDept = employees
+    .Join(departments,
+          e => e.DepartmentId,
+          d => d.DepartmentId,
+          (e, d) => new 
+          {
+              EmployeeName = e.Name,
+              DepartmentName = d.DepartmentName
+          });
+
+
+    </code></pre>
+  </div>
+</details>
+
+<details>
+  <summary>Employees With Each Department (LEFT JOIN)</summary>
+  <div>
+    <pre><code class="language-csharp">
+var employeesWithDeptLeftJoin = employees
+    .GroupJoin(departments,
+        e => e.DepartmentId,
+        d => d.DepartmentId,
+        (e, deptGroup) => new { e, deptGroup })
+    .SelectMany(
+        x => x.deptGroup.DefaultIfEmpty(),
+        (x, d) => new 
+        {
+            EmployeeName = x.e.Name,
+            DepartmentName = d?.DepartmentName ?? "No Department"
+        });
+
+
+    </code></pre>
+  </div>
+</details>
+
+
+<details>
+  <summary>Employees Count Per Department Example</summary>
+  <p><strong>Question:</strong> How can we count how many employees are in each department using LINQ?</p>
+  <p><strong>What this does:</strong> Joins Employees with Departments, groups by department, and counts employees in each group.</p>
+  <pre><code class="language-csharp">
+var empCountPerDept = employees
+    .Join(departments,
+          e => e.DepartmentId,
+          d => d.DepartmentId,
+          (e, d) => new { e.Name, d.DepartmentName })
+    .GroupBy(x => x.DepartmentName)
+    .Select(g => new { Department = g.Key, Count = g.Count() });
+
+  </code></pre>
+  <div class="tip">Tip: Use <code>GroupBy()</code> with <code>Count()</code> to get totals per group.</div>
+</details>
+
+<details>
+  <summary>Employees with Salary Greater than Average</summary>
+  <p><strong>Question:</strong> How can we find employees whose salary is greater than the average salary using LINQ?</p>
+  <p><strong>What this does:</strong> Calculates the average salary of all employees, then filters employees whose salary is above that average.</p>
+  <pre><code class="language-csharp">
+var avgSalary = employees.Average(e => e.Salary);
+
+var aboveAverageEmployees = employees
+    .Where(e => e.Salary > avgSalary)
+    .Select(e => new { e.Name, e.Salary });
+
+  </code></pre>
+  <div class="tip">Tip: Use <code>Average()</code> first, then filter with <code>Where()</code>.</div>
+</details>
+
+<details>
+  <summary>Top 3 Earning Employees</summary>
+  <p><strong>Question:</strong> How can we get the top 3 earning employees using LINQ?</p>
+  <p><strong>What this does:</strong> Sorts employees by salary descending and takes the first 3.</p>
+  <pre><code class="language-csharp">
+var top3Employees = employees
+    .OrderByDescending(e => e.Salary)
+    .Take(3)
+    .Select(e => new { e.Name, e.Salary });
+
+  </code></pre>
+  <div class="tip">Tip: Use <code>Take(N)</code> after sorting to get the top N records.</div>
+</details>
+<style>
+  .output {
+    background: #f6f8fa;   /* light gray background */
+    color: #24292e;        /* dark text */
+    padding: 10px;
+    border-radius: 6px;
+    font-family: Consolas, monospace;
+    font-size: 90%;
+    border: 1px solid #ddd;
+    white-space: pre;       /* preserve line breaks */
+  }
+</style>
+
+
+
+<details>
+  <summary>Zip Example</summary>
+  <p><strong>Question:</strong> How can we use <code>Zip</code> to combine two sequences element‑by‑element?</p>
+  <pre><code class="language-csharp">
+var names = new[] { "Alice", "Bob", "Charlie" };
+var salaries = new[] { 60000, 75000, 50000 };
+
+var combined = names.Zip(salaries, (n, s) => $"{n} earns {s}");
+
+foreach (var item in combined)
+{
+    Console.WriteLine(item);
+}
+  </code></pre>
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+Alice earns 60000
+Bob earns 75000
+Charlie earns 50000
+  </div>
+</details>
+
+<details>
+  <summary>Aggregate Example</summary>
+  <p><strong>Question:</strong> How can we use <code>Aggregate</code> to calculate a custom result (like concatenating employee names)?</p>
+  <pre><code class="language-csharp">
+var allNames = employees
+    .Select(e => e.Name)
+    .Aggregate((acc, name) => acc + ", " + name);
+
+Console.WriteLine($"Employees: {allNames}");
+  </code></pre>
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+Employees: Alice, Bob, Charlie, David, Eva, Frank
+  </div>
+</details>
+
+<details>
+  <summary>SelectMany Example</summary>
+  <p><strong>Question:</strong> How can we use <code>SelectMany</code> to flatten nested collections?</p>
+  <pre><code class="language-csharp">
+// Extended Employee with Skills
+public class EmployeeWithSkills
+{
+    public string Name { get; set; }
+    public List&lt;string&gt; Skills { get; set; }
+}
+
+var employeesWithSkills = new List&lt;EmployeeWithSkills&gt;
+{
+    new EmployeeWithSkills { Name = "Alice", Skills = new List&lt;string&gt; { "C#", "SQL" } },
+    new EmployeeWithSkills { Name = "Bob", Skills = new List&lt;string&gt; { "Java", "React" } }
+};
+
+var flattened = employeesWithSkills
+    .SelectMany(e => e.Skills, (e, skill) => new { e.Name, Skill = skill });
+
+foreach (var item in flattened)
+{
+    Console.WriteLine($"{item.Name} - {item.Skill}");
+}
+  </code></pre>
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+Alice - C#
+Alice - SQL
+Bob - Java
+Bob - React
+  </div>
+</details>
+
+
+<details>
+  <summary>Simple Dependency Injection Example</summary>
+  <p><strong>Question:</strong> How can we demonstrate dependency injection with a service interface and implementation?</p>
+  <pre><code class="language-csharp">
+// Service interface
+public interface IMessageService
+{
+    string GetMessage();
+}
+
+// Implementation
+public class HelloMessageService : IMessageService
+{
+    public string GetMessage() => "Hello from DI!";
+}
+
+// Controller using DI
+public class HomeController : Controller
+{
+    private readonly IMessageService _messageService;
+
+    public HomeController(IMessageService messageService)
+    {
+        _messageService = messageService;
+    }
+
+    public IActionResult Index()
+    {
+        return Content(_messageService.GetMessage());
+    }
+}
+
+// Register in Program.cs
+builder.Services.AddScoped&lt;IMessageService, HelloMessageService&gt;();
+  </code></pre>
+  <div class="tip">Tip: ASP.NET Core’s built‑in DI container resolves <code>IMessageService</code> automatically.</div>
+</details>
+
+<details>
+  <summary>Thread-Safe Singleton Example</summary>
+  <p><strong>Question:</strong> How can we implement a thread‑safe Singleton in C#?</p>
+  <pre><code class="language-csharp">
+public sealed class Logger
+{
+    private static readonly Lazy&lt;Logger&gt; _instance =
+        new Lazy&lt;Logger&gt;(() =&gt; new Logger());
+
+    private Logger() { }
+
+    public static Logger Instance =&gt; _instance.Value;
+
+    public void Log(string message)
+    {
+        Console.WriteLine($"{DateTime.Now}: {message}");
+    }
+}
+
+// Usage
+Logger.Instance.Log("Application started");
+Logger.Instance.Log("Processing data...");
+  </code></pre>
+  <div class="tip">Tip: <code>Lazy&lt;T&gt;</code> ensures thread‑safe, lazy initialization of the Singleton.</div>
+</details>
+<details>
+  <summary>Repository Pattern with Dependency Injection (GetAll)</summary>
+  <p><strong>Question:</strong> How can we implement a simple repository with DI that only exposes <code>GetAll()</code>?</p>
+
+  <pre><code class="language-csharp">
+// Entity
+public class Employee
+{
+    public int EmployeeId { get; set; }
+    public string Name { get; set; }
+}
+
+// Repository interface
+public interface IEmployeeRepository
+{
+    IEnumerable&lt;Employee&gt; GetAll();
+}
+
+// Repository implementation
+public class EmployeeRepository : IEmployeeRepository
+{
+    private readonly List&lt;Employee&gt; _employees = new()
+    {
+        new Employee { EmployeeId = 1, Name = "Alice" },
+        new Employee { EmployeeId = 2, Name = "Bob" }
+    };
+
+    public IEnumerable&lt;Employee&gt; GetAll() =&gt; _employees;
+}
+
+// Service using repository
+public class EmployeeService
+{
+    private readonly IEmployeeRepository _repository;
+
+    public EmployeeService(IEmployeeRepository repository)
+    {
+        _repository = repository;
+    }
+
+    public IEnumerable&lt;Employee&gt; GetEmployees() =&gt; _repository.GetAll();
+}
+
+// Register in Program.cs
+builder.Services.AddScoped&lt;IEmployeeRepository, EmployeeRepository&gt;();
+builder.Services.AddScoped&lt;EmployeeService&gt;();
+
+// Usage in Controller
+public class HomeController : Controller
+{
+    private readonly EmployeeService _service;
+
+    public HomeController(EmployeeService service)
+    {
+        _service = service;
+    }
+
+    public IActionResult Index()
+    {
+        var employees = _service.GetEmployees();
+        return Ok(employees);
+    }
+}
+  </code></pre>
+
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+[{"EmployeeId":1,"Name":"Alice"},{"EmployeeId":2,"Name":"Bob"}]
+  </div>
+
+  <div class="tip">Tip: Keep repositories minimal — exposing only <code>GetAll()</code> here makes it easy to demonstrate DI without extra complexity.</div>
+</details>
+
+<details>
+  <summary>Async/Await with HttpClient</summary>
+  <p><strong>Question:</strong> How can we use <code>async/await</code> with <code>HttpClient</code> to fetch data without blocking threads?</p>
+
+  <pre><code class="language-csharp">
+using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+
+public class Program
+{
+    private static readonly HttpClient _httpClient = new HttpClient();
+
+    public static async Task Main(string[] args)
+    {
+        string url = "https://jsonplaceholder.typicode.com/posts/1";
+
+        // Async call with await
+        string result = await FetchDataAsync(url);
+
+        Console.WriteLine("Response:");
+        Console.WriteLine(result);
+    }
+
+    public static async Task&lt;string&gt; FetchDataAsync(string url)
+    {
+        HttpResponseMessage response = await _httpClient.GetAsync(url);
+
+        response.EnsureSuccessStatusCode(); // throws if not 2xx
+
+        string content = await response.Content.ReadAsStringAsync();
+        return content;
+    }
+}
+  </code></pre>
+
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+Response:
+{
+  "userId": 1,
+  "id": 1,
+  "title": "sunt aut facere repellat provident occaecati...",
+  "body": "quia et suscipit..."
+}
+  </div>
+
+  <div class="tip">Tip: <code>await</code> frees the thread while waiting for the HTTP response, improving scalability in web apps.</div>
+</details>
+<details>
+  <summary>Generic Class Example (UtilityName)</summary>
+  <p><strong>Question:</strong> How can we create a generic utility class that works with any type?</p>
+
+  <pre><code class="language-csharp">
+// Generic utility class
+public class DataStore&lt;T&gt;
+{
+    private readonly List&lt;T&gt; _items = new();
+
+    public void Add(T item)
+    {
+        _items.Add(item);
+    }
+
+    public IEnumerable&lt;T&gt; GetAll()
+    {
+        return _items;
+    }
+}
+
+// Usage
+var intStore = new DataStore&lt;int&gt;();
+intStore.Add(10);
+intStore.Add(20);
+
+var stringStore = new DataStore&lt;string&gt;();
+stringStore.Add("Alice");
+stringStore.Add("Bob");
+
+Console.WriteLine(string.Join(", ", intStore.GetAll()));    // 10, 20
+Console.WriteLine(string.Join(", ", stringStore.GetAll())); // Alice, Bob
+  </code></pre>
+
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+10, 20
+Alice, Bob
+  </div>
+
+  <div class="tip">Tip: Naming it <code>DataStore&lt;T&gt;</code> makes it clear this is a reusable container, not tied to persistence or repositories.</div>
+</details>
+
+<details>
+  <summary>Generic Method Example</summary>
+  <p><strong>Question:</strong> How can we create a generic method that works with different types?</p>
+
+  <pre><code class="language-csharp">
+// Generic method
+public static class Utilities
+{
+    public static void PrintTwice&lt;T&gt;(T value)
+    {
+        Console.WriteLine(value);
+        Console.WriteLine(value);
+    }
+}
+
+// Usage
+Utilities.PrintTwice&lt;int&gt;(42);
+Utilities.PrintTwice&lt;string&gt;("Hello");
+Utilities.PrintTwice(DateTime.Now); // type inferred automatically
+  </code></pre>
+
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+42
+42
+Hello
+Hello
+07/02/2026 13:17:00
+07/02/2026 13:17:00
+  </div>
+
+  <div class="tip">Tip: Generic methods can infer type arguments automatically, making them flexible and concise.</div>
+</details>
+
+<details>
+  <summary>Extension Methods Example</summary>
+  <p><strong>Question:</strong> How can we create and use an extension method to add functionality to an existing type?</p>
+
+  <pre><code class="language-csharp">
+// Extension method must be in a static class
+public static class StringExtensions
+{
+    // Another example: capitalize first letter
+    public static string CapitalizeFirst(this string value)
+    {
+        return char.ToUpper(value[0]) + value.Substring(1);
+    }
+}
+
+// Usage
+class Program
+{
+    static void Main()
+    {
+        string name = "alice";
+        Console.WriteLine(name.CapitalizeFirst()); // Alice
+    }
+}
+  </code></pre>
+
+  <p><strong>Expected Output:</strong></p>
+  <div class="output">
+Alice
+  </div>
+
+  <div class="tip">Tip: Extension methods let you "extend" existing types (like <code>string</code>) with new methods, while keeping your code clean and reusable.</div>
+</details>
+
+<details>
+  <summary>LINQ Methods Comparison</summary>
+  <div>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <tr>
+        <th>Method</th>
+        <th>Purpose</th>
+        <th>Example</th>
+        <th>Output</th>
+      </tr>
+      <tr>
+        <td><b>Select</b></td>
+        <td>Projects each element into a new form (1-to-1 mapping).</td>
+        <td>employees.Select(e => e.Name)</td>
+        <td>List of names</td>
+      </tr>
+      <tr>
+        <td><b>SelectMany</b></td>
+        <td>Flattens collections (1-to-many mapping).</td>
+        <td>departments.SelectMany(d => d.Employees)</td>
+        <td>All employees across departments in a single list</td>
+      </tr>
+      <tr>
+        <td><b>Any</b></td>
+        <td>Checks if any element satisfies a condition.</td>
+        <td>employees.Any(e => e.Salary > 50000)</td>
+        <td>true / false</td>
+      </tr>
+      <tr>
+        <td><b>All</b></td>
+        <td>Checks if all elements satisfy a condition.</td>
+        <td>employees.All(e => e.Salary > 30000)</td>
+        <td>true / false</td>
+      </tr>
+      <tr>
+        <td><b>First</b></td>
+        <td>Returns the first element that matches a condition. Throws exception if none found.</td>
+        <td>employees.First(e => e.Salary > 50000)</td>
+        <td>Employee object</td>
+      </tr>
+      <tr>
+        <td><b>FirstOrDefault</b></td>
+        <td>Same as First, but returns default (null for reference types) if none found.</td>
+        <td>employees.FirstOrDefault(e => e.Salary > 100000)</td>
+        <td>Employee or null</td>
+      </tr>
+      <tr>
+        <td><b>Single</b></td>
+        <td>Returns the only element that matches a condition. Throws exception if none or more than one found.</td>
+        <td>employees.Single(e => e.Id == 5)</td>
+        <td>Employee object</td>
+      </tr>
+      <tr>
+        <td><b>SingleOrDefault</b></td>
+        <td>Same as Single, but returns default if none found. Throws exception if more than one found.</td>
+        <td>employees.SingleOrDefault(e => e.Id == 5)</td>
+        <td>Employee or null</td>
+      </tr>
+      <tr>
+        <td><b>Count</b></td>
+        <td>Returns the number of elements (optionally with condition).</td>
+        <td>employees.Count(e => e.Salary > 50000)</td>
+        <td>Integer</td>
+      </tr>
+      <tr>
+        <td><b>Contains</b></td>
+        <td>Checks if a sequence contains a specific element.</td>
+        <td>employees.Select(e => e.Id).Contains(10)</td>
+        <td>true / false</td>
+      </tr>
+    </table>
+  </div>
+</details>
+
 
 </div> <!-- end of content -->
 
