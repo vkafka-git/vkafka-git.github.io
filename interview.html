@@ -1677,11 +1677,109 @@ HAVING COUNT(*) > 1;
 
 <!-- Question 27 -->
 <details>
-  <summary>Scaling Queries for 200M Row Orders Table</summary>
-  <div class="answer-content">
-    Use <b>partitioning</b> by date, <b>indexes</b> on CustomerID/OrderDate, and <b>covering indexes</b>.<br>
-    Example: <code>CREATE INDEX idx_orders ON Orders(CustomerID, OrderDate)</code>.
-  </div>
+  <summary>Scaling Queries for a 200M Row Orders Table</summary>
+  <p><strong>Definition:</strong> Querying very large tables (hundreds of millions of rows) requires careful design to avoid full table scans and performance bottlenecks.</p>
+
+  <p><strong>Key Strategies:</strong></p>
+  <ul>
+    <li><strong>Indexing:</strong> Use clustered index on primary key, non-clustered indexes on frequently queried columns, and covering indexes to avoid lookups.</li>
+    <li><strong>Partitioning:</strong> Partition by date range (monthly/yearly) so queries scan only relevant partitions.</li>
+    <li><strong>SARGable Queries:</strong> Avoid functions on indexed columns (e.g., <code>WHERE YEAR(OrderDate)=2025</code> is bad; use range filters instead).</li>
+    <li><strong>Statistics:</strong> Keep statistics updated to help the optimizer choose efficient plans.</li>
+    <li><strong>Materialized Views / Caching:</strong> Precompute frequent aggregations (e.g., daily sales totals).</li>
+    <li><strong>Architecture:</strong> Consider read replicas for reporting workloads, or sharding if data exceeds single server capacity.</li>
+  </ul>
+
+  <p><strong>Example:</strong></p>
+  <pre><code class="language-sql">
+-- Covering index for frequent query
+CREATE INDEX idx_orders_customer_date
+ON Orders(CustomerID, OrderDate)
+INCLUDE (TotalAmount);
+
+-- Partition function by year
+CREATE PARTITION FUNCTION pfOrdersRange (DATE)
+AS RANGE LEFT FOR VALUES ('2020-01-01','2021-01-01','2022-01-01');
+  </code></pre>
+
+  <p><strong>Interview Insight:</strong> Scaling queries on a 200M row table is not just about writing efficient SQL — it’s about index design, partitioning, query optimization, and system-level scaling strategies.</p>
+</details>
+
+<details>
+  <summary>CTE vs Temp Table</summary>
+  <p><strong>CTE (Common Table Expression):</strong></p>
+  <ul>
+    <li>Defined with <code>WITH</code> keyword, scoped only to the query.</li>
+    <li>Improves readability and modular query design.</li>
+    <li>Supports recursion (hierarchical data).</li>
+    <li>Exists only during query execution — cannot be indexed or reused.</li>
+    <li>Performance similar to inline views/subqueries.</li>
+  </ul>
+
+  <pre><code class="language-sql">
+WITH HighEarners AS (
+    SELECT Name, Salary
+    FROM Employees
+    WHERE Salary &gt; 100000
+)
+SELECT * FROM HighEarners;
+  </code></pre>
+
+  <p><strong>Temp Table (#Temp):</strong></p>
+  <ul>
+    <li>Physically created in <code>tempdb</code>.</li>
+    <li>Can be indexed, constrained, and reused across multiple queries.</li>
+    <li>Better for large datasets and complex joins.</li>
+    <li>Supports statistics, helping the optimizer choose efficient plans.</li>
+  </ul>
+
+  <pre><code class="language-sql">
+CREATE TABLE #HighEarners (
+    Name NVARCHAR(100),
+    Salary INT
+);
+
+INSERT INTO #HighEarners
+SELECT Name, Salary
+FROM Employees
+WHERE Salary &gt; 100000;
+
+SELECT * FROM #HighEarners;
+  </code></pre>
+
+  <p><strong>Comparison:</strong></p>
+  <table border="1" cellpadding="6" cellspacing="0">
+    <tr>
+      <th>Aspect</th>
+      <th>CTE</th>
+      <th>Temp Table</th>
+    </tr>
+    <tr>
+      <td>Lifetime</td>
+      <td>Only within one query</td>
+      <td>Session (until dropped)</td>
+    </tr>
+    <tr>
+      <td>Indexing</td>
+      <td>No</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>Reuse</td>
+      <td>No</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>Best For</td>
+      <td>Readability, recursion, one-off sets</td>
+      <td>Large datasets, complex joins, performance tuning</td>
+    </tr>
+  </table>
+
+  <p><strong>Interview Insight:</strong> 
+    Use <em>CTEs</em> for readability, recursion, and lightweight intermediate sets.  
+    Use <em>Temp Tables</em> when dealing with large datasets, indexing, or reuse across multiple queries.
+  </p>
 </details>
 
 <!-- Question 28 -->
@@ -2390,11 +2488,366 @@ Always emphasize backward compatibility and clear communication with API consume
 </p>
 </details>
 
-<details><summary>Pagination in APIs</summary></details>
-<details><summary>Rate Limiting in APIs</summary></details>
-<details><summary>CORS Configuration</summary></details>
-<details><summary>Caching Strategies in APIs</summary></details>
-<details><summary>Logging Architecture Design</summary></details>
+<details>
+  <summary>Designing Pagination in APIs</summary>
+  
+
+<h2>1. Why Pagination?</h2>
+<p>
+Pagination is used to split large datasets into smaller chunks when returning results from an API. 
+It improves performance, reduces payload size, and provides a better client experience by avoiding overwhelming responses.
+</p>
+
+<h2>2. Common Pagination Strategies</h2>
+<ul>
+  <li><b>Offset-Based:</b> Use <code>limit</code> and <code>offset</code> parameters.
+    <br/>Example: <code>/api/products?limit=10&offset=20</code>
+    <br/>Pros: Simple to implement. Cons: Inefficient for large datasets (slow skips).</li>
+  
+  <li><b>Page-Based:</b> Use <code>page</code> and <code>size</code> parameters.
+    <br/>Example: <code>/api/products?page=3&size=10</code>
+    <br/>Pros: Easy for clients. Cons: Can be inconsistent if data changes between requests.</li>
+  
+  <li><b>Cursor-Based:</b> Use a unique identifier (like timestamp or ID) as a cursor.
+    <br/>Example: <code>/api/products?after=123&limit=10</code>
+    <br/>Pros: Efficient for large datasets, consistent results. Cons: More complex to implement.</li>
+  
+  <li><b>Keyset Pagination:</b> Similar to cursor-based, uses indexed fields for fast lookups.
+    <br/>Example: <code>/api/products?lastId=200&limit=10</code>
+    <br/>Pros: Very efficient with indexed columns. Cons: Requires careful schema design.</li>
+</ul>
+
+<h2>3. Example: Offset-Based Pagination</h2>
+<pre><code class="language-csharp">
+// Request
+GET /api/orders?limit=5&offset=10
+
+// Response
+{
+  "data": [
+    { "orderId": "ORD011", "status": "Shipped" },
+    { "orderId": "ORD012", "status": "Pending" },
+    ...
+  ],
+  "pagination": {
+    "limit": 5,
+    "offset": 10,
+    "total": 100
+  }
+}
+</code></pre>
+
+<h2>4. Example: Cursor-Based Pagination</h2>
+<pre><code class="language-csharp">
+// Request
+GET /api/orders?after=ORD010&limit=5
+
+// Response
+{
+  "data": [
+    { "orderId": "ORD011", "status": "Shipped" },
+    { "orderId": "ORD012", "status": "Pending" },
+    ...
+  ],
+  "pagination": {
+    "limit": 5,
+    "nextCursor": "ORD015"
+  }
+}
+</code></pre>
+
+<h2>5. Best Practices</h2>
+<ul>
+  <li>Always return metadata (total count, next/previous links, cursors).</li>
+  <li>Use consistent naming conventions (<code>page</code>, <code>size</code>, <code>limit</code>, <code>offset</code>).</li>
+  <li>Prefer cursor-based pagination for large, frequently updated datasets.</li>
+  <li>Support sorting and filtering alongside pagination.</li>
+  <li>Document pagination strategy clearly for API consumers.</li>
+</ul>
+
+<h2>6. Interview Insight</h2>
+<p>
+👉 In interviews, emphasize that pagination prevents performance bottlenecks and improves scalability. 
+Mention different strategies (offset, page, cursor, keyset), their trade-offs, and highlight that <b>cursor-based pagination is preferred for large, dynamic datasets</b>.
+</p>
+</details>
+<details>
+  <summary>Handling Rate Limiting in APIs</summary>
+  
+
+<h2>1. What is Rate Limiting?</h2>
+<p>
+<b>Rate limiting</b> controls how many requests a client can make to an API within a given time window. 
+It protects services from abuse, prevents overload, and ensures fair usage among clients.
+</p>
+
+<h2>2. Common Strategies</h2>
+<ul>
+  <li><b>Fixed Window:</b> Limit requests per fixed interval (e.g., 100 requests per minute). Simple but can cause bursts at window boundaries.</li>
+  <li><b>Sliding Window:</b> Tracks requests in a rolling time window. More accurate but requires more computation.</li>
+  <li><b>Token Bucket:</b> Clients accumulate tokens at a fixed rate; each request consumes a token. Allows short bursts while enforcing limits.</li>
+  <li><b>Leaky Bucket:</b> Similar to token bucket but enforces a steady outflow rate, smoothing traffic.</li>
+</ul>
+
+<h2>3. Implementation Approaches</h2>
+<ul>
+  <li><b>API Gateway:</b> Enforce rate limits at the gateway (e.g., Kong, NGINX, Azure API Management).</li>
+  <li><b>Middleware:</b> Implement rate limiting logic in application middleware (e.g., ASP.NET Core middleware).</li>
+  <li><b>Distributed Cache:</b> Use Redis or Memcached to track request counts across multiple servers.</li>
+</ul>
+
+<h2>4. Example: ASP.NET Core Middleware with Redis</h2>
+<pre><code class="language-csharp">
+// Pseudocode for fixed window rate limiting
+if (redis.Increment("client:123:minute") > 100)
+{
+    return 429 Too Many Requests;
+}
+else
+{
+    processRequest();
+}
+</code></pre>
+
+<h2>5. Best Practices</h2>
+<ul>
+  <li>Return <code>HTTP 429 Too Many Requests</code> when limits are exceeded.</li>
+  <li>Include <code>Retry-After</code> header to guide clients on when to retry.</li>
+  <li>Differentiate limits by client type (e.g., free vs premium users).</li>
+  <li>Combine with authentication to enforce per-user or per-API key limits.</li>
+  <li>Monitor and log rate limit violations for analysis.</li>
+</ul>
+
+<h2>6. Interview Insight</h2>
+<p>
+👉 Rate limiting ensures <b>fair usage and system stability</b>. 
+In interviews, emphasize strategies like <b>fixed window, sliding window, token bucket</b>, and mention practical enforcement via <b>API gateways or distributed caches</b>. 
+Highlight the importance of returning proper HTTP status codes and headers for client guidance.
+</p>
+</details>
+<details>
+  <summary>CORS (Cross-Origin Resource Sharing) and Its Configuration</summary>
+  
+
+<h2>1. What is CORS?</h2>
+<p>
+<b>CORS</b> is a security mechanism implemented by browsers to restrict web applications from making requests to a domain different from the one that served the web page. 
+It prevents malicious scripts from accessing sensitive data from another origin. 
+When a client (e.g., JavaScript in a browser) calls an API hosted on a different domain, the server must explicitly allow it via CORS headers.
+</p>
+
+<h2>2. Key Concepts</h2>
+<ul>
+  <li><b>Origin:</b> Defined by scheme (http/https), host, and port. Example: <code>https://example.com:443</code>.</li>
+  <li><b>Same-Origin Policy:</b> By default, browsers block requests from one origin to another.</li>
+  <li><b>Preflight Request:</b> For non-simple requests (e.g., PUT, DELETE, custom headers), the browser sends an <code>OPTIONS</code> request first to check if the server allows it.</li>
+  <li><b>CORS Headers:</b> Server responds with headers like <code>Access-Control-Allow-Origin</code>, <code>Access-Control-Allow-Methods</code>, and <code>Access-Control-Allow-Headers</code>.</li>
+</ul>
+
+<h2>3. Common CORS Headers</h2>
+<ul>
+  <li><code>Access-Control-Allow-Origin</code>: Specifies which origins can access the resource (e.g., <code>*</code> or <code>https://myapp.com</code>).</li>
+  <li><code>Access-Control-Allow-Methods</code>: Lists allowed HTTP methods (e.g., <code>GET, POST, PUT</code>).</li>
+  <li><code>Access-Control-Allow-Headers</code>: Lists allowed custom headers (e.g., <code>Content-Type, Authorization</code>).</li>
+  <li><code>Access-Control-Allow-Credentials</code>: Indicates whether cookies/credentials can be sent.</li>
+</ul>
+
+<h2>4. Example: ASP.NET Core Configuration</h2>
+<pre><code class="language-csharp">
+// In Program.cs
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin",
+        policy => policy.WithOrigins("https://myapp.com")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials());
+});
+
+var app = builder.Build();
+app.UseCors("AllowSpecificOrigin");
+</code></pre>
+
+<h2>5. Example: Express.js Configuration</h2>
+<pre><code class="language-csharp">
+const cors = require('cors');
+const app = require('express')();
+
+app.use(cors({
+  origin: 'https://myapp.com',
+  methods: ['GET','POST','PUT'],
+  allowedHeaders: ['Content-Type','Authorization'],
+  credentials: true
+}));
+</code></pre>
+
+<h2>6. Best Practices</h2>
+<ul>
+  <li>Restrict <code>Access-Control-Allow-Origin</code> to trusted domains (avoid <code>*</code> in production).</li>
+  <li>Allow only necessary methods and headers.</li>
+  <li>Enable credentials only when required.</li>
+  <li>Log and monitor CORS errors for debugging.</li>
+</ul>
+
+<h2>7. Interview Insight</h2>
+<p>
+👉 CORS is about <b>controlling cross-origin requests</b. 
+In interviews, emphasize the role of <b>preflight requests</b>, the importance of <b>Access-Control-Allow-Origin</b>, and how to configure CORS securely in frameworks like ASP.NET Core or Express.js. 
+Highlight that misconfigured CORS can lead to security vulnerabilities.
+</p>
+</details>
+<details>
+  <summary>Implementing Caching in APIs</summary>
+  
+
+<h2>1. Why Caching?</h2>
+<p>
+Caching improves API performance by storing frequently accessed data closer to the client or server. 
+It reduces latency, minimizes database load, and improves scalability. 
+Without caching, APIs may repeatedly fetch the same data, leading to inefficiency.
+</p>
+
+<h2>2. Types of Caching</h2>
+<ul>
+  <li><b>Client-Side Caching:</b> Browser or mobile app caches responses locally.</li>
+  <li><b>Server-Side Caching:</b> API server caches results in memory (e.g., in-memory cache, Redis).</li>
+  <li><b>Reverse Proxy Caching:</b> Tools like NGINX, Varnish, or CDN cache responses at the edge.</li>
+  <li><b>Database Query Caching:</b> Store results of expensive queries in cache for reuse.</li>
+</ul>
+
+<h2>3. HTTP Caching Headers</h2>
+<p>
+APIs often use HTTP headers to control caching:
+</p>
+<ul>
+  <li><code>Cache-Control</code>: Defines caching policies (e.g., <code>Cache-Control: public, max-age=3600</code>).</li>
+  <li><code>ETag</code>: Unique identifier for a resource version. Clients use it for conditional requests.</li>
+  <li><code>Last-Modified</code>: Timestamp of last update. Clients can check freshness.</li>
+  <li><code>Expires</code>: Specifies when a cached response becomes stale.</li>
+</ul>
+
+<h2>4. Example: ASP.NET Core Response Caching</h2>
+<pre><code class="language-csharp">
+// In Program.cs
+builder.Services.AddResponseCaching();
+
+var app = builder.Build();
+app.UseResponseCaching();
+
+app.MapGet("/products", async context =>
+{
+    context.Response.GetTypedHeaders().CacheControl =
+        new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+        {
+            Public = true,
+            MaxAge = TimeSpan.FromSeconds(60)
+        };
+    await context.Response.WriteAsync("Cached product list");
+});
+</code></pre>
+
+<h2>5. Example: Redis Caching in APIs</h2>
+<pre><code class="language-csharp">
+// Pseudocode for caching API response
+var cacheKey = "products:all";
+var cachedData = redis.Get(cacheKey);
+
+if (cachedData != null)
+{
+    return cachedData; // Serve from cache
+}
+else
+{
+    var data = db.GetProducts();
+    redis.Set(cacheKey, data, expiry: TimeSpan.FromMinutes(10));
+    return data;
+}
+</code></pre>
+
+<h2>6. Best Practices</h2>
+<ul>
+  <li>Cache only frequently accessed or expensive-to-compute data.</li>
+  <li>Set appropriate expiration times to avoid stale data.</li>
+  <li>Use <b>ETag</b> or <b>Last-Modified</b> for conditional requests.</li>
+  <li>Invalidate cache when data changes (cache busting).</li>
+  <li>Combine caching with CDN for global scalability.</li>
+</ul>
+
+<h2>7. Interview Insight</h2>
+<p>
+👉 In interviews, emphasize that caching improves <b>performance, scalability, and user experience</b>. 
+Mention strategies like <b>HTTP caching headers</b>, <b>server-side caching with Redis</b>, and <b>reverse proxy/CDN caching</b>. 
+Highlight the importance of cache invalidation and balancing freshness with performance.
+</p>
+</details>
+<details>
+  <summary>Designing a Logging Architecture</summary>
+  
+
+<h2>1. Purpose of Logging Architecture</h2>
+<p>
+A logging architecture provides a <b>centralized, structured, and scalable</b> way to capture, store, and analyze logs 
+from distributed applications. It enables <b>observability, debugging, auditing, and compliance</b>.
+</p>
+
+<h2>2. Key Requirements</h2>
+<p>
+- <b>Centralization:</b> Collect logs from all services into a single system.<br/>
+- <b>Scalability:</b> Handle high-volume logs from microservices and cloud workloads.<br/>
+- <b>Structure:</b> Use structured formats (JSON) for easy parsing.<br/>
+- <b>Correlation:</b> Include correlation IDs for tracing requests across services.<br/>
+- <b>Security:</b> Mask sensitive data and enforce access controls.<br/>
+</p>
+
+<h2>3. Core Components</h2>
+<p>
+- <b>Log Shippers/Agents:</b> Collect logs (Fluentd, Filebeat, Logstash).<br/>
+- <b>Message Broker:</b> Buffer and stream logs (Kafka, Azure Event Hub).<br/>
+- <b>Storage:</b> Index and store logs (Elasticsearch, Azure Monitor, AWS CloudWatch).<br/>
+- <b>Visualization:</b> Dashboards for analysis (Kibana, Grafana).<br/>
+- <b>Alerting:</b> Trigger alerts on anomalies (Prometheus Alertmanager, Azure Monitor Alerts).<br/>
+</p>
+
+<h2>4. Example Architecture Flow</h2>
+<p>
+1. Applications emit logs in structured JSON with correlation IDs.<br/>
+2. Log agents (Fluent Bit, Filebeat) collect and forward logs.<br/>
+3. Logs are streamed via Kafka/Event Hub for durability.<br/>
+4. Elasticsearch or cloud-native storage indexes logs.<br/>
+5. Kibana/Grafana provides visualization and search.<br/>
+6. Alerts are configured for error rates, latency spikes, or security violations.<br/>
+</p>
+
+<h2>5. Example in .NET</h2>
+<pre><code class="language-csharp"><code class="csharp">
+// Structured logging with Serilog
+Log.Logger = new LoggerConfiguration()
+    .Enrich.WithCorrelationId()
+    .WriteTo.Console()
+    .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri("http://localhost:9200")))
+    .CreateLogger();
+
+Log.Information("Order {OrderId} created successfully", orderId);
+</code></code></pre>
+
+<h2>6. Best Practices</h2>
+<p>
+- Use <b>structured logs</b> (JSON) instead of plain text.<br/>
+- Include <b>correlation IDs</b> for distributed tracing.<br/>
+- Apply <b>log levels</b> (Info, Warn, Error, Debug) consistently.<br/>
+- Implement <b>log rotation and retention policies</b>.<br/>
+- Integrate with <b>SIEM systems</b> for security monitoring.<br/>
+</p>
+
+<h2>7. Interview Insight</h2>
+<p>
+In interviews, emphasize that logging architecture is about <b>centralization, scalability, and observability</b>. 
+Highlight practical experience with <b>ELK stack, cloud-native logging (Azure Monitor, AWS CloudWatch), and structured logging frameworks like Serilog</b>. 
+Mention <b>correlation IDs, log levels, and security practices</b> as critical design elements. 
+Demonstrating awareness of <b>trade-offs</b> (e.g., storage cost vs retention, verbosity vs performance) shows maturity in designing robust logging systems.
+</p>
+</details>
+
 <details><summary>CQRS + Event Sourcing</summary></details>
 <details><summary>CAP Theorem</summary></details>
 <details><summary>Distributed Transactions</summary></details>
