@@ -2420,7 +2420,7 @@ Always emphasize that breaking changes should be avoided, and new features shoul
 </p>
 </details>
 <details>
-  <summary>Handling API Versioning in ASP.NET Core</summary>
+  <summary>API Versioning in ASP.NET Core</summary>
   
 
 <h2>1. Why API Versioning?</h2>
@@ -2572,7 +2572,7 @@ Mention different strategies (offset, page, cursor, keyset), their trade-offs, a
 </p>
 </details>
 <details>
-  <summary>Handling Rate Limiting in APIs</summary>
+  <summary>Rate Limiting in APIs</summary>
   
 
 <h2>1. What is Rate Limiting?</h2>
@@ -2848,23 +2848,1194 @@ Demonstrating awareness of <b>trade-offs</b> (e.g., storage cost vs retention, v
 </p>
 </details>
 
-<details><summary>CQRS + Event Sourcing</summary></details>
-<details><summary>CAP Theorem</summary></details>
-<details><summary>Distributed Transactions</summary></details>
-<details><summary>Resiliency in Cloud Apps</summary></details>
+<details>
+  <summary>CQRS and Event Sourcing</summary>
+  
 
+<h2>1. CQRS (Command Query Responsibility Segregation)</h2>
+<p>
+CQRS is an architectural pattern that <b>separates read and write operations</b> into different models:
+</p>
+<p>
+- <b>Command side:</b> Handles writes (create, update, delete).<br/>
+- <b>Query side:</b> Handles reads (fetch, search, report).<br/>
+</p>
+<p>
+This separation allows each side to be optimized independently—for example, using a relational database for commands 
+and a NoSQL store for queries.
+</p>
+
+<h3>✅ Benefits</h3>
+<p>
+- Scalability: Read and write workloads scale separately.<br/>
+- Flexibility: Different storage technologies for commands vs queries.<br/>
+- Clearer design: Explicit separation of responsibilities.<br/>
+</p>
+
+<h2>2. Event Sourcing</h2>
+<p>
+Event Sourcing is a pattern where <b>state is derived from a sequence of events</b> rather than storing the current state directly.
+</p>
+<p>
+- Every change is recorded as an <b>immutable event</b> (e.g., <code>OrderPlaced</code>, <code>PaymentProcessed</code>).<br/>
+- The system rebuilds state by replaying events.<br/>
+- Provides a complete <b>audit trail</b> and supports temporal queries (what was the state at time X?).<br/>
+</p>
+
+<h3>✅ Benefits</h3>
+<p>
+- Auditability: Full history of changes.<br/>
+- Debugging: Replay events to reproduce issues.<br/>
+- Flexibility: Rebuild state in new ways (e.g., projections).<br/>
+</p>
+
+<h2>3. CQRS + Event Sourcing Together</h2>
+<p>
+CQRS and Event Sourcing complement each other:
+</p>
+<p>
+- Commands generate <b>events</b>.<br/>
+- Events are stored in an <b>event store</b>.<br/>
+- Query side builds <b>projections</b> from events for fast reads.<br/>
+</p>
+
+<h2>4. Example in .NET</h2>
+<pre><code class="language-csharp"><code class="csharp">
+// Command
+public record PlaceOrderCommand(Guid OrderId, string Product);
+
+// Event
+public record OrderPlacedEvent(Guid OrderId, string Product);
+
+// Command Handler
+public class PlaceOrderHandler
+{
+    private readonly IEventStore _eventStore;
+    public PlaceOrderHandler(IEventStore eventStore) => _eventStore = eventStore;
+
+    public async Task Handle(PlaceOrderCommand command)
+    {
+        var evt = new OrderPlacedEvent(command.OrderId, command.Product);
+        await _eventStore.AppendAsync(evt);
+    }
+}
+
+// Query Projection
+public class OrderProjection
+{
+    private readonly List&lt;OrderPlacedEvent&gt; _events;
+    public OrderProjection(IEnumerable&lt;OrderPlacedEvent&gt; events) => _events = events.ToList();
+
+    public IEnumerable&lt;string&gt; GetProducts() =&gt; _events.Select(e =&gt; e.Product);
+}
+</code></code></pre>
+
+<h2>5. Best Practices</h2>
+<p>
+- Use CQRS only when complexity justifies it.<br/>
+- Ensure events are <b>immutable and versioned</b>.<br/>
+- Keep projections <b>eventually consistent</b>.<br/>
+- Use <b>idempotent handlers</b> to handle retries safely.<br/>
+</p>
+
+<h2>6. Interview Insight</h2>
+<p>
+In interviews, emphasize that CQRS separates <b>read and write concerns</b>, while Event Sourcing ensures 
+<b>auditability and replayability</b>. Highlight how they work together: commands produce events, 
+events are stored, and queries build projections. Mention practical experience with <b>event stores, 
+projections, and eventual consistency</b>. Demonstrating awareness of <b>trade-offs</b> (added complexity vs scalability and auditability) 
+shows maturity in architectural decision-making.
+</p>
+</details>
+<details>
+  <summary>CAP Theorem and Its Relevance</summary>
+  
+
+<h2>1. What Is CAP Theorem?</h2>
+<p>
+The <b>CAP theorem</b> states that in a distributed system, you can only guarantee 
+two out of three properties at the same time: <b>Consistency, Availability, and Partition Tolerance</b>.
+</p>
+
+<h2>2. The Three Properties</h2>
+<p>
+- <b>Consistency (C):</b> Every read receives the most recent write. All nodes see the same data.<br/>
+- <b>Availability (A):</b> Every request receives a response, even if some nodes are down.<br/>
+- <b>Partition Tolerance (P):</b> The system continues to operate despite network partitions or failures.<br/>
+</p>
+
+<h2>3. Trade-Offs</h2>
+<p>
+- <b>CP (Consistency + Partition Tolerance):</b> Prioritizes accuracy of data, may sacrifice availability during partitions.<br/>
+- <b>AP (Availability + Partition Tolerance):</b> Prioritizes responsiveness, may return stale data.<br/>
+- <b>CA (Consistency + Availability):</b> Only possible if there are no partitions, which is unrealistic in distributed systems.<br/>
+</p>
+
+<h2>4. Examples</h2>
+<p>
+- <b>CP Systems:</b> Traditional RDBMS, MongoDB (in certain configurations).<br/>
+- <b>AP Systems:</b> Cassandra, DynamoDB, CouchDB.<br/>
+- <b>CA Systems:</b> Rare in practice, as real-world networks always risk partitions.<br/>
+</p>
+
+<h2>5. Relevance in Modern Architectures</h2>
+<p>
+- <b>NoSQL Databases:</b> Often choose AP for availability and scalability.<br/>
+- <b>Financial Systems:</b> Often choose CP to ensure strict consistency.<br/>
+- <b>Cloud-Native Applications:</b> Must tolerate partitions, so they balance between AP and CP depending on business needs.<br/>
+- <b>Microservices:</b> CAP guides whether services should fail fast (consistency focus) or degrade gracefully (availability focus).<br/>
+</p>
+
+<h2>6. Interview Insight</h2>
+<p>
+In interviews, emphasize that CAP theorem is about <b>trade-offs in distributed systems</b>. 
+Highlight that partition tolerance is unavoidable, so the real choice is between <b>consistency and availability</b>. 
+Mention practical examples like <b>Cassandra (AP)</b> vs <b>MongoDB (CP)</b>, and explain how business requirements 
+drive the choice. Demonstrating awareness of <b>real-world implications</b> (e.g., financial transactions vs social media feeds) 
+shows maturity in system design thinking.
+</p>
+</details>
+<details>
+  <summary>Distributed Transactions</summary>
+  
+
+
+    <h1>Distributed Transactions</h1>
+    <p>When you move from a monolithic architecture to microservices, a single business action often needs to update multiple independent databases. In a monolith, this is easy—the database handles it via local transactions (ACID). But in a distributed system, ensuring that either <em>all</em> services update their databases or <em>none</em> do is a massive challenge.</p>
+    
+    <blockquote>
+        A <strong>Distributed Transaction</strong> is a set of operations that spans across two or more independent databases, applications, or network nodes, which must be executed with the guarantee of data consistency.
+    </blockquote>
+
+    <hr>
+
+    <section>
+        <h2>1. Two-Phase Commit (2PC)</h2>
+        <p>The Two-Phase Commit (2PC) protocol is a <strong>synchronous, blocking</strong> protocol that ensures all participating databases either commit or abort a transaction together. It relies on a central coordinator component.</p>
+        
+        <h3>Phase 1: Prepare Phase (Voting)</h3>
+        <ul>
+            <li>The <strong>Coordinator</strong> sends a <code>Prepare</code> message to all participating services (Cohorts).</li>
+            <li>Each participant executes the transaction locally up to the point of committing, locks the necessary database rows, and writes to its undo/redo logs.</li>
+            <li>If successful, the participant replies with a <strong>VOTE_COMMIT</strong>. If it fails (e.g., due to a constraint violation or a lock timeout), it replies with a <strong>VOTE_ABORT</strong>.</li>
+        </ul>
+
+        <h3>Phase 2: Commit Phase (Execution)</h3>
+        <ul>
+            <li><strong>If all participants voted to commit:</strong> The coordinator sends a <code>Global Commit</code> command. The participants make the changes permanent, release their locks, and reply with an acknowledgment.</li>
+            <li><strong>If any participant voted to abort (or timed out):</strong> The coordinator sends a <code>Global Abort</code> command. All participants roll back their local changes using the undo logs and release their locks.</li>
+        </ul>
+
+        <pre><code class="language-csharp">[Coordinator] --------(1. Prepare)--------> [Service A] & [Service B]
+[Coordinator] <-----(2. Vote Commit)------ [Service A] & [Service B]
+
+[Coordinator] --------(3. Global Commit)---> [Service A] & [Service B]</code></pre>
+
+        <h3>The Catch: Why it's rarely used in microservices</h3>
+        <ul>
+            <li><strong>Blocking Nature:</strong> Participants hold database locks from the start of Phase 1 until they receive the final decision in Phase 2. If the coordinator crashes mid-way, participants are left in limbo, holding locks indefinitely, which can paralyze the system.</li>
+            <li><strong>Performance Bottleneck:</strong> It is highly synchronous. The slowest database or network lag dictates the entire transaction speed.</li>
+            <li><strong>CAP Theorem:</strong> 2PC prioritizes <strong>Consistency</strong> over <strong>Availability</strong>.</li>
+        </ul>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>2. The Saga Pattern</h2>
+        <p>Because 2PC doesn't scale well across microservices, the <strong>Saga Pattern</strong> is the preferred modern alternative. Instead of using global technical locks, a Saga breaks a distributed transaction into a sequence of <strong>local transactions</strong>.</p>
+        <p>Each service performs its own local transaction and publishes an event. If a step fails, the Saga executes <strong>Compensating Transactions</strong> backward to undo the changes made by the previous steps (e.g., if step 3 fails, it runs compensating actions for step 2 and step 1).</p>
+        <p>There are two primary ways to implement a Saga: <strong>Orchestration</strong> and <strong>Choreography</strong>.</p>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>A. Saga Orchestration (Centralized Control)</h2>
+        <p>In an orchestrated Saga, a centralized service—the <strong>Orchestrator</strong> (or Saga Manager)—acts as the brain. It tells each participant exactly what local transaction to execute and when.</p>
+        
+        <h3>How it works (Example: E-commerce Order)</h3>
+        <ol>
+            <li>The <strong>Order Service</strong> creates a pending order and kicks off the <strong>Order Orchestrator</strong>.</li>
+            <li>The Orchestrator sends a command to the <strong>Payment Service</strong>: <em>"Deduct Money"</em>.</li>
+            <li>Payment Service succeeds and replies to the Orchestrator: <em>"Money Deducted"</em>.</li>
+            <li>The Orchestrator sends a command to the <strong>Inventory Service</strong>: <em>"Reserve Items"</em>.</li>
+            <li>If Inventory fails (out of stock), it replies: <em>"Inventory Failed"</em>.</li>
+            <li>The Orchestrator initiates rollback by sending a compensating command to the <strong>Payment Service</strong>: <em>"Refund Money"</em>.</li>
+        </ol>
+
+        <div class="pro-con">
+            <div>
+                <strong>Pros:</strong>
+                <ul>
+                    <li><strong>Centralized Logic:</strong> It’s easy to see the entire workflow and state of the transaction in one place.</li>
+                    <li><strong>Low Coupling:</strong> Participants only know about the orchestrator; they don’t need to know about each other.</li>
+                    <li><strong>Easy Debugging:</strong> Step-by-step execution tracking makes troubleshooting much simpler.</li>
+                </ul>
+            </div>
+            <div>
+                <strong>Cons:</strong>
+                <ul>
+                    <li><strong>Single Point of Failure/Bottleneck:</strong> If the orchestrator goes down, the business process stalls.</li>
+                    <li><strong>Over-centralization:</strong> There's a risk of turning the orchestrator into a monolithic "god object" that holds all the business logic, reducing services to simple anemic data stores.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>B. Saga Choreography (Decentralized Event-Driven)</h2>
+        <p>In a choreographed Saga, there is no central controller. Instead, participants interact implicitly by publishing and reacting to events via a message broker (like Kafka or RabbitMQ). Each service knows what to do next by listening to the events emitted by other services.</p>
+        
+        <h3>How it works (Same E-commerce Example)</h3>
+        <ol>
+            <li><strong>Order Service</strong> creates an order and publishes an event: <code>Order_Created</code>.</li>
+            <li><strong>Payment Service</strong> listens for <code>Order_Created</code>, processes the payment, and emits: <code>Payment_Successful</code>.</li>
+            <li><strong>Inventory Service</strong> listens for <code>Payment_Successful</code>, checks stock, realizes it's empty, and emits: <code>Inventory_Failed</code>.</li>
+            <li><strong>Payment Service</strong> listens for <code>Inventory_Failed</code> and triggers its local compensation: <em>"Refund Money"</em>, then emits <code>Payment_Refunded</code>.</li>
+            <li><strong>Order Service</strong> listens for <code>Payment_Refunded</code> and updates the order status to <code>Cancelled</code>.</li>
+        </ol>
+
+        <div class="pro-con">
+            <div>
+                <strong>Pros:</strong>
+                <ul>
+                    <li><strong>High Decoupling:</strong> Services don't even know other services exist; they only interact with the event stream.</li>
+                    <li><strong>No Single Point of Failure:</strong> Highly distributed, responsive, and natural for event-driven architectures.</li>
+                    <li><strong>Performance:</strong> Exceptional throughput because processing is entirely asynchronous.</li>
+                </ul>
+            </div>
+            <div>
+                <strong>Cons:</strong>
+                <ul>
+                    <li><strong>High Complexity:</strong> It is difficult to track which service is currently processing what, making the overall business flow hard to visualize.</li>
+                    <li><strong>Cyclic Dependency Risk:</strong> Without careful design, services can easily end up waiting on events from each other in a circular loop.</li>
+                    <li><strong>Difficult Testing/Debugging:</strong> Simulating a failure across a chain of multiple asynchronous event-handlers requires complex integration testing setups.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>Direct Comparison</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Two-Phase Commit (2PC)</th>
+                    <th>Saga Orchestration</th>
+                    <th>Saga Choreography</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Type</strong></td>
+                    <td>Synchronous & Blocking</td>
+                    <td>Asynchronous & Non-blocking</td>
+                    <td>Asynchronous & Non-blocking</td>
+                </tr>
+                <tr>
+                    <td><strong>Consistency</strong></td>
+                    <td>Strong Consistency (ACID)</td>
+                    <td>Eventual Consistency (BASE)</td>
+                    <td>Eventual Consistency (BASE)</td>
+                </tr>
+                <tr>
+                    <td><strong>Control</strong></td>
+                    <td>Central Coordinator</td>
+                    <td>Central Orchestrator</td>
+                    <td>Decentralized (Events)</td>
+                </tr>
+                <tr>
+                    <td><strong>Data Isolation</strong></td>
+                    <td>High (Locks database rows)</td>
+                    <td>Low (Changes visible immediately)</td>
+                    <td>Low (Changes visible immediately)</td>
+                </tr>
+                <tr>
+                    <td><strong>Best Used For</strong></td>
+                    <td>Critical financial ledgers, monolithic DBs</td>
+                    <td>Complex workflows with many steps</td>
+                    <td>Simple, highly scalable event-driven flows</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+</details>
+<details>
+  <summary>Designing for Resiliency in Cloud Applications</summary>
+  
+
+<h2>1. What Is Resiliency?</h2>
+<p>
+Resiliency means building cloud applications that can <b>withstand failures, recover gracefully, and continue operating</b> 
+without major disruption. It ensures reliability even when components fail, networks partition, or external dependencies 
+become unstable.
+</p>
+
+<h2>2. Core Principles</h2>
+<p>
+- <b>Fault Tolerance:</b> System continues working despite component failures.<br/>
+- <b>Graceful Degradation:</b> Reduce functionality instead of complete failure.<br/>
+- <b>Self-Healing:</b> Automatically detect and recover from issues.<br/>
+- <b>Redundancy:</b> Multiple instances or backups to ensure availability.<br/>
+</p>
+
+<h2>3. Resiliency Patterns</h2>
+<p>
+- <b>Retry with Exponential Backoff:</b> Handle transient failures.<br/>
+- <b>Circuit Breaker:</b> Prevent cascading failures by failing fast.<br/>
+- <b>Bulkhead Isolation:</b> Isolate components to prevent widespread impact.<br/>
+- <b>Fallbacks:</b> Provide alternative responses when dependencies fail.<br/>
+- <b>Timeouts:</b> Avoid hanging requests.<br/>
+</p>
+
+<h2>4. Cloud-Native Techniques</h2>
+<p>
+- <b>Auto-Scaling:</b> Adjust resources dynamically to handle load spikes.<br/>
+- <b>Multi-Region Deployment:</b> Ensure availability during regional outages.<br/>
+- <b>Geo-Redundant Storage:</b> Protect against data loss.<br/>
+- <b>Managed Services:</b> Use cloud-native services with built-in resiliency (e.g., Azure SQL with geo-replication).<br/>
+- <b>Observability:</b> Monitor with logs, metrics, and distributed tracing.<br/>
+</p>
+
+<h2>5. Example in .NET + Azure</h2>
+<pre><code class="language-csharp"><code class="csharp">
+// Using Polly for resilience
+var policy = Policy
+    .Handle&lt;HttpRequestException&gt;()
+    .WaitAndRetryAsync(
+        retryCount: 3,
+        sleepDurationProvider: attempt =&gt; TimeSpan.FromSeconds(Math.Pow(2, attempt))
+    );
+
+await policy.ExecuteAsync(() =&gt; httpClient.GetAsync("https://external-api"));
+</code></code></pre>
+
+<h2>6. Best Practices</h2>
+<p>
+- Design apps to be <b>stateless</b> for easier scaling.<br/>
+- Use <b>health checks</b> and <b>auto-restart policies</b> in Kubernetes.<br/>
+- Regularly test <b>chaos engineering</b> scenarios (e.g., with Azure Chaos Studio).<br/>
+- Define <b>SLA, RTO, and RPO</b> targets.<br/>
+- Automate <b>failover and recovery</b> processes.<br/>
+</p>
+
+<h2>7. Interview Insight</h2>
+<p>
+In interviews, emphasize that resiliency is about <b>absorbing shocks and continuing operations</b>. 
+Highlight practical patterns like <b>retry, circuit breaker, and bulkhead isolation</b>, and mention 
+cloud-native strategies such as <b>multi-region deployments, auto-scaling, and chaos testing</b>. 
+Demonstrating awareness of <b>trade-offs</b> (e.g., cost vs resiliency) shows maturity in designing 
+robust cloud applications.
+</p>
+</details>
+
+<details>
+<summary>Async API Failures and Retry Strategy</summary>
+<p>
+
+<h2>1. The Setup</h2>
+<p>
+Imagine you call three external APIs in parallel using <code>Task.WhenAll(api1, api2, api3)</code>.  
+If <b>API2 fails</b>, you need to identify which one failed and then decide: retry only API2, or retry all three again?
+</p>
+
+<h2>2. Identifying Which API Failed</h2>
+<p>
+When you use <code>Task.WhenAll</code>, if any task fails, the returned task is faulted with an <code>AggregateException</code>.  
+Each inner exception corresponds to the failed task. You can inspect which task failed by checking <code>task.Exception.InnerExceptions</code> or by wrapping each call in its own <code>try/catch</code>.
+</p>
+
+<pre><code class="language-csharp">
+var api1Task = CallApi1Async();
+var api2Task = CallApi2Async();
+var api3Task = CallApi3Async();
+
+try
+{
+    await Task.WhenAll(api1Task, api2Task, api3Task);
+}
+catch
+{
+    if (api2Task.IsFaulted)
+    {
+        Console.WriteLine("API2 failed: " + api2Task.Exception?.Message);
+    }
+}
+</code></pre>
+
+<h2>3. Retry Strategy Options</h2>
+<h3>a) Retry Only the Failed API</h3>
+<ul>
+  <li><b>Pros:</b> Saves time and resources.</li>
+  <li><b>Cons:</b> Must ensure partial retries still combine results correctly.</li>
+</ul>
+
+<h3>b) Retry All APIs Together</h3>
+<ul>
+  <li><b>Pros:</b> Simpler logic, ensures consistency if APIs depend on each other.</li>
+  <li><b>Cons:</b> Wastes resources if API1 and API3 already succeeded.</li>
+</ul>
+
+<h2>4. Best Practice</h2>
+<ul>
+  <li><b>Independent APIs:</b> Retry only the failed one.</li>
+  <li><b>Dependent APIs:</b> Retry all together for consistency.</li>
+  <li>Use a resilience library like <b>Polly</b> to implement retry policies per API call.</li>
+  <li>Combine with <b>circuit breaker</b> so you don’t hammer a failing API repeatedly.</li>
+</ul>
+
+<h2>5. Example with Polly</h2>
+<pre><code class="language-csharp">
+var retryPolicy = Policy
+    .Handle<HttpRequestException>()
+    .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+
+var api1Task = retryPolicy.ExecuteAsync(() => CallApi1Async());
+var api2Task = retryPolicy.ExecuteAsync(() => CallApi2Async());
+var api3Task = retryPolicy.ExecuteAsync(() => CallApi3Async());
+
+await Task.WhenAll(api1Task, api2Task, api3Task);
+</code></pre>
+<p>
+Here, each API has its own retry logic. If API2 fails, only API2 retries — API1 and API3 are unaffected.
+</p>
+
+<h2>6. Interview Insight</h2>
+<p>
+“When calling multiple APIs in parallel, you can identify which one failed by checking the faulted tasks after <code>Task.WhenAll</code>.  
+If APIs are independent, retry only the failed one using a retry policy.  
+If they’re dependent, retry all together for consistency.  
+Libraries like Polly make it easy to apply per‑API retry, exponential backoff, and circuit breakers.”
+</p>
+
+</p>
+</details>
+
+
+<details>
+<summary>Dependent Async Calls with Retry and Logging</summary>
+<p>
+
+<h2>1. Scenario</h2>
+<p>
+You have multiple async calls where one depends on the result of another:
+<ul>
+  <li><b>API1:</b> Get customer details</li>
+  <li><b>API2:</b> Get customer’s orders (requires customer ID from API1)</li>
+  <li><b>API3:</b> Get shipping info (requires order ID from API2)</li>
+</ul>
+Because of dependencies, these calls must be executed sequentially with <code>await</code>.
+</p>
+
+<h2>2. Sequential Awaits</h2>
+<p>
+Dependent calls cannot run in parallel. You must <code>await</code> each one before starting the next.  
+If API1 fails, API2 and API3 cannot even start.
+</p>
+
+<h2>3. Code Example with Retry and Logging</h2>
+<pre><code class="language-csharp">
+public async Task<CustomerShippingInfo> GetCustomerShippingAsync(int customerId)
+{
+    // Define a retry policy for each call (Polly)
+    var retryPolicy = Policy
+        .Handle<HttpRequestException>()
+        .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+            (exception, timespan, retryCount, context) =>
+            {
+                Console.WriteLine($"Retry {retryCount} due to: {exception.Message}");
+            });
+
+    try
+    {
+        // Step 1: Call API1 with retry and logging
+        var customer = await retryPolicy.ExecuteAsync(async () =>
+        {
+            try
+            {
+                return await GetCustomerDetailsAsync(customerId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"API1 failed: {ex.Message}");
+                throw;
+            }
+        });
+
+        // Step 2: Call API2 (depends on API1 result)
+        var orders = await retryPolicy.ExecuteAsync(async () =>
+        {
+            try
+            {
+                return await GetCustomerOrdersAsync(customer.Id);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"API2 failed: {ex.Message}");
+                throw;
+            }
+        });
+
+        // Step 3: Call API3 (depends on API2 result)
+        var shipping = await retryPolicy.ExecuteAsync(async () =>
+        {
+            try
+            {
+                return await GetShippingInfoAsync(orders.First().OrderId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"API3 failed: {ex.Message}");
+                throw;
+            }
+        });
+
+        return new CustomerShippingInfo(customer, orders, shipping);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Failure in dependent chain: {ex.Message}");
+        throw;
+    }
+}
+</code></pre>
+
+<h2>4. Key Practices</h2>
+<ul>
+  <li><b>Sequential awaits:</b> Each dependent call waits for the previous one.</li>
+  <li><b>Try/catch per call:</b> Handle failures gracefully at each stage.</li>
+  <li><b>Retry policies per call:</b> Apply Polly retry individually, not globally.</li>
+  <li><b>Logging:</b> Log failures and retries for observability and debugging.</li>
+</ul>
+
+<h2>5. Interview Insight</h2>
+<p>
+“In dependent async chains, you must use sequential awaits. If API1 fails, API2 and API3 cannot run.  
+Wrap each call in try/catch to log failures, and apply retry policies per call so only the failed call retries.  
+This ensures resilience without re‑executing successful calls, and observability through logging makes debugging easier.”
+</p>
+
+</p>
+</details>
 <!-- Microservices -->
 <h2 id="microservices">Microservices</h2>
-<details><summary>Service Discovery</summary></details>
-<details><summary>Circuit Breaker Pattern</summary></details>
-<details><summary>Distributed Logging</summary></details>
-<details><summary>Securing Inter-Service Communication</summary></details>
-<details><summary>API Gateway Role</summary></details>
-<details><summary>Eventual Consistency</summary></details>
-<details><summary>Duplicate Message Handling</summary></details>
-<details><summary>Distributed Tracing</summary></details>
-<details><summary>Service Mesh in Kubernetes</summary></details>
-<details><summary>Monitoring Microservices with Grafana & Kibana</summary></details>
+<details>
+  <summary>Implementing Service Discovery in Microservices</summary>
+  
+
+<h2>1. What is Service Discovery?</h2>
+<p>
+<b>Service Discovery</b> is the mechanism by which microservices automatically locate and communicate with each other without hardcoding network addresses. 
+It is essential in dynamic environments (like Kubernetes or cloud platforms) where services scale up/down and IPs change frequently.
+</p>
+
+<h2>2. Approaches to Service Discovery</h2>
+<ul>
+  <li><b>Client-Side Discovery:</b> Clients query a service registry (e.g., Consul, Eureka) to find service instances and then call them directly.</li>
+  <li><b>Server-Side Discovery:</b> Clients send requests to a load balancer or API gateway, which queries the registry and routes requests to the appropriate service.</li>
+</ul>
+
+<h2>3. Common Tools</h2>
+<ul>
+  <li><b>Consul:</b> Provides service registry, health checks, and key-value store.</li>
+  <li><b>Eureka (Netflix OSS):</b> Popular in Spring Cloud ecosystems.</li>
+  <li><b>Kubernetes:</b> Built-in service discovery using DNS and service objects.</li>
+  <li><b>Azure Service Fabric / AWS Cloud Map:</b> Cloud-native service discovery solutions.</li>
+</ul>
+
+<h2>4. Implementation Example: Using Consul</h2>
+<pre><code class="language-csharp">
+// Register service with Consul (JSON definition)
+{
+  "ID": "orders-service-1",
+  "Name": "orders-service",
+  "Address": "10.0.0.5",
+  "Port": 5000,
+  "Check": {
+    "HTTP": "http://10.0.0.5:5000/health",
+    "Interval": "10s"
+  }
+}
+
+// Client queries Consul for "orders-service"
+// Consul returns available instances with health status
+</code></pre>
+
+<h2>5. Implementation Example: Kubernetes</h2>
+<pre><code class="language-csharp">
+// Define a service in Kubernetes
+apiVersion: v1
+kind: Service
+metadata:
+  name: orders-service
+spec:
+  selector:
+    app: orders
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+
+// Clients can access via DNS: orders-service.default.svc.cluster.local
+</code></pre>
+
+<h2>6. Best Practices</h2>
+<ul>
+  <li>Use health checks to ensure only healthy instances are discoverable.</li>
+  <li>Combine service discovery with load balancing for resilience.</li>
+  <li>Secure service registry with authentication and TLS.</li>
+  <li>Automate registration/deregistration during deployments.</li>
+  <li>Monitor registry health to avoid cascading failures.</li>
+</ul>
+
+<h2>7. Interview Insight</h2>
+<p>
+👉 Service discovery in microservices is about <b>dynamic service registration and lookup</b>. 
+Emphasize the difference between client-side and server-side discovery, mention tools like <b>Consul, Eureka, Kubernetes DNS</b>, and highlight best practices such as health checks and secure registries. 
+This shows both architectural understanding and practical implementation knowledge.
+</p>
+</details>
+<details>
+  <summary>Circuit Breaker Pattern in Microservices</summary>
+  
+
+<h2>1. What is the Circuit Breaker Pattern?</h2>
+<p>
+The <b>Circuit Breaker</b> pattern is a resilience strategy used in distributed systems to prevent cascading failures. 
+It monitors calls to external services and "opens" the circuit if failures exceed a threshold, temporarily blocking further calls until the service recovers.
+</p>
+
+<h2>2. Why Use It?</h2>
+<ul>
+  <li>Protects the system from repeated failures when a dependency is down.</li>
+  <li>Prevents resource exhaustion (threads, memory, CPU).</li>
+  <li>Improves fault tolerance and user experience by failing fast.</li>
+</ul>
+
+<h2>3. States of a Circuit Breaker</h2>
+<ul>
+  <li><b>Closed:</b> Normal operation. Requests flow through. Failures are counted.</li>
+  <li><b>Open:</b> The circuit trips after threshold failures. Requests are blocked immediately.</li>
+  <li><b>Half-Open:</b> After a timeout, a limited number of test requests are allowed. If successful, the circuit closes; if not, it reopens.</li>
+</ul>
+
+<h2>4. Example in .NET with Polly</h2>
+<pre><code class="language-csharp">
+using Polly;
+using Polly.CircuitBreaker;
+
+var circuitBreakerPolicy = Policy
+    .Handle&lt;HttpRequestException&gt;()
+    .CircuitBreaker(
+        exceptionsAllowedBeforeBreaking: 3,
+        durationOfBreak: TimeSpan.FromSeconds(30)
+    );
+
+try
+{
+    circuitBreakerPolicy.Execute(() =>
+    {
+        // Call external API
+        var response = httpClient.GetAsync("https://external-service/api/data").Result;
+        response.EnsureSuccessStatusCode();
+    });
+}
+catch (BrokenCircuitException)
+{
+    Console.WriteLine("Circuit is open. Failing fast.");
+}
+</code></pre>
+
+<h2>5. Business Scenario Example</h2>
+<p>
+Imagine an immigration service API that frequently becomes unstable. 
+Instead of retrying endlessly and slowing down the system, the circuit breaker blocks calls once failures exceed a threshold. 
+After a cooldown period, it allows test calls to check if the API is healthy again.
+</p>
+
+<h2>6. Best Practices</h2>
+<ul>
+  <li>Combine with <b>Retry</b> policies for transient failures.</li>
+  <li>Log and monitor circuit breaker state changes.</li>
+  <li>Use fallback responses (e.g., cached data, default values).</li>
+  <li>Configure thresholds carefully to balance resilience and availability.</li>
+</ul>
+
+<h2>7. Interview Insight</h2>
+<p>
+👉 The Circuit Breaker pattern prevents cascading failures by <b>failing fast</b> when a dependency is down. 
+In interviews, emphasize the three states (Closed, Open, Half-Open), mention libraries like <b>Polly in .NET</b>, and highlight how it improves resilience in microservices.
+</p>
+</details>
+<details>
+  <summary>Distributed Logging in Microservices</summary>
+  
+
+<h2>1. Why Distributed Logging?</h2>
+<p>
+In microservices, logs are spread across multiple services running on different nodes. 
+<b>Distributed logging</b> centralizes these logs to provide visibility, traceability, and debugging capabilities across the entire system.
+</p>
+
+<h2>2. Challenges</h2>
+<ul>
+  <li>Logs scattered across multiple services and servers.</li>
+  <li>Difficulty in correlating logs for a single request.</li>
+  <li>High volume of logs in large-scale systems.</li>
+  <li>Ensuring consistency and structured formats.</li>
+</ul>
+
+<h2>3. Strategies for Distributed Logging</h2>
+<ul>
+  <li><b>Centralized Log Aggregation:</b> Collect logs from all services into a single system (e.g., ELK stack, Splunk, Azure Monitor).</li>
+  <li><b>Structured Logging:</b> Use JSON or key-value formats for machine readability.</li>
+  <li><b>Correlation IDs:</b> Attach a unique ID to each request and propagate it across services to trace end-to-end flows.</li>
+  <li><b>Log Levels:</b> Define consistent log levels (Info, Debug, Error, Critical) across services.</li>
+  <li><b>Distributed Tracing:</b> Combine logs with tracing tools (e.g., OpenTelemetry, Jaeger, Zipkin) for deeper insights.</li>
+  <li><b>Cloud-Native Solutions:</b> Use managed services like Azure Application Insights, AWS CloudWatch, or GCP Stackdriver.</li>
+</ul>
+
+<h2>4. Example: Using Serilog + ELK Stack</h2>
+<pre><code class="language-csharp">
+// Configure Serilog in Program.cs
+Log.Logger = new LoggerConfiguration()
+    .Enrich.WithProperty("Application", "OrderService")
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri("http://localhost:9200"))
+    {
+        AutoRegisterTemplate = true,
+        IndexFormat = "orderservice-logs-{0:yyyy.MM}"
+    })
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+</code></pre>
+<p>
+👉 Logs are sent to Elasticsearch, visualized in Kibana, and correlated using request IDs.
+</p>
+
+<h2>5. Best Practices</h2>
+<ul>
+  <li>Use <b>correlation IDs</b> for tracing requests across services.</li>
+  <li>Adopt <b>structured logging</b> for consistency.</li>
+  <li>Implement <b>log rotation and retention policies</b> to manage storage.</li>
+  <li>Secure logs (mask sensitive data like passwords, tokens).</li>
+  <li>Integrate logs with monitoring and alerting systems.</li>
+</ul>
+
+<h2>6. Interview Insight</h2>
+<p>
+👉 Distributed logging is about <b>centralization, correlation, and observability</b. 
+In interviews, emphasize the use of <b>correlation IDs</b>, structured logging, and log aggregation tools like ELK, Splunk, or cloud-native solutions. 
+Highlight how logging integrates with distributed tracing for complete observability in microservices.
+</p>
+</details>
+<details>
+  <summary>Securing Inter-Service Communication in Microservices</summary>
+  
+
+<h2>1. Why Secure Inter-Service Communication?</h2>
+<p>
+In a microservices architecture, services often communicate over the network. 
+Without proper security, attackers could intercept, spoof, or tamper with messages. 
+Securing inter-service communication ensures confidentiality, integrity, and trust between services.
+</p>
+
+<h2>2. Key Strategies</h2>
+<ul>
+  <li><b>Mutual TLS (mTLS):</b> Both client and server authenticate each other using certificates. Ensures encrypted communication and prevents impersonation.</li>
+  <li><b>Service Mesh:</b> Tools like Istio, Linkerd, or Consul automatically enforce mTLS, traffic policies, and observability across services.</li>
+  <li><b>API Gateway:</b> Acts as a secure entry point, enforcing authentication, authorization, and rate limiting before requests reach services.</li>
+  <li><b>Token-Based Authentication:</b> Use JWT or OAuth2 tokens for identity propagation between services.</li>
+  <li><b>Network Policies:</b> Restrict which services can talk to each other using Kubernetes Network Policies or cloud VNet rules.</li>
+  <li><b>Encryption:</b> Always encrypt data in transit (TLS 1.2+). For sensitive data, also encrypt at rest.</li>
+  <li><b>Zero-Trust Principles:</b> Never assume trust between services; every request must be authenticated and authorized.</li>
+</ul>
+
+<h2>3. Example: Mutual TLS in Kubernetes</h2>
+<pre><code class="language-csharp">
+// Service A calls Service B
+// Both present certificates signed by a trusted CA
+// Communication is encrypted and authenticated
+
+Service A ----mTLS----> Service B
+</code></pre>
+
+<h2>4. Example: JWT Propagation</h2>
+<pre><code class="language-csharp">
+// Service A receives a JWT from API Gateway
+// It forwards the JWT when calling Service B
+// Service B validates the token before processing
+
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+</code></pre>
+
+<h2>5. Best Practices</h2>
+<ul>
+  <li>Automate certificate rotation and renewal.</li>
+  <li>Use a service mesh for consistent enforcement of security policies.</li>
+  <li>Implement fine-grained RBAC (Role-Based Access Control).</li>
+  <li>Log and monitor inter-service traffic for anomalies.</li>
+  <li>Apply defense-in-depth: combine mTLS, tokens, and network policies.</li>
+</ul>
+
+<h2>6. Interview Insight</h2>
+<p>
+👉 Securing inter-service communication involves <b>mTLS for encryption and authentication</b>, 
+<b>JWT/OAuth2 for identity propagation</b>, and <b>network policies for isolation</b>. 
+In interviews, emphasize <b>Zero-Trust principles</b> — every request must be verified, even between internal services.
+</p>
+</details>
+<details>
+  <summary>API Gateway Role</summary>
+  
+
+<h2>1. What is an API Gateway?</h2>
+<p>
+An <b>API Gateway</b> is a single entry point that sits between clients and microservices. 
+It routes requests, enforces policies, and provides cross-cutting concerns like security, monitoring, and rate limiting. 
+Think of it as the "front door" to your microservices ecosystem.
+</p>
+
+<h2>2. Key Responsibilities</h2>
+<ul>
+  <li><b>Request Routing:</b> Directs client requests to the appropriate microservice.</li>
+  <li><b>Authentication & Authorization:</b> Validates tokens (e.g., JWT, OAuth2) and enforces access control.</li>
+  <li><b>Rate Limiting & Throttling:</b> Protects services from overload by limiting requests per client.</li>
+  <li><b>Load Balancing:</b> Distributes traffic across multiple service instances.</li>
+  <li><b>Protocol Translation:</b> Converts between protocols (e.g., HTTP ↔ gRPC, WebSockets).</li>
+  <li><b>Caching:</b> Stores frequently accessed responses to improve performance.</li>
+  <li><b>Monitoring & Logging:</b> Collects metrics and logs for observability.</li>
+  <li><b>Request/Response Transformation:</b> Modifies headers, payloads, or formats before forwarding.</li>
+</ul>
+
+<h2>3. Example Flow</h2>
+<pre><code class="language-csharp">
+Client → API Gateway → Authentication → Routing → Microservice → Response
+</code></pre>
+
+<h2>4. Common Tools</h2>
+<ul>
+  <li><b>YARP (ASP.NET Core):</b> Lightweight reverse proxy for .NET applications.</li>
+  <li><b>NGINX / Kong:</b> Popular open-source gateways with plugin ecosystems.</li>
+  <li><b>Azure API Management:</b> Cloud-native API gateway with enterprise features.</li>
+  <li><b>Istio (Service Mesh):</b> Provides gateway + service-to-service security.</li>
+</ul>
+
+<h2>5. Benefits</h2>
+<ul>
+  <li>Simplifies client communication by exposing a unified API surface.</li>
+  <li>Centralizes cross-cutting concerns (security, logging, throttling).</li>
+  <li>Improves scalability and resilience.</li>
+  <li>Enables versioning and backward compatibility strategies.</li>
+</ul>
+
+<h2>6. Interview Insight</h2>
+<p>
+👉 In microservices, the API Gateway is crucial for <b>routing, security, and observability</b>. 
+In interviews, emphasize that it reduces complexity for clients, enforces policies centrally, and integrates with service discovery and load balancing. 
+It’s the backbone of secure and manageable inter-service communication.
+</p>
+</details>
+<details>
+  <summary>Eventual Consistency</summary>
+  
+
+<h2>1. What Is Eventual Consistency?</h2>
+<p>
+Eventual consistency is a consistency model used in distributed systems where updates 
+to data are not immediately visible across all nodes, but the system guarantees that 
+<b>given enough time, all replicas will converge to the same state</b>.
+</p>
+
+<h2>2. Why Use Eventual Consistency?</h2>
+<p>
+- Enables <b>high availability</b> under the CAP theorem.<br/>
+- Improves <b>performance and scalability</b> by avoiding strict synchronization.<br/>
+- Suitable for systems where <b>temporary stale reads</b> are acceptable (e.g., social feeds).<br/>
+</p>
+
+<h2>3. Techniques to Handle Eventual Consistency</h2>
+
+<h3>Idempotency</h3>
+<p>
+Ensure operations can be retried safely without side effects. Critical for handling 
+duplicate or delayed messages.
+</p>
+
+<h3>Conflict Resolution</h3>
+<p>
+- <b>Last Write Wins (LWW):</b> Use timestamps to resolve conflicts.<br/>
+- <b>Custom Merge Logic:</b> Apply domain-specific rules (e.g., sum counters).<br/>
+- <b>CRDTs (Conflict-Free Replicated Data Types):</b> Mathematical structures that 
+merge consistently across replicas.<br/>
+</p>
+
+<h3>Asynchronous Messaging</h3>
+<p>
+Use message queues (Kafka, RabbitMQ, Azure Service Bus) to propagate changes reliably 
+and replay events if needed.
+</p>
+
+<h3>📊 Read Models / Projections</h3>
+<p>
+Maintain separate read models that are updated asynchronously from events. 
+Clients accept that reads may be slightly stale.
+</p>
+
+<h3>🕒 Timeouts and Retries</h3>
+<p>
+Implement retry policies with exponential backoff to handle transient failures 
+while ensuring eventual propagation.
+</p>
+
+<h2>4. Example in .NET (Eventual Consistency with Messaging)</h2>
+<pre><code class="language-csharp"><code class="csharp">
+// Producer publishes event
+await _bus.Publish(new OrderCreatedEvent(orderId));
+
+// Consumer updates read model asynchronously
+public async Task Handle(OrderCreatedEvent evt)
+{
+    await _readModel.UpdateAsync(evt.OrderId, evt.Product);
+    // Read model may lag behind, but will eventually catch up
+}
+</code></code></pre>
+
+<h2>5. Best Practices</h2>
+<p>
+- Clearly communicate consistency expectations to clients.<br/>
+- Use <b>distributed tracing</b> to monitor propagation delays.<br/>
+- Apply <b>compensating transactions</b> for business-critical workflows.<br/>
+- Choose <b>AP systems</b (Availability + Partition Tolerance) when responsiveness 
+is more important than strict consistency.<br/>
+</p>
+
+<h2>6. Interview Insight</h2>
+<p>
+In interviews, emphasize that eventual consistency is a <b>trade-off between availability and consistency</b> 
+under the CAP theorem. Highlight techniques like <b>idempotency, conflict resolution, CRDTs, and asynchronous messaging</b>. 
+Mention practical experience with <b>Kafka, RabbitMQ, or Azure Service Bus</b>, and explain how read models and projections 
+help manage stale data. Demonstrating awareness of <b>business-driven trade-offs</b> (e.g., financial systems need strong consistency, 
+social feeds can tolerate eventual consistency) shows maturity in distributed system design.
+</p>
+</details>
+<details>
+  <summary>Duplicate Message Handling</summary>
+  
+  <h3>Why Handle Duplicates?</h3>
+  <ul>
+    <li>Prevent processing the same request multiple times.</li>
+    <li>Avoid double billing, duplicate notifications, or repeated DB updates.</li>
+    <li>Ensure system reliability and consistency.</li>
+  </ul>
+
+  <h3>Common Strategies</h3>
+  <ul>
+    <li><strong>Idempotency Keys</strong> → Clients send a unique key with each request; server ensures only one execution per key.</li>
+    <li><strong>Message Deduplication</strong> → Messaging systems (e.g., Azure Service Bus, AWS SQS) detect and discard duplicates.</li>
+    <li><strong>Database Constraints</strong> → Use unique indexes or primary keys to prevent duplicate inserts.</li>
+    <li><strong>Application Logic</strong> → Check if a message has already been processed before executing.</li>
+  </ul>
+
+  <h3>Example Flow</h3>
+  <ol>
+    <li>Client sends a payment request with <code>Idempotency-Key: 12345</code>.</li>
+    <li>Payment Service checks if key <code>12345</code> was already processed.</li>
+    <li>If yes → return cached response.</li>
+    <li>If no → process payment, store result against key <code>12345</code>.</li>
+  </ol>
+
+  <h3>Best Practices</h3>
+  <ul>
+    <li>Always design APIs to be idempotent.</li>
+    <li>Use correlation IDs for tracking across services.</li>
+    <li>Leverage built-in deduplication features in queues.</li>
+    <li>Log duplicate detection events for monitoring.</li>
+  </ul>
+
+  <h3>Interview Insight</h3>
+  <ul>
+    <li>Explain <strong>idempotency</strong> clearly.</li>
+    <li>Highlight queue-level deduplication (e.g., AWS SQS FIFO, Azure Service Bus).</li>
+    <li>Show how DB constraints and application checks complement messaging guarantees.</li>
+  </ul>
+</details>
+
+<details>
+  <summary>Distributed Tracing</summary>
+  <h3>Why Distributed Tracing?</h3>
+  <ul>
+    <li>Microservices involve multiple hops across APIs, databases, and queues.</li>
+    <li>Logs alone can’t easily correlate events across services.</li>
+    <li>Tracing helps answer:
+      <ul>
+        <li>Where is the latency?</li>
+        <li>Which service failed?</li>
+        <li>How do requests flow through the system?</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h3>Core Concepts</h3>
+  <ul>
+    <li><strong>Trace</strong> → Journey of a single request across services.</li>
+    <li><strong>Span</strong> → Unit of work (function call, DB query).</li>
+    <li><strong>Context Propagation</strong> → Trace IDs and Span IDs passed via headers (e.g., <code>traceparent</code>).</li>
+  </ul>
+
+  <h3>Tools & Frameworks</h3>
+  <ul>
+    <li><strong>OpenTelemetry</strong> → Standard for generating and exporting traces.</li>
+    <li><strong>Jaeger / Zipkin</strong> → Visualization and analysis tools.</li>
+    <li><strong>Cloud-native solutions</strong>: Azure Application Insights, AWS X-Ray, GCP Cloud Trace.</li>
+  </ul>
+
+  <h3>Example Flow</h3>
+  <ol>
+    <li><strong>API Gateway</strong> → Receives request (root span).</li>
+    <li><strong>Order Service</strong> → Validates order (child span).</li>
+    <li><strong>Payment Service</strong> → Processes payment (child span).</li>
+    <li><strong>Inventory Service</strong> → Updates stock (child span).</li>
+    <li><strong>Notification Service</strong> → Sends confirmation email (child span).</li>
+  </ol>
+  <p>All spans are linked under one trace ID, giving a full picture of the request lifecycle.</p>
+
+  <h3>Best Practices</h3>
+  <ul>
+    <li>Use correlation IDs consistently.</li>
+    <li>Instrument critical paths first.</li>
+    <li>Combine tracing with metrics and logs.</li>
+    <li>Mask sensitive data in trace metadata.</li>
+    <li>Set sampling policies.</li>
+  </ul>
+
+  <h3>Interview Insight</h3>
+  <ul>
+    <li>Emphasize <strong>trace → span → context propagation</strong>.</li>
+    <li>Mention <strong>OpenTelemetry</strong> as the industry standard.</li>
+    <li>Highlight integration with monitoring tools (Jaeger, Zipkin, cloud-native).</li>
+    <li>Show how tracing complements logging and metrics for observability.</li>
+  </ul>
+</details>
+
+<details>
+  <summary>Service Mesh in Kubernetes</summary>
+  
+  <h3>What is a Service Mesh?</h3>
+  <p>A <strong>service mesh</strong> is a dedicated infrastructure layer for handling service-to-service communication in microservices. It provides features like traffic management, security, and observability without requiring changes to application code.</p>
+
+  <h3>Key Features</h3>
+  <ul>
+    <li><strong>Traffic Management</strong> → Load balancing, routing, retries, failover.</li>
+    <li><strong>Security</strong> → Mutual TLS (mTLS), service identity, encryption in transit.</li>
+    <li><strong>Observability</strong> → Metrics, logs, distributed tracing.</li>
+    <li><strong>Policy Enforcement</strong> → Access control, rate limiting, quotas.</li>
+  </ul>
+
+  <h3>Popular Service Meshes for Kubernetes</h3>
+  <ul>
+    <li><strong>Istio</strong> → Most feature-rich, integrates with Envoy proxy.</li>
+    <li><strong>Linkerd</strong> → Lightweight, simpler setup, focused on performance.</li>
+    <li><strong>Consul Connect</strong> → HashiCorp solution with strong service discovery.</li>
+    <li><strong>Kuma</strong> → CNCF project built on Envoy, supports multi-cluster.</li>
+  </ul>
+
+  <h3>How It Works in Kubernetes</h3>
+  <ol>
+    <li>Each pod gets a <strong>sidecar proxy</strong> (e.g., Envoy).</li>
+    <li>All service-to-service traffic flows through these proxies.</li>
+    <li>The mesh control plane manages configuration, policies, and telemetry.</li>
+    <li>Developers focus on business logic while the mesh handles communication.</li>
+  </ol>
+
+  <h3>Best Practices</h3>
+  <ul>
+    <li>Start small (e.g., Linkerd) before adopting complex meshes like Istio.</li>
+    <li>Enable mTLS for secure communication.</li>
+    <li>Use tracing (OpenTelemetry, Jaeger) for observability.</li>
+    <li>Monitor resource overhead since sidecars add latency and memory usage.</li>
+  </ul>
+
+  <h3>Interview Insight</h3>
+  <ul>
+    <li>Explain the <strong>sidecar proxy pattern</strong>.</li>
+    <li>Highlight differences between Istio (feature-rich) and Linkerd (lightweight).</li>
+    <li>Emphasize how service mesh improves <strong>security, reliability, and observability</strong> in Kubernetes.</li>
+  </ul>
+</details>
+
+<details>
+  <summary>Monitoring Microservices with Grafana & Kibana</summary>
+  
+  <h3>Why Monitor Microservices?</h3>
+  <p>Microservices architectures are distributed and complex. Monitoring ensures <strong>observability, reliability, and performance</strong> by tracking logs, metrics, and traces across services.</p>
+
+  <h3>Grafana (Metrics & Dashboards)</h3>
+  <ul>
+    <li><strong>Purpose:</strong> Visualizes metrics from Prometheus, InfluxDB, Azure Monitor, etc.</li>
+    <li><strong>Use Cases:</strong>
+      <ul>
+        <li>Track CPU, memory, and network usage per container/pod.</li>
+        <li>Monitor request latency, throughput, and error rates.</li>
+        <li>Set up alerts for anomalies (e.g., high latency, pod restarts).</li>
+      </ul>
+    </li>
+    <li><strong>Integration:</strong>
+      <ul>
+        <li>Deploy Prometheus in AKS/EKS to scrape metrics.</li>
+        <li>Connect Grafana to Prometheus as a data source.</li>
+        <li>Build dashboards for service-level and cluster-level visibility.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h3>Kibana (Logs & Search)</h3>
+  <ul>
+    <li><strong>Purpose:</strong> Visualizes and queries logs stored in Elasticsearch.</li>
+    <li><strong>Use Cases:</strong>
+      <ul>
+        <li>Centralized logging for all microservices.</li>
+        <li>Search logs by correlation ID to trace requests across services.</li>
+        <li>Detect errors, exceptions, and unusual patterns.</li>
+      </ul>
+    </li>
+    <li><strong>Integration:</strong>
+      <ul>
+        <li>Use Fluentd/Logstash to ship logs from containers to Elasticsearch.</li>
+        <li>Configure Kibana dashboards for error rates, log volume, and trends.</li>
+        <li>Enable alerting for critical log events.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h3>Example Setup</h3>
+  <pre>
+Microservices → Logs → Fluentd → Elasticsearch → Kibana (log dashboards)
+Microservices → Metrics → Prometheus → Grafana (metrics dashboards)
+  </pre>
+
+  <h3>Best Practices</h3>
+  <ul>
+    <li>Use structured logging (JSON) with correlation IDs for traceability.</li>
+    <li>Combine metrics (Grafana) and logs (Kibana) for full observability.</li>
+    <li>Set up alerts in Grafana and Kibana for proactive detection.</li>
+    <li>Integrate with Azure Monitor / Application Insights for hybrid observability.</li>
+    <li>Secure dashboards with RBAC and TLS.</li>
+  </ul>
+
+  <h3>Interview Insight</h3>
+  <p>Emphasize that <strong>Grafana</strong> is used for metrics visualization and alerting, while <strong>Kibana</strong> is used for log analysis and search. Together they provide <strong>end-to-end observability</strong> in microservices.</p>
+</details>
+
 
 <!-- React -->
 <h2 id="react">React / Frontend</h2>
@@ -2984,36 +4155,1316 @@ Demonstrating awareness of <b>trade-offs</b> (e.g., storage cost vs retention, v
 
 <!-- Project Challenges -->
 <h2 id="scenarios">Project Challenges & Solutions</h2>
-<details><summary>.NET API Performance & Scalability</summary></details>
-<details><summary>SQL Server Deadlock in Production</summary></details>
-<details><summary>Microservices Resilience (Payment Gateway)</summary></details>
-<details><summary>Designing Web API for 10,000 Concurrent Requests</summary></details>
-<details><summary>Retry Logic in .NET Microservice Calling External APIs</summary></details>
-<details><summary>Optimizing Web API Returning 1M Records</summary></details>
-<details><summary>Securing .NET Web API with JWT & RBAC</summary></details>
-<details><summary>Efficient Bulk Insert of 100,000 Records</summary></details>
-<details><summary>Optimizing Slow LINQ Queries</summary></details>
-<details><summary>Processing 1000 Tasks in Parallel with Concurrency Limit</summary></details>
-<details><summary>Designing Event-Driven .NET Microservice</summary></details>
-<details><summary>Large File Uploads (2GB) in Web API</summary></details>
-<details><summary>Centralized Logging in Microservices</summary></details>
-<details><summary>Importing 1M Rows from CSV into SQL Server</summary></details>
-<details><summary>Transactional Consistency Across Multiple Tables</summary></details>
-<details><summary>Optimizing Slow Multi-Join SQL Query</summary></details>
-<details><summary>Choosing Between CTE, Temp Table, Table Variable</summary></details>
-<details><summary>Optimizing GROUP BY Queries on Millions of Rows</summary></details>
-<details><summary>Transaction Strategy for Multi-Table Inserts Without Deadlocks</summary></details>
-<details><summary>Handling Concurrent Updates in SQL Server</summary></details>
-<details><summary>Indexing Strategy for Large Transactional Tables</summary></details>
-<details><summary>Clustered vs Non-Clustered Indexes</summary></details>
-<details><summary>Covering Indexes for Query Performance</summary></details>
-<details><summary>Error Handling in Stored Procedures with Multi-Table Inserts</summary></details>
-<details><summary>Handling Partial Bulk Insert Failures</summary></details>
-<details><summary>Auditing Critical Tables in SQL Server</summary></details>
-<details><summary>Efficient Queries for Recent Orders</summary></details>
-<details><summary>Minimizing Impact When Dropping Columns Used in Procedures</summary></details>
-<details><summary>Shared Employee Schema Across Multiple Applications</summary></details>
-<details><summary>Analyzing and Fixing Deadlocks in Production</summary></details>
+<details>
+    <summary>.NET API Performance & Scalability</summary>
+    <p><span class="section">Situation:</span> Our ASP.NET Core Web API had to return large datasets (hundreds of thousands of records). The initial implementation returned everything at once, causing timeouts and poor performance.</p>
+    <p><span class="section">Task:</span> Make the API scalable and responsive, ensuring users could access data quickly.</p>
+    <p><span class="section">Action:</span></p>
+    <ul>
+      <li>Implemented server-side pagination (SQL OFFSET/FETCH).</li>
+      <li>Added caching with Redis.</li>
+      <li>Optimized LINQ queries to fetch only required columns.</li>
+      <li>Introduced asynchronous streaming with <code>IAsyncEnumerable</code>.</li>
+    </ul>
+    <p><span class="section">Result:</span> Response time dropped from ~20s to under 2s. API handled thousands of concurrent requests smoothly.</p>
+    <div class="summary-box">Interview Summary: One challenge was API performance. I solved it with pagination, caching, and query optimization, reducing response time drastically.</div>
+  </details>
+
+  <details>
+    <summary>SQL Server Deadlock in Production</summary>
+    <p><span class="section">Situation:</span> In a financial application, frequent deadlocks occurred when multiple users updated the same tables simultaneously.</p>
+    <p><span class="section">Task:</span> Identify the root cause and ensure smooth concurrent updates.</p>
+    <p><span class="section">Action:</span></p>
+    <ul>
+      <li>Used SQL Profiler and Extended Events to capture deadlock graphs.</li>
+      <li>Standardized locking order across stored procedures.</li>
+      <li>Added indexes to reduce lock duration.</li>
+      <li>Applied READ COMMITTED SNAPSHOT isolation for non-critical reads.</li>
+    </ul>
+    <p><span class="section">Result:</span> Deadlocks reduced by 90%, transactions completed smoothly, system stability improved.</p>
+    <div class="summary-box">Interview Summary: We faced deadlocks due to inconsistent locking order. I standardized updates, added indexes, and adjusted isolation levels, eliminating most deadlocks.</div>
+  </details>
+
+  <details>
+    <summary>Microservices Resilience (Payment Gateway)</summary>
+    <p><span class="section">Situation:</span> A microservice depended on an external payment gateway. During peak loads, the gateway became slow/unavailable, causing cascading failures.</p>
+    <p><span class="section">Task:</span> Ensure the service handled failures gracefully without downtime or lost transactions.</p>
+    <p><span class="section">Action:</span></p>
+    <ul>
+      <li>Implemented retry with exponential backoff.</li>
+      <li>Added circuit breaker pattern (Polly).</li>
+      <li>Introduced Azure Service Bus for async processing.</li>
+      <li>Used Saga pattern for multi-step workflows.</li>
+      <li>Added structured logging and monitoring.</li>
+    </ul>
+    <p><span class="section">Result:</span> System became resilient, reduced failed transactions by 80%, improved customer trust.</p>
+    <div class="summary-box">Interview Summary: One challenge was handling external API failures. I solved it with retry, circuit breaker, queues, and Saga pattern, making the system resilient.</div>
+  </details>
+
+<details>
+  <summary>Designing Web API for 10,000 Concurrent Requests</summary>
+  <p><b>Situation:</b> The API must support very high concurrency (10,000+ requests) without degrading performance or reliability.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Stateless Design:</b> Ensure API endpoints are stateless so requests can be distributed across multiple servers easily.</li>
+    <li><b>Horizontal Scaling:</b> Deploy behind a load balancer (Azure Front Door, Nginx) and scale out multiple instances of the API.</li>
+    <li><b>Async I/O:</b> Use <code>async/await</code> in .NET Core to handle non-blocking requests efficiently.</li>
+    <li><b>Caching:</b> Implement distributed caching (Redis, MemoryCache) to reduce database load for frequently accessed data.</li>
+    <li><b>Database Optimization:</b> Use connection pooling, indexing, and read replicas to handle concurrent queries.</li>
+    <li><b>Rate Limiting & Throttling:</b> Protect the API from overload by limiting requests per client.</li>
+    <li><b>Resilience Patterns:</b> Add retry logic, circuit breakers (Polly), and graceful degradation for external dependencies.</li>
+    <li><b>Observability:</b> Monitor with Application Insights, Prometheus, or Grafana to detect bottlenecks and scale proactively.</li>
+  </ul>
+
+  <p><b>Result:</b> With stateless design, horizontal scaling, async processing, and caching, the API can handle 10,000+ concurrent requests reliably and efficiently.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “To handle 10,000 concurrent requests, I’d design the API to be stateless, deploy it behind a load balancer, use async I/O, caching, and database optimization. I’d also add resilience patterns and monitoring. This ensures scalability, reliability, and high performance under heavy load.”
+  </div>
+</details>
+
+<details>
+  <summary>Retry Logic in .NET Microservice Calling External APIs</summary>
+  <p><b>Situation:</b> A .NET microservice depends on external APIs that can be slow, rate-limited, or temporarily unavailable, risking cascading failures.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Retry with Exponential Backoff:</b> Use Polly to retry transient failures (timeouts, 5xx, 429). 
+      <pre><code>var retryPolicy = Policy
+  .Handle&lt;HttpRequestException&gt;()
+  .OrResult&lt;HttpResponseMessage&gt;(r =&gt; !r.IsSuccessStatusCode)
+  .WaitAndRetryAsync(3, attempt =&gt; TimeSpan.FromSeconds(Math.Pow(2, attempt)));</code></pre>
+    </li>
+    <li><b>Circuit Breaker:</b> Prevent repeated calls to an unhealthy API.
+      <pre><code>var circuitBreaker = Policy
+  .Handle&lt;HttpRequestException&gt;()
+  .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));</code></pre>
+    </li>
+    <li><b>Fallbacks:</b> Provide cached/default data if the API is unavailable.</li>
+    <li><b>Bulkhead Isolation:</b> Limit concurrent calls to avoid resource exhaustion.</li>
+    <li><b>Timeouts:</b> Always set request timeouts (e.g., 10 seconds).</li>
+    <li><b>Resiliency at Scale:</b> Use message queues (Azure Service Bus, RabbitMQ) to decouple user requests from external API calls. For long workflows, apply Saga pattern for consistency.</li>
+  </ul>
+
+  <p><b>Result:</b> With retry, circuit breaker, fallback, bulkhead, and timeout policies, the microservice becomes resilient. Even if the external API is down, the system fails gracefully, recovers automatically, and avoids cascading failures.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “I’d implement resilience in a .NET microservice using Polly for retry with exponential backoff, circuit breaker to fail fast, and fallback for cached/default responses. I’d also add bulkhead isolation, timeouts, and decouple calls via queues for long workflows. This ensures the service remains reliable even when external APIs are slow or unavailable.”
+  </div>
+</details>
+
+<details>
+  <summary>Optimizing Web API Returning 1M Records</summary>
+  <p><b>Situation:</b> A Web API needs to return very large datasets (e.g., 1 million records). Returning all data at once causes timeouts, heavy bandwidth usage, and poor user experience.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Pagination:</b> Implement server-side pagination (OFFSET/FETCH or keyset pagination) so clients request data in chunks (e.g., 1000 records at a time).</li>
+    <li><b>Filtering & Projection:</b> Allow clients to filter results and return only required columns instead of full entities.</li>
+    <li><b>Asynchronous Streaming:</b> Use <code>IAsyncEnumerable</code> or gRPC streaming to send data progressively instead of one huge payload.</li>
+    <li><b>Caching:</b> Cache frequently accessed queries (Redis, MemoryCache) to avoid repeated heavy database hits.</li>
+    <li><b>Compression:</b> Enable response compression (gzip, Brotli) to reduce payload size.</li>
+    <li><b>Database Optimization:</b> Add proper indexing, partitioning, and query tuning to handle large result sets efficiently.</li>
+    <li><b>Batching:</b> For bulk exports, generate files (CSV/Excel) asynchronously and let clients download instead of returning inline JSON.</li>
+  </ul>
+
+  <p><b>Result:</b> With pagination, filtering, streaming, caching, and compression, the API delivers large datasets efficiently, avoids timeouts, and provides a responsive user experience.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “To optimize a Web API returning 1M records, I’d implement server-side pagination, filtering, and projection. I’d add caching, compression, and async streaming for performance. For very large exports, I’d generate files asynchronously. This ensures scalability, efficiency, and a smooth user experience.”
+  </div>
+</details>
+
+<details>
+  <summary>Securing .NET Web API with JWT & RBAC</summary>
+  <p><b>Situation:</b> A .NET Web API needs secure authentication and fine-grained access control. We want to ensure only authorized users can access endpoints, and roles determine permissions.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>JWT Authentication:</b> 
+      - Issue JWT tokens after successful login. 
+      - Token contains claims (userId, roles, expiry). 
+      - Signed with a secret/private key to ensure integrity.
+      <pre><code>services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+  .AddJwtBearer(options =&gt;
+  {
+      options.TokenValidationParameters = new TokenValidationParameters
+      {
+          ValidateIssuerSigningKey = true,
+          IssuerSigningKey = new SymmetricSecurityKey(
+              Encoding.UTF8.GetBytes("SuperSecretKey123")),
+          ValidateIssuer = false,
+          ValidateAudience = false,
+          ClockSkew = TimeSpan.Zero
+      };
+  });</code></pre>
+    </li>
+
+    <li><b>Authorization with Roles:</b> 
+      - Add role claims to the JWT (e.g., "Admin", "User"). 
+      - Use <code>[Authorize(Roles = "Admin")]</code> on controllers or actions. 
+      - Define policies for complex rules.
+      <pre><code>[Authorize(Roles = "Admin")]
+[HttpGet("secure-data")]
+public IActionResult GetSecureData()
+{
+    return Ok("This is protected data only for Admins.");
+}</code></pre>
+    </li>
+
+    <li><b>Best Practices:</b>
+      <ul>
+        <li>Use HTTPS to prevent token interception.</li>
+        <li>Keep tokens short-lived; use refresh tokens for renewal.</li>
+        <li>Store tokens securely (HTTP-only cookies preferred).</li>
+        <li>Validate signature, issuer, audience, and expiry on every request.</li>
+        <li>Do not put sensitive data in JWT payload (it’s only base64 encoded).</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><b>Result:</b> With JWT authentication and role-based authorization, the API is secure, stateless, and scalable. Each request is validated, and access is restricted based on roles.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “I’d secure a .NET Web API by issuing JWT tokens with claims, validating them in middleware, and enforcing role-based authorization using the <code>[Authorize]</code> attribute. I’d follow best practices like HTTPS, short-lived tokens, refresh tokens, and secure storage. This ensures both authentication and fine-grained access control.”
+  </div>
+</details>
+
+<details>
+  <summary>Efficient Bulk Insert of 100,000 Records</summary>
+  <p><b>Situation:</b> A .NET application needs to insert 100,000 records into SQL Server. Row-by-row inserts are inefficient and can cause performance bottlenecks.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Use SqlBulkCopy:</b> The fastest way to insert large datasets. Load data into a <code>DataTable</code> or <code>IDataReader</code> and push it directly to SQL Server.
+      <pre><code>using (var bulkCopy = new SqlBulkCopy(connection))
+{
+    bulkCopy.DestinationTableName = "TargetTable";
+    bulkCopy.BatchSize = 5000;
+    bulkCopy.WriteToServer(dataTable);
+}</code></pre>
+    </li>
+    <li><b>Batch Inserts:</b> If bulk copy isn’t possible, insert in batches (e.g., 500–1000 rows per transaction) instead of one huge transaction.</li>
+    <li><b>Transactions:</b> Wrap batches in transactions for consistency, but avoid one giant transaction to reduce locking overhead.</li>
+    <li><b>Disable Indexes/Triggers Temporarily:</b> For bulk loads, disable non-clustered indexes and triggers, then rebuild after insert to improve speed.</li>
+    <li><b>Use Stored Procedures:</b> Encapsulate insert logic in a stored procedure for efficiency and reduced network round-trips.</li>
+    <li><b>Consider Staging Tables:</b> Load raw data into a staging table, then transform/merge into final tables for cleaner ETL workflows.</li>
+  </ul>
+
+  <p><b>Result:</b> Using <code>SqlBulkCopy</code> or batched inserts, the application can insert 100,000 records in seconds instead of minutes, while maintaining transactional consistency and minimizing locks.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “To efficiently insert 100,000 records, I’d use SqlBulkCopy for high-speed bulk inserts. If that’s not possible, I’d batch inserts in transactions, disable indexes during load, and use staging tables. This ensures fast, reliable, and scalable data loading.”
+  </div>
+</details>
+
+<details>
+  <summary>Optimizing Slow LINQ Queries</summary>
+  <p><b>Situation:</b> A LINQ query in a .NET application is running slowly, especially when dealing with large datasets or complex joins.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Project Only Needed Columns:</b> Use <code>Select</code> to fetch only required fields instead of entire entities.</li>
+    <li><b>Use AsNoTracking:</b> For read-only queries, apply <code>.AsNoTracking()</code> to avoid unnecessary change tracking overhead.</li>
+    <li><b>Filter Early:</b> Apply <code>Where</code> clauses before joins or projections to reduce the dataset size.</li>
+    <li><b>Optimize Joins:</b> Ensure proper indexes exist on join keys in SQL Server. Use navigation properties instead of manual joins when possible.</li>
+    <li><b>Avoid N+1 Queries:</b> Use <code>.Include()</code> for eager loading or explicit joins instead of multiple round-trips.</li>
+    <li><b>Check Query Translation:</b> Use <code>.ToQueryString()</code> in EF Core to inspect the generated SQL and optimize accordingly.</li>
+    <li><b>Batch Operations:</b> For bulk inserts/updates, use <code>BulkInsert</code> libraries or <code>SqlBulkCopy</code> instead of looping LINQ operations.</li>
+    <li><b>Pagination:</b> For large result sets, implement <code>Skip</code>/<code>Take</code> to fetch data in chunks.</li>
+    <li><b>Compiled Queries:</b> For frequently executed queries, use <code>EF.CompileQuery</code> to reduce overhead.</li>
+  </ul>
+
+  <p><b>Result:</b> By projecting only necessary data, disabling tracking, filtering early, and ensuring proper indexing, the LINQ query runs significantly faster and scales better with large datasets.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “If a LINQ query is slow, I optimize by selecting only required columns, using AsNoTracking for read-only queries, filtering early, and ensuring proper indexes on join keys. I also check the generated SQL with ToQueryString and use eager loading to avoid N+1 queries. These steps usually improve performance drastically.”
+  </div>
+</details>
+
+<details>
+  <summary>Processing 1000 Tasks in Parallel with Concurrency Limit</summary>
+  <p><b>Situation:</b> A .NET application needs to process 1000 tasks in parallel, but we must limit concurrency to 10 tasks at a time to avoid overwhelming resources.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>SemaphoreSlim:</b> Use a <code>SemaphoreSlim</code> to restrict the number of concurrent tasks.
+      <pre><code>var semaphore = new SemaphoreSlim(10); // limit to 10
+var tasks = new List&lt;Task&gt;();
+
+foreach (var item in items)
+{
+    await semaphore.WaitAsync();
+    tasks.Add(Task.Run(async () =&gt;
+    {
+        try
+        {
+            await ProcessItemAsync(item);
+        }
+        finally
+        {
+            semaphore.Release();
+        }
+    }));
+}
+
+await Task.WhenAll(tasks);</code></pre>
+    </li>
+
+    <li><b>Parallel.ForEachAsync (NET 6+):</b> Use built-in parallelism with a degree of parallelism.
+      <pre><code>await Parallel.ForEachAsync(items,
+    new ParallelOptions { MaxDegreeOfParallelism = 10 },
+    async (item, token) =&gt;
+    {
+        await ProcessItemAsync(item);
+    });</code></pre>
+    </li>
+
+    <li><b>TPL Dataflow:</b> Use <code>ActionBlock</code> with <code>MaxDegreeOfParallelism = 10</code> for advanced scenarios like pipelines.</li>
+  </ul>
+
+  <p><b>Result:</b> With concurrency limited to 10, the application processes all 1000 tasks efficiently without exhausting CPU, memory, or database connections.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “To process 1000 tasks in parallel while limiting concurrency to 10, I’d use either SemaphoreSlim or Parallel.ForEachAsync with MaxDegreeOfParallelism set to 10. This ensures controlled parallelism, efficient resource usage, and reliable task completion.”
+  </div>
+</details>
+
+<details>
+  <summary>Designing Event-Driven .NET Microservice</summary>
+  <p><b>Situation:</b> We need a microservice in .NET that communicates with other services asynchronously via events instead of direct API calls. This ensures loose coupling, scalability, and resilience.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Event Bus:</b> Use a message broker like Azure Service Bus, RabbitMQ, or Kafka as the backbone for event publishing and subscribing.</li>
+    <li><b>Publish/Subscribe Pattern:</b> 
+      - The microservice publishes domain events (e.g., <code>OrderCreated</code>, <code>PaymentProcessed</code>).<br>
+      - Other services subscribe to these events and react accordingly.</li>
+    <li><b>.NET Implementation:</b> 
+      - Define event contracts as C# classes.<br>
+      - Use libraries like <code>MassTransit</code> or <code>CAP</code> for integration with message brokers.<br>
+      - Example:
+      <pre><code>public record OrderCreatedEvent(Guid OrderId, DateTime CreatedAt);
+
+await _publishEndpoint.Publish(new OrderCreatedEvent(order.Id, DateTime.UtcNow));</code></pre>
+    </li>
+    <li><b>Resilience:</b> 
+      - Implement retry and dead-letter queues for failed event deliveries.<br>
+      - Use idempotency checks to avoid duplicate processing.</li>
+    <li><b>Event-Driven Workflow:</b> 
+      - For complex workflows (e.g., Order → Payment → Notification), use Saga or choreography patterns.<br>
+      - Each service reacts to events and emits new ones, forming a chain of actions.</li>
+    <li><b>Observability:</b> Add logging, tracing, and monitoring (Application Insights, OpenTelemetry) to track event flow across services.</li>
+  </ul>
+
+  <p><b>Result:</b> The microservice communicates asynchronously with others, achieving loose coupling, scalability, and resilience. Failures in one service don’t block others, and the system can evolve independently.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “I’d design a .NET microservice to communicate via events using a message broker like Azure Service Bus or RabbitMQ. The service publishes domain events, other services subscribe, and workflows are coordinated with Saga or choreography patterns. I’d add retries, dead-letter queues, and idempotency for resilience. This ensures scalable, loosely coupled, and reliable communication.”
+  </div>
+</details>
+
+<details>
+  <summary>Large File Uploads (2GB) in Web API</summary>
+  <p><b>Situation:</b> A Web API must handle very large file uploads (e.g., 2GB). Naively reading the entire file into memory would cause memory bloat, thread blocking, and poor scalability.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Streaming Uploads:</b> 
+      - Use <code>Stream</code> APIs in ASP.NET Core (<code>Request.Body</code>, <code>IFormFile.OpenReadStream()</code>).<br>
+      - Process files in chunks instead of loading them fully into memory.
+      <pre><code>[HttpPost("upload")]
+public async Task<IActionResult> Upload(IFormFile file)
+{
+    using var stream = file.OpenReadStream();
+    var blobClient = new BlobClient(connectionString, containerName, file.FileName);
+    await blobClient.UploadAsync(stream, overwrite: true);
+    return Ok("File uploaded successfully");
+}</code></pre>
+    </li>
+
+    <li><b>Direct-to-Storage Uploads:</b> 
+      - Issue SAS tokens (Azure Blob) or pre-signed URLs (S3).<br>
+      - Clients upload directly to storage, bypassing the API server.</li>
+
+    <li><b>Chunked Uploads:</b> 
+      - Split large files into smaller blocks (e.g., 4MB).<br>
+      - Upload chunks sequentially or in parallel.<br>
+      - Reassemble chunks server-side or client-side.</li>
+
+    <li><b>Background Processing:</b> 
+      - Offload heavy file operations to background workers (Azure Functions, Queues).<br>
+      - API responds quickly with an operation ID while processing continues asynchronously.</li>
+
+    <li><b>Resilience & Scalability:</b> 
+      - Use async/await to avoid blocking threads.<br>
+      - Apply retry logic for chunk failures.<br>
+      - Monitor uploads with Application Insights.</li>
+
+    <li><b>Content Delivery:</b> 
+      - Serve downloads via CDN (Azure Front Door, CloudFront).<br>
+      - Avoid routing large files through the API itself.</li>
+  </ul>
+
+  <p><b>Result:</b> With streaming, direct-to-storage uploads, chunking, and background processing, the Web API can handle 2GB file uploads efficiently without memory bloat or thread blocking.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “To handle 2GB file uploads, I’d design the API to stream files instead of buffering them, use direct-to-storage uploads with SAS tokens, implement chunked transfers for reliability, and offload heavy processing to background workers. This ensures scalability, resilience, and efficient handling of large files.”
+  </div>
+</details>
+
+<details>
+  <summary>Centralized Logging in Microservices</summary>
+  <p><b>Situation:</b> In a microservices architecture, each service generates logs independently. Without centralization, troubleshooting and tracing requests across services becomes difficult.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Structured Logging:</b> Use frameworks like <code>Serilog</code> or <code>NLog</code> to produce JSON-formatted logs for machine readability.</li>
+    <li><b>Correlation IDs:</b> Generate a unique ID per request and propagate it across services. This allows tracing a request end-to-end.</li>
+    <li><b>Log Aggregation:</b> Collect logs from all services into a centralized system:
+      <ul>
+        <li><b>ELK Stack:</b> Elasticsearch + Logstash/Fluentd + Kibana.</li>
+        <li><b>Cloud-native:</b> Azure Application Insights, AWS CloudWatch, or GCP Stackdriver.</li>
+      </ul>
+    </li>
+    <li><b>Configuration in .NET:</b>
+      <pre><code>// Example with Serilog + Elasticsearch
+Log.Logger = new LoggerConfiguration()
+    .Enrich.WithProperty("Service", "OrderService")
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri("http://localhost:9200"))
+    {
+        AutoRegisterTemplate = true,
+        IndexFormat = "orderservice-logs-{0:yyyy.MM}"
+    })
+    .CreateLogger();
+
+builder.Host.UseSerilog();</code></pre>
+    </li>
+    <li><b>Alerting & Monitoring:</b> Integrate logs with monitoring tools (Prometheus, Grafana, Azure Monitor Alerts) to trigger alerts on anomalies.</li>
+    <li><b>Best Practices:</b>
+      <ul>
+        <li>Mask sensitive data (passwords, tokens).</li>
+        <li>Define consistent log levels (Info, Warn, Error, Critical).</li>
+        <li>Implement log rotation and retention policies.</li>
+        <li>Combine logs with distributed tracing (OpenTelemetry, Jaeger, Zipkin).</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><b>Result:</b> With centralized logging, developers can trace requests across services, quickly identify issues, and monitor system health in real time.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “I’d implement centralized logging in .NET microservices using structured logging (Serilog), correlation IDs, and log aggregation into ELK or cloud-native solutions. I’d add monitoring and alerts, mask sensitive data, and integrate with distributed tracing. This ensures observability, faster debugging, and reliable operations.”
+  </div>
+</details>
+
+<details>
+  <summary>Importing 1M Rows from CSV into SQL Server</summary>
+  <p><b>Situation:</b> A .NET application must import 1 million rows from a CSV file into SQL Server. Row-by-row inserts would be too slow and error-prone, so we need a design that balances speed and reliability.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Staging Table:</b> Create a staging table in SQL Server to hold raw CSV data before transforming it into normalized tables.</li>
+    <li><b>Bulk Insert / SqlBulkCopy:</b> Use <code>SqlBulkCopy</code> in .NET or <code>BULK INSERT</code> in SQL Server to load data quickly.
+      <pre><code>using (var bulkCopy = new SqlBulkCopy(connection))
+{
+    bulkCopy.DestinationTableName = "StagingTable";
+    bulkCopy.BatchSize = 50000;
+    bulkCopy.WriteToServer(dataTable);
+}</code></pre>
+    </li>
+    <li><b>Batch Processing:</b> Insert in batches (e.g., 50k rows at a time) to avoid locking and memory issues.</li>
+    <li><b>Validation & Cleansing:</b> Validate data (types, constraints, duplicates) either before bulk load or inside a stored procedure that moves data from staging to final tables.</li>
+    <li><b>Error Handling:</b> Log failed rows separately for review, while continuing with valid rows.</li>
+    <li><b>Indexes & Constraints:</b> Disable non-clustered indexes and foreign keys during bulk load, then rebuild after import for speed.</li>
+    <li><b>Transactions:</b> Use transactions per batch to ensure atomicity without locking the entire dataset.</li>
+    <li><b>Automation:</b> Wrap the process in a scheduled job or ETL pipeline (SSIS, Azure Data Factory) for repeatability.</li>
+  </ul>
+
+  <p><b>Result:</b> With staging tables, bulk insert, batching, and validation, the system can import 1 million rows in minutes while ensuring reliability and data integrity.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “To import 1M rows efficiently, I’d load data into a staging table using SqlBulkCopy or BULK INSERT in batches, validate and cleanse data, then move it into final tables with transactions. I’d disable indexes during load and rebuild afterward. This design ensures both speed and reliability.”
+  </div>
+</details>
+
+
+
+<details>
+  <summary>Transactional Consistency Across Multiple Tables</summary>
+  <p><b>Situation:</b> You need to import data from a source (CSV/Excel/ETL pipeline) into multiple related SQL Server tables (e.g., <code>Customer</code>, <code>Orders</code>, <code>OrderDetails</code>). The requirement is that all inserts for a given record succeed together, or none at all.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Staging Table:</b> First load raw data into a staging table using <code>BULK INSERT</code> or <code>SqlBulkCopy</code>. This isolates the import process and allows validation before moving data into final tables.</li>
+    <li><b>Transactional Inserts:</b> Use a single transaction to insert related data into multiple tables. If any insert fails, rollback ensures consistency.
+      <pre><code>BEGIN TRANSACTION;
+
+BEGIN TRY
+    INSERT INTO Customer (CustomerId, Name) VALUES (...);
+    INSERT INTO Orders (OrderId, CustomerId, Date) VALUES (...);
+    INSERT INTO OrderDetails (OrderId, ProductId, Quantity) VALUES (...);
+
+    COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+    ROLLBACK TRANSACTION;
+    -- Log error for review
+END CATCH;</code></pre>
+    </li>
+    <li><b>Stored Procedure:</b> Encapsulate the logic in a stored procedure that handles inserts into all related tables within a transaction. This improves maintainability and reliability.</li>
+    <li><b>Batch Processing:</b> Process data in batches (e.g., 10k rows per transaction) to balance performance and reduce locking overhead.</li>
+    <li><b>Validation:</b> Validate foreign keys, required fields, and data types before committing. Reject or log invalid rows separately.</li>
+    <li><b>Error Handling:</b> Use error logging tables to capture failed rows for later correction without halting the entire import.</li>
+    <li><b>Indexes & Constraints:</b> Disable non-essential indexes during bulk load, then rebuild afterward for speed.</li>
+  </ul>
+
+  <p><b>Result:</b> With staging tables, transactional inserts, batching, and validation, the system ensures that related data across multiple tables is always consistent. Either all inserts succeed together, or none are applied.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “To import data into multiple related tables reliably, I’d load into a staging table, then use a stored procedure with transactions to insert into all related tables. If any insert fails, rollback ensures consistency. I’d process in batches, validate data, and log errors. This guarantees both speed and transactional integrity.”
+  </div>
+</details>
+
+<details>
+  <summary>Optimizing Slow Multi-Join SQL Query</summary>
+  <p><b>Situation:</b> A SQL Server query with multiple joins is running very slowly. This can be due to poor indexing, inefficient join order, large intermediate result sets, or suboptimal query design.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Examine Execution Plan:</b> Use <code>SET STATISTICS IO ON</code> or <code>EXPLAIN</code> (Actual Execution Plan in SSMS) to identify table scans, expensive joins, and missing indexes.</li>
+    <li><b>Index Optimization:</b> Ensure join columns and filter columns have appropriate indexes. Consider covering indexes for frequently queried combinations.</li>
+    <li><b>Join Order & Type:</b> 
+      - Place selective filters early to reduce dataset size.<br>
+      - Use INNER JOINs only when necessary; LEFT JOINs can expand result sets.<br>
+      - Reorder joins to minimize intermediate row counts.</li>
+    <li><b>Reduce Data Volume:</b> 
+      - Select only required columns (avoid <code>SELECT *</code>).<br>
+      - Apply WHERE filters before joins if possible.<br>
+      - Use CTEs or temp tables to pre-filter large datasets.</li>
+    <li><b>Statistics & Maintenance:</b> Update table statistics and rebuild fragmented indexes to ensure the optimizer has accurate information.</li>
+    <li><b>Partitioning:</b> For very large tables, consider partitioning to reduce scan size.</li>
+    <li><b>Query Rewrite:</b> Replace correlated subqueries with joins, simplify complex expressions, and avoid unnecessary DISTINCT or ORDER BY clauses.</li>
+    <li><b>Parallelism & Hints:</b> Allow SQL Server to use parallel execution. Use query hints cautiously (e.g., <code>OPTION (HASH JOIN)</code>) only after testing.</li>
+  </ul>
+
+  <p><b>Result:</b> By analyzing the execution plan, applying proper indexing, filtering early, and restructuring joins, the query performance improves significantly, often reducing execution time from minutes to seconds.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “To troubleshoot a slow multi-join query, I’d start with the execution plan to identify bottlenecks. Then I’d optimize indexes on join/filter columns, reduce data volume by selecting only needed fields, reorder joins, and update statistics. If needed, I’d use CTEs, partitioning, or query rewrites. This systematic approach usually improves performance drastically.”
+  </div>
+</details>
+
+<details>
+  <summary>Choosing Between CTE, Temp Table, and Table Variable</summary>
+  <p><b>Situation:</b> In SQL Server, you often need intermediate result sets when working with complex queries. Options include Common Table Expressions (CTEs), temporary tables, and table variables. Each has different performance and use-case implications.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>CTE (Common Table Expression):</b>
+      <ul>
+        <li>Best for readability and modular query design.</li>
+        <li>Useful for recursion (e.g., hierarchical data).</li>
+        <li>Exists only during query execution; cannot be indexed or reused across queries.</li>
+        <li>Performance similar to inline views/subqueries.</li>
+      </ul>
+    </li>
+
+    <li><b>Temp Table (#Temp):</b>
+      <ul>
+        <li>Physically created in <code>tempdb</code>.</li>
+        <li>Can be indexed, constrained, and reused across multiple queries or stored procedures.</li>
+        <li>Better for large datasets and complex joins where performance tuning is needed.</li>
+        <li>Supports statistics, which helps the optimizer choose efficient plans.</li>
+      </ul>
+    </li>
+
+    <li><b>Table Variable (@Table):</b>
+      <ul>
+        <li>Stored in memory (but can spill to <code>tempdb</code> if large).</li>
+        <li>Good for small datasets (hundreds or a few thousand rows).</li>
+        <li>Limited support for indexing (only primary key/unique constraints).</li>
+        <li>Does not maintain statistics, so optimizer may assume 1 row, which can lead to poor plans for large data.</li>
+        <li>Scope limited to the batch or procedure.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><b>Decision Guidelines:</b></p>
+  <ul>
+    <li>Use <b>CTE</b> for readability, recursion, and one-off intermediate sets.</li>
+    <li>Use <b>Temp Table</b> for large datasets, complex joins, or when indexing/statistics are needed.</li>
+    <li>Use <b>Table Variable</b> for small datasets, lightweight operations, or when you don’t need statistics.</li>
+  </ul>
+
+  <p><b>Result:</b> Choosing the right option balances readability and performance. Temp tables are generally preferred for performance-critical scenarios, while CTEs and table variables are better for simplicity and small-scale operations.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “I decide based on dataset size and query complexity: CTEs for readability and recursion, temp tables for large datasets with indexing/statistics, and table variables for small, lightweight operations. This ensures both clarity and performance.”
+  </div>
+</details>
+
+<details>
+  <summary>Optimizing GROUP BY Queries on Millions of Rows</summary>
+  <p><b>Situation:</b> A SQL Server query with <code>GROUP BY</code> and aggregate functions (SUM, COUNT, AVG) is running slowly on millions of rows. This is often due to large scans, poor indexing, or inefficient query design.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Indexing:</b> 
+      - Create indexes on the <code>GROUP BY</code> columns.<br>
+      - Use covering indexes to include aggregate columns.<br>
+      <pre><code>CREATE INDEX idx_sales_customer_date 
+ON Sales(CustomerId, OrderDate) INCLUDE (Amount);</code></pre>
+    </li>
+
+    <li><b>Pre-Aggregation:</b> 
+      - Use indexed/materialized views to store pre-computed aggregates.<br>
+      - Example: daily sales totals per customer.</li>
+
+    <li><b>Partitioning:</b> 
+      - Partition large tables by date or region.<br>
+      - Queries only scan relevant partitions instead of the entire dataset.</li>
+
+    <li><b>Filtered Aggregation:</b> 
+      - Apply WHERE filters before GROUP BY to reduce dataset size.<br>
+      - Example: restrict to last 12 months instead of all history.</li>
+
+    <li><b>Statistics & Maintenance:</b> 
+      - Update statistics regularly (<code>UPDATE STATISTICS</code>).<br>
+      - Rebuild fragmented indexes to help the optimizer.</li>
+
+    <li><b>Query Rewrite:</b> 
+      - Replace complex GROUP BY with window functions (<code>OVER()</code>) when appropriate.<br>
+      - Example:
+      <pre><code>SELECT CustomerId, SUM(Amount) OVER(PARTITION BY CustomerId) AS TotalAmount
+FROM Sales;</code></pre>
+    </li>
+
+    <li><b>Batch Processing:</b> 
+      - Break large aggregations into smaller batches (e.g., per month) and combine results.</li>
+
+    <li><b>Hardware/Parallelism:</b> 
+      - Ensure queries can leverage parallel execution.<br>
+      - Scale out with read replicas for reporting workloads.</li>
+  </ul>
+
+  <p><b>Result:</b> With proper indexing, partitioning, pre-aggregation, and query rewrites, GROUP BY queries on millions of rows can run in seconds instead of minutes, while maintaining accuracy and scalability.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “To optimize slow GROUP BY queries, I’d index the grouping columns, use pre-aggregated views, partition large tables, and filter data early. I’d also update statistics, consider window functions, and batch aggregations. This approach ensures fast and reliable performance on millions of rows.”
+  </div>
+</details>
+
+<details>
+  <summary>Transaction Strategy for Multi-Table Inserts Without Deadlocks</summary>
+  <p><b>Situation:</b> You need to insert related data into multiple SQL Server tables (e.g., <code>Customer</code>, <code>Orders</code>, <code>OrderDetails</code>) while ensuring transactional consistency. The challenge is to avoid deadlocks when multiple transactions run concurrently.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Consistent Resource Access Order:</b> Always insert into tables in the same sequence (e.g., <code>Customer → Orders → OrderDetails</code>). This prevents circular waits that cause deadlocks.</li>
+    <li><b>Keep Transactions Short:</b> Perform only necessary inserts inside the transaction. Do not include long-running queries or business logic.</li>
+    <li><b>Use Proper Isolation Level:</b> 
+      - Default <code>READ COMMITTED</code> is usually sufficient.<br>
+      - For bulk inserts, consider <code>READ COMMITTED SNAPSHOT</code> to reduce locking contention.</li>
+    <li><b>Batch Inserts:</b> Insert data in manageable batches (e.g., 10k rows per transaction) instead of one massive transaction.</li>
+    <li><b>Locking Hints (if needed):</b> Use <code>UPDLOCK</code> or <code>ROWLOCK</code> to control lock granularity and avoid escalation to table locks.</li>
+    <li><b>Stored Procedure Encapsulation:</b> Encapsulate multi-table insert logic in a stored procedure with explicit <code>BEGIN TRANSACTION</code> / <code>COMMIT</code> / <code>ROLLBACK</code> handling.
+      <pre><code>BEGIN TRANSACTION;
+BEGIN TRY
+    INSERT INTO Customer (...) VALUES (...);
+    INSERT INTO Orders (...) VALUES (...);
+    INSERT INTO OrderDetails (...) VALUES (...);
+    COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+    ROLLBACK TRANSACTION;
+    -- Log error
+END CATCH;</code></pre>
+    </li>
+    <li><b>Index & Foreign Key Strategy:</b> Ensure foreign keys and indexes exist to speed up inserts and reduce lock duration.</li>
+    <li><b>Monitoring:</b> Use SQL Server Profiler or Extended Events to detect deadlocks and confirm that the chosen strategy eliminates them.</li>
+  </ul>
+
+  <p><b>Result:</b> By enforcing a consistent insert order, keeping transactions short, batching operations, and using appropriate isolation levels, you achieve transactional consistency across multiple tables while minimizing the risk of deadlocks.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “To insert into multiple tables without deadlocks, I’d use a transaction with a consistent table access order, keep it short, batch inserts, and apply proper isolation levels. I’d encapsulate the logic in a stored procedure with error handling. This ensures both consistency and concurrency safety.”
+  </div>
+</details>
+
+<details>
+  <summary>Handling Concurrent Updates in SQL Server</summary>
+  <p><b>Situation:</b> Two users attempt to update the same record at the same time. Without proper concurrency control, one user’s changes may overwrite the other’s, leading to lost updates or inconsistent data.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Pessimistic Concurrency (Locking):</b>
+      <ul>
+        <li>Use transactions with row-level locks (<code>WITH (UPDLOCK, ROWLOCK)</code>).</li>
+        <li>Ensures only one user can update the record at a time.</li>
+        <li>Best for high-contention scenarios but can reduce scalability.</li>
+      </ul>
+    </li>
+
+    <li><b>Optimistic Concurrency (RowVersion/Timestamp):</b>
+      <ul>
+        <li>Add a <code>rowversion</code> column to the table.</li>
+        <li>When updating, check if the rowversion matches the one originally read.</li>
+        <li>If it has changed, another user updated the record → reject or retry update.</li>
+        <li>Best for low-contention, high-scalability scenarios.</li>
+      </ul>
+      <pre><code>UPDATE Customers
+SET Name = @Name
+WHERE CustomerId = @CustomerId
+AND RowVersion = @OriginalRowVersion;</code></pre>
+    </li>
+
+    <li><b>Application-Level Handling:</b>
+      <ul>
+        <li>Catch concurrency exceptions in the application.</li>
+        <li>Decide on conflict resolution strategy:
+          <ul>
+            <li><b>Client Wins:</b> Last user’s changes overwrite.</li>
+            <li><b>Store Wins:</b> Reject conflicting update.</li>
+            <li><b>Merge:</b> Combine changes intelligently.</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><b>Result:</b> By using rowversion-based optimistic concurrency or transaction-level locking, SQL Server ensures data integrity. The application can then decide how to resolve conflicts when simultaneous updates occur.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “If two users try to update the same record, I’d use optimistic concurrency with a rowversion column. SQL Server detects conflicts, and the application decides whether to retry, reject, or merge changes. For high-contention cases, I’d use transactions with locking. This ensures consistency without lost updates.”
+  </div>
+</details>
+
+<details>
+  <summary>Indexing Strategy for Large Transactional Tables</summary>
+  <p><b>Situation:</b> In a large transactional table (millions of rows, frequent inserts/updates), indexing decisions directly affect query performance and write overhead. The challenge is to balance read efficiency with write cost.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Primary Key / Clustered Index:</b>
+      <ul>
+        <li>Always index the primary key column (e.g., <code>OrderID</code>).</li>
+        <li>Choose a clustered index on a column that is unique, sequential, and frequently used for range queries (e.g., identity or date).</li>
+      </ul>
+    </li>
+
+    <li><b>Foreign Keys:</b>
+      <ul>
+        <li>Index foreign key columns (e.g., <code>CustomerID</code>, <code>ProductID</code>) to speed up joins.</li>
+      </ul>
+    </li>
+
+    <li><b>Frequently Queried Columns:</b>
+      <ul>
+        <li>Columns used in <code>WHERE</code>, <code>JOIN</code>, <code>GROUP BY</code>, and <code>ORDER BY</code> clauses.</li>
+        <li>Example: <code>OrderDate</code> for filtering by date ranges.</li>
+      </ul>
+    </li>
+
+    <li><b>Covering Indexes:</b>
+      <ul>
+        <li>Include additional columns in non-clustered indexes to cover queries and avoid lookups.</li>
+        <li>Example:
+          <pre><code>CREATE NONCLUSTERED INDEX idx_orders_customer
+ON Orders(CustomerID)
+INCLUDE (OrderDate, TotalAmount);</code></pre>
+        </li>
+      </ul>
+    </li>
+
+    <li><b>Selectivity & Cardinality:</b>
+      <ul>
+        <li>Index columns with high selectivity (many distinct values).</li>
+        <li>Avoid indexing low-selectivity columns (e.g., <code>Status = 'Active'</code>) unless combined with other filters.</li>
+      </ul>
+    </li>
+
+    <li><b>Write Overhead Consideration:</b>
+      <ul>
+        <li>Each index adds overhead to <code>INSERT</code>, <code>UPDATE</code>, and <code>DELETE</code>.</li>
+        <li>Limit indexes to those that provide measurable query performance benefits.</li>
+      </ul>
+    </li>
+
+    <li><b>Monitoring & Tuning:</b>
+      <ul>
+        <li>Use SQL Server DMVs (<code>sys.dm_db_missing_index_details</code>, <code>sys.dm_db_index_usage_stats</code>) to identify missing or unused indexes.</li>
+        <li>Regularly review execution plans to confirm index effectiveness.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><b>Result:</b> By indexing primary keys, foreign keys, and frequently queried columns, while balancing write overhead, the transactional table achieves optimal performance for both reads and writes.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “I decide which columns to index by analyzing query patterns. Primary keys and foreign keys are always indexed. I add non-clustered indexes on frequently filtered or joined columns, and use covering indexes for common queries. I avoid indexing low-selectivity columns and balance read performance with write overhead. Monitoring DMVs and execution plans helps refine the strategy.”
+  </div>
+</details>
+
+<details>
+  <summary>Clustered vs. Non‑Clustered Indexes</summary>
+  <p><b>Situation:</b> SQL Server offers two main types of indexes: clustered and non‑clustered. Choosing between them depends on how data is accessed, stored, and queried.</p>
+
+  <p><b>Clustered Index:</b></p>
+  <ul>
+    <li>Physically sorts and stores rows in the table based on the index key.</li>
+    <li>Each table can have only <b>one</b> clustered index because rows can only be ordered one way.</li>
+    <li>Best for:
+      <ul>
+        <li>Primary keys or unique identifiers.</li>
+        <li>Range queries (e.g., <code>WHERE OrderDate BETWEEN ...</code>).</li>
+        <li>Columns frequently used for sorting or sequential access.</li>
+      </ul>
+    </li>
+    <li>Example:
+      <pre><code>CREATE CLUSTERED INDEX idx_orders_orderid
+ON Orders(OrderID);</code></pre>
+    </li>
+  </ul>
+
+  <p><b>Non‑Clustered Index:</b></p>
+  <ul>
+    <li>Creates a separate structure with pointers (row locators) to the actual data rows.</li>
+    <li>Multiple non‑clustered indexes can exist on a table.</li>
+    <li>Best for:
+      <ul>
+        <li>Columns used in <code>WHERE</code>, <code>JOIN</code>, <code>GROUP BY</code>, <code>ORDER BY</code>.</li>
+        <li>Covering queries by including extra columns (<code>INCLUDE</code>).</li>
+        <li>Improving point lookups and selective filters.</li>
+      </ul>
+    </li>
+    <li>Example:
+      <pre><code>CREATE NONCLUSTERED INDEX idx_orders_customer
+ON Orders(CustomerID)
+INCLUDE (OrderDate, TotalAmount);</code></pre>
+    </li>
+  </ul>
+
+  <p><b>How to Choose:</b></p>
+  <ul>
+    <li>Use a <b>clustered index</b> for the table’s natural ordering (usually the primary key or a column used in range queries).</li>
+    <li>Use <b>non‑clustered indexes</b> to optimize specific query patterns (filters, joins, lookups).</li>
+    <li>Balance performance: too many non‑clustered indexes slow down <code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code>.</li>
+    <li>Analyze execution plans and DMVs to confirm index effectiveness.</li>
+  </ul>
+
+  <p><b>Result:</b> Clustered indexes define the physical order of data and are ideal for primary keys and range queries, while non‑clustered indexes provide flexible, query‑specific optimization. Choosing depends on query patterns and workload balance.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #2980b9;">
+    <b>Interview Summary:</b><br>
+    “Clustered indexes store rows physically ordered by the key, best for primary keys and range queries. Non‑clustered indexes are separate structures with pointers, best for filters, joins, and covering queries. I choose clustered for natural ordering and non‑clustered for query optimization, balancing read speed with write overhead.”
+  </div>
+</details>
+
+
+<details>
+  <summary>Covering Indexes for Query Performance</summary>
+  <p><b>Situation:</b> Queries that frequently access large tables can become slow if SQL Server must perform extra lookups to fetch non-indexed columns. A covering index solves this by including all columns needed for the query, so SQL Server can satisfy it directly from the index.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Definition:</b> A covering index is a non-clustered index that “covers” a query by including all columns referenced in <code>SELECT</code>, <code>WHERE</code>, <code>JOIN</code>, and <code>ORDER BY</code>.</li>
+    <li><b>How It Helps:</b>
+      <ul>
+        <li>Eliminates key lookups (extra trips to the base table).</li>
+        <li>Reduces I/O since all needed data is in the index structure.</li>
+        <li>Improves performance for frequently executed queries.</li>
+      </ul>
+    </li>
+    <li><b>Example:</b>
+      <pre><code>-- Query
+SELECT CustomerID, OrderDate, TotalAmount
+FROM Orders
+WHERE CustomerID = 123;
+
+-- Covering Index
+CREATE NONCLUSTERED INDEX idx_orders_customer
+ON Orders(CustomerID)
+INCLUDE (OrderDate, TotalAmount);</code></pre>
+      <p>✅ This index covers the query completely, avoiding lookups to the clustered index.</p>
+    </li>
+    <li><b>Best Practices:</b>
+      <ul>
+        <li>Use <code>INCLUDE</code> for non-key columns to keep index size smaller.</li>
+        <li>Cover queries that run frequently and are performance-critical.</li>
+        <li>Avoid over-indexing — each index adds overhead to <code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code>.</li>
+        <li>Monitor with DMVs (<code>sys.dm_db_missing_index_details</code>) to identify queries that would benefit.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><b>Result:</b> Covering indexes allow SQL Server to serve queries directly from the index, eliminating costly lookups and significantly improving performance on large transactional tables.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “I use covering indexes when a query frequently needs extra columns beyond the filter/join keys. By including those columns in the index, SQL Server avoids lookups, reducing I/O and speeding up execution. I balance this with write overhead to avoid over-indexing.”
+  </div>
+</details>
+
+<details>
+  <summary>Error Handling in Stored Procedures with Multi-Table Inserts</summary>
+  <p><b>Situation:</b> A stored procedure must insert related data into multiple SQL Server tables (e.g., <code>Customer</code>, <code>Orders</code>, <code>OrderDetails</code>). If any insert fails, the entire operation should roll back to maintain consistency. Proper error handling ensures reliability and easier troubleshooting.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Use Explicit Transactions:</b> Wrap all inserts in a single transaction so they succeed or fail together.</li>
+    <li><b>TRY…CATCH Block:</b> Handle errors gracefully by rolling back and logging the issue.</li>
+    <li><b>Error Logging:</b> Insert error details into a logging table for later review.</li>
+    <li><b>Batch Strategy:</b> If inserting large volumes, process in batches to reduce lock contention and improve reliability.</li>
+    <li><b>Validation:</b> Validate input data before attempting inserts to reduce runtime errors.</li>
+  </ul>
+
+  <p><b>Example Implementation:</b></p>
+  <pre><code>CREATE PROCEDURE InsertOrderData
+    @CustomerId INT,
+    @CustomerName NVARCHAR(100),
+    @OrderId INT,
+    @OrderDate DATETIME,
+    @ProductId INT,
+    @Quantity INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO Customer (CustomerId, Name)
+        VALUES (@CustomerId, @CustomerName);
+
+        INSERT INTO Orders (OrderId, CustomerId, OrderDate)
+        VALUES (@OrderId, @CustomerId, @OrderDate);
+
+        INSERT INTO OrderDetails (OrderId, ProductId, Quantity)
+        VALUES (@OrderId, @ProductId, @Quantity);
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+
+        INSERT INTO ErrorLog (ErrorMessage, ErrorTime)
+        VALUES (ERROR_MESSAGE(), GETDATE());
+
+        THROW; -- re-raise error for caller
+    END CATCH
+END;</code></pre>
+
+  <p><b>Best Practices:</b></p>
+  <ul>
+    <li>Keep transactions short to minimize locking.</li>
+    <li>Always log errors with context (procedure name, parameters).</li>
+    <li>Use <code>THROW</code> instead of <code>RAISERROR</code> for modern error handling.</li>
+    <li>Test with concurrent inserts to ensure deadlock safety.</li>
+  </ul>
+
+  <p><b>Result:</b> With explicit transactions, TRY…CATCH, and error logging, the stored procedure ensures that either all inserts succeed together or none are applied, maintaining data integrity and providing clear diagnostics.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #27ae60;">
+    <b>Interview Summary:</b><br>
+    “I’d design error handling with a TRY…CATCH block inside a transaction. If any insert fails, rollback ensures consistency, and errors are logged for review. This guarantees reliability and makes troubleshooting easier.”
+  </div>
+</details>
+
+<details>
+  <summary>Handling Partial Bulk Insert Failures</summary>
+  <p><b>Situation:</b> You’re importing millions of rows into SQL Server using bulk insert or <code>SqlBulkCopy</code>. If the process fails halfway, you need to log failed rows and retry only those, without reprocessing successful ones.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Staging Table:</b>
+      <ul>
+        <li>Load all incoming data into a staging table first.</li>
+        <li>Include metadata columns: <code>BatchId</code>, <code>RowNumber</code>, <code>Status</code>, <code>ErrorMessage</code>.</li>
+      </ul>
+    </li>
+
+    <li><b>Batch Processing:</b>
+      <ul>
+        <li>Insert rows in batches (e.g., 50k at a time).</li>
+        <li>Wrap each batch in a transaction. If it fails, rollback only that batch.</li>
+      </ul>
+    </li>
+
+    <li><b>Error Logging:</b>
+      <ul>
+        <li>Use TRY…CATCH in T‑SQL to capture errors.</li>
+        <li>Log failed rows into an <code>ErrorLog</code> table with details (row data + error message).</li>
+      </ul>
+      <pre><code>BEGIN TRY
+    INSERT INTO TargetTable (...)
+    SELECT ...
+    FROM StagingTable
+    WHERE BatchId = @BatchId;
+END TRY
+BEGIN CATCH
+    INSERT INTO ErrorLog(RowId, ErrorMessage, ErrorTime)
+    SELECT RowId, ERROR_MESSAGE(), GETDATE()
+    FROM StagingTable
+    WHERE BatchId = @BatchId;
+END CATCH;</code></pre>
+    </li>
+
+    <li><b>Retry Strategy:</b>
+      <ul>
+        <li>Identify failed rows from <code>ErrorLog</code> or <code>Status</code> column.</li>
+        <li>Reprocess only those rows after fixing data issues.</li>
+        <li>Optionally, automate retries with a queue or scheduled job.</li>
+      </ul>
+    </li>
+
+    <li><b>Best Practices:</b>
+      <ul>
+        <li>Validate data before bulk insert to minimize runtime errors.</li>
+        <li>Disable non‑clustered indexes during bulk load, rebuild afterward.</li>
+        <li>Keep transactions short to reduce lock contention.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><b>Result:</b> With staging tables, batch inserts, TRY…CATCH error logging, and targeted retries, you ensure that only failed rows are retried while successful rows remain intact. This design balances speed with reliability.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #d35400;">
+    <b>Interview Summary:</b><br>
+    “If a bulk insert fails halfway, I’d load data into a staging table, process in batches, and use TRY…CATCH to log failed rows into an error table. Then I’d retry only those failed rows after correction. This ensures speed, reliability, and transactional consistency.”
+  </div>
+</details>
+
+<details>
+  <summary>Auditing for Critical Tables</summary>
+  <p><b>Situation:</b> Critical tables (e.g., financial transactions, user accounts, medical records) require auditing to track <b>who changed what, when, and how</b>. The goal is to ensure accountability, compliance, and forensic traceability.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Audit Table Design:</b>
+      <ul>
+        <li>Create a separate <code>AuditLog</code> table to store changes.</li>
+        <li>Include columns: <code>AuditId</code>, <code>EventTime</code>, <code>UserId</code>, <code>Action</code> (INSERT/UPDATE/DELETE), <code>TableName</code>, <code>PrimaryKey</code>, <code>OldValues</code>, <code>NewValues</code>, <code>IPAddress</code>, <code>CorrelationId</code>.</li>
+      </ul>
+    </li>
+
+    <li><b>Implementation Options:</b>
+      <ul>
+        <li><b>Triggers:</b> Create AFTER INSERT/UPDATE/DELETE triggers to log changes automatically.</li>
+        <li><b>Stored Procedures:</b> Encapsulate DML operations in procedures that explicitly log changes.</li>
+        <li><b>Change Data Capture (CDC):</b> Use SQL Server’s built-in CDC for tracking row-level changes.</li>
+        <li><b>Temporal Tables:</b> Enable system-versioned tables to maintain history automatically.</li>
+      </ul>
+    </li>
+
+    <li><b>Example Trigger:</b></li>
+    <pre><code>CREATE TRIGGER trg_AuditOrders
+ON Orders
+AFTER UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO AuditLog (EventTime, UserId, Action, TableName, PrimaryKey, OldValues, NewValues)
+    SELECT 
+        GETDATE(),
+        SUSER_SNAME(),
+        CASE WHEN EXISTS (SELECT * FROM deleted) AND EXISTS (SELECT * FROM inserted) 
+             THEN 'UPDATE'
+             WHEN EXISTS (SELECT * FROM deleted) 
+             THEN 'DELETE'
+        END,
+        'Orders',
+        d.OrderId,
+        CONCAT('OldAmount=', d.Amount),
+        CONCAT('NewAmount=', i.Amount)
+    FROM deleted d
+    LEFT JOIN inserted i ON d.OrderId = i.OrderId;
+END;</code></pre>
+
+    <li><b>Best Practices:</b>
+      <ul>
+        <li>Use <b>structured logging</b> (JSON) for easy parsing.</li>
+        <li>Secure audit tables with <b>RBAC</b> (only admins can view/modify).</li>
+        <li>Archive audit logs periodically to cold storage (Blob/S3).</li>
+        <li>Integrate with SIEM tools (Splunk, ELK, Azure Sentinel) for monitoring.</li>
+        <li>Ensure compliance with regulations (GDPR, HIPAA, SOX).</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><b>Result:</b> With triggers or CDC, structured audit tables, and secure logging, every change to critical tables is tracked, ensuring accountability and compliance.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #8e44ad;">
+    <b>Interview Summary:</b><br>
+    “I’d implement auditing using triggers or CDC to log changes into a dedicated audit table. Each entry records user, timestamp, action, and old/new values. I’d secure logs, archive them, and integrate with monitoring tools. This ensures tamper-resistant auditing for compliance and reliability.”
+  </div>
+</details>
+
+<details>
+  <summary>Efficient Queries for Recent Orders</summary>
+  <p><b>Situation:</b> The <code>Orders</code> table has millions of rows. Queries that fetch recent orders (e.g., last 7 days, last 1000 orders) must be optimized to avoid scanning the entire dataset.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Clustered Index on Date/ID:</b>
+      <ul>
+        <li>Ensure the table has a clustered index on <code>OrderDate</code> or <code>OrderID</code> (if sequential).</li>
+        <li>This allows SQL Server to quickly seek recent rows instead of scanning all data.</li>
+      </ul>
+    </li>
+
+    <li><b>Filtered Queries:</b>
+      <ul>
+        <li>Always filter by date range or top N rows.</li>
+        <li>Example:
+          <pre><code>SELECT TOP 1000 *
+FROM Orders
+WHERE OrderDate >= DATEADD(DAY, -7, GETDATE())
+ORDER BY OrderDate DESC;</code></pre>
+        </li>
+      </ul>
+    </li>
+
+    <li><b>Covering Indexes:</b>
+      <ul>
+        <li>Create non-clustered indexes on <code>OrderDate</code> including frequently selected columns.</li>
+        <li>Example:
+          <pre><code>CREATE NONCLUSTERED INDEX idx_orders_recent
+ON Orders(OrderDate DESC)
+INCLUDE (CustomerId, TotalAmount);</code></pre>
+        </li>
+      </ul>
+    </li>
+
+    <li><b>Partitioning:</b>
+      <ul>
+        <li>Partition the table by <code>OrderDate</code> (monthly or yearly).</li>
+        <li>Recent queries only scan the latest partition, reducing I/O.</li>
+      </ul>
+    </li>
+
+    <li><b>Materialized Views / Indexed Views:</b>
+      <ul>
+        <li>Pre-aggregate or pre-store recent orders in an indexed view for faster retrieval.</li>
+      </ul>
+    </li>
+
+    <li><b>Archiving Strategy:</b>
+      <ul>
+        <li>Move old orders to an archive table.</li>
+        <li>Keep only recent orders in the main table to reduce query load.</li>
+      </ul>
+    </li>
+
+    <li><b>Monitoring:</b>
+      <ul>
+        <li>Use execution plans to confirm index usage.</li>
+        <li>Check DMVs (<code>sys.dm_db_index_usage_stats</code>) to validate query/index efficiency.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><b>Result:</b> With clustered indexes, filtered queries, covering indexes, and partitioning, fetching recent orders becomes a seek operation rather than a full table scan, reducing query time from minutes to milliseconds.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #16a085;">
+    <b>Interview Summary:</b><br>
+    “To fetch recent orders efficiently from a multi-million row table, I’d use a clustered index on OrderDate or OrderID, filter queries by date or top N, and add covering indexes. For very large datasets, I’d partition by date and archive old data. This ensures queries run as fast index seeks instead of full scans.”
+  </div>
+</details>
+
+<details>
+  <summary>Minimizing Impact When Dropping Columns Used in Procedures</summary>
+  <p><b>Situation:</b> You have a table where a column (e.g., <code>Address</code>) is referenced in 50 stored procedures. Tomorrow, this column must be dropped. Directly editing all 50 procedures would be error‑prone and time‑consuming.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Encapsulation via Views:</b>
+      <ul>
+        <li>Create a view that exposes the table columns, including the soon‑to‑be‑dropped column.</li>
+        <li>Stored procedures should query the view instead of the base table.</li>
+        <li>When dropping the column, update the view definition only — procedures remain unchanged.</li>
+      </ul>
+    </li>
+
+    <li><b>Deprecation Strategy:</b>
+      <ul>
+        <li>Mark the column as deprecated in documentation and stop referencing it in new procedures.</li>
+        <li>Gradually refactor existing procedures to remove dependency on the column.</li>
+      </ul>
+    </li>
+
+    <li><b>Wrapper Functions / Table‑Valued Functions:</b>
+      <ul>
+        <li>Encapsulate access to the table in a function that returns only required columns.</li>
+        <li>Stored procedures call the function, not the raw table.</li>
+      </ul>
+    </li>
+
+    <li><b>Metadata‑Driven Code Generation:</b>
+      <ul>
+        <li>Use scripts or templates to generate stored procedures from metadata.</li>
+        <li>Dropping a column means regenerating procedures, not manually editing 50 files.</li>
+      </ul>
+    </li>
+
+    <li><b>Practical Migration Steps:</b>
+      <ol>
+        <li>Identify all dependencies using <code>sys.sql_dependencies</code> or <code>sys.dm_sql_referencing_entities</code>.</li>
+        <li>Redirect procedures to use a view or wrapper.</li>
+        <li>Drop the column from the base table.</li>
+        <li>Update the view/wrapper to exclude the column.</li>
+      </ol>
+    </li>
+  </ul>
+
+  <p><b>Result:</b> By abstracting table access through views or functions, you minimize the impact of dropping a column. Instead of editing 50 procedures, you only update one abstraction layer, ensuring schema evolution is safe and maintainable.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #c0392b;">
+    <b>Interview Summary:</b><br>
+    “If a column used in 50 stored procedures needs to be dropped, I’d avoid editing each procedure. Instead, I’d abstract the table behind a view or function. Procedures depend on the abstraction, not the raw table. Dropping the column then only requires updating the view, minimizing impact and ensuring maintainability.”
+  </div>
+</details>
+
+<details>
+  <summary>Shared Employee Schema Across Multiple Applications</summary>
+  <p><b>Situation:</b> Employee data must be shared across multiple applications (HR, Payroll, Attendance, Project Management). The schema should ensure consistency, scalability, and security while avoiding duplication.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Core Employee Table:</b>
+      <ul>
+        <li>Contains canonical employee information (EmployeeId, Name, DOB, Gender, HireDate).</li>
+        <li>Acts as the single source of truth for identity data.</li>
+      </ul>
+      <pre><code>CREATE TABLE Employee (
+    EmployeeId INT PRIMARY KEY,
+    FirstName NVARCHAR(50),
+    LastName NVARCHAR(50),
+    DOB DATE,
+    Gender CHAR(1),
+    HireDate DATE,
+    Status NVARCHAR(20)
+);</code></pre>
+    </li>
+
+    <li><b>Reference Tables:</b>
+      <ul>
+        <li><code>Department</code>, <code>Location</code>, <code>Role</code> tables for normalization.</li>
+        <li>Employee table references these via foreign keys.</li>
+      </ul>
+    </li>
+
+    <li><b>Modular Extension Tables:</b>
+      <ul>
+        <li>Separate tables for application-specific data:
+          <ul>
+            <li><code>PayrollInfo</code> (BankAccount, TaxId, Salary).</li>
+            <li><code>Attendance</code> (EmployeeId, Date, Status).</li>
+            <li><code>ProjectAssignment</code> (EmployeeId, ProjectId, Role).</li>
+          </ul>
+        </li>
+        <li>This avoids bloating the core Employee table with unrelated fields.</li>
+      </ul>
+    </li>
+
+    <li><b>Auditing & History:</b>
+      <ul>
+        <li>Use temporal tables or audit logs to track changes (e.g., promotions, transfers).</li>
+      </ul>
+    </li>
+
+    <li><b>Security & Access Control:</b>
+      <ul>
+        <li>Restrict sensitive columns (e.g., salary, tax info) with role-based access.</li>
+        <li>Encrypt sensitive fields (e.g., bank account numbers).</li>
+      </ul>
+    </li>
+
+    <li><b>Integration Strategy:</b>
+      <ul>
+        <li>Expose employee data via APIs or views for other applications.</li>
+        <li>Use consistent <code>EmployeeId</code> as the global identifier across systems.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><b>Result:</b> The schema separates core identity data from application-specific data, ensuring consistency across multiple applications. It supports scalability, security, and modular growth without duplicating employee information.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #2c3e50;">
+    <b>Interview Summary:</b><br>
+    “I’d design a core Employee table with canonical identity fields, reference tables for departments/locations, and modular extension tables for payroll, attendance, and projects. This ensures a single source of truth, avoids duplication, and allows secure sharing across applications.”
+  </div>
+</details>
+
+<details>
+  <summary>Analyzing and Fixing Deadlocks in Production</summary>
+  <p><b>Situation:</b> A deadlock occurs when two or more transactions block each other by holding locks on resources the other needs. In production, this can cause query failures and impact application stability. The goal is to identify the root cause and implement a fix without disrupting operations.</p>
+
+  <p><b>Approach:</b></p>
+  <ul>
+    <li><b>Capture Deadlock Information:</b>
+      <ul>
+        <li>Enable SQL Server trace flags (<code>1222</code> or <code>1204</code>) to log deadlock details.</li>
+        <li>Use Extended Events or SQL Profiler to capture deadlock graphs.</li>
+        <li>Analyze the deadlock graph to see which queries and resources are involved.</li>
+      </ul>
+    </li>
+
+    <li><b>Analyze Execution Plans:</b>
+      <ul>
+        <li>Check the queries involved for inefficient joins, missing indexes, or large scans.</li>
+        <li>Identify lock types (row, page, table) and escalation patterns.</li>
+      </ul>
+    </li>
+
+    <li><b>Fix Strategies:</b>
+      <ul>
+        <li><b>Consistent Access Order:</b> Ensure all transactions access tables in the same sequence to avoid circular waits.</li>
+        <li><b>Reduce Transaction Scope:</b> Keep transactions short; avoid user interaction inside transactions.</li>
+        <li><b>Index Optimization:</b> Add indexes to reduce lock contention by narrowing scans.</li>
+        <li><b>Isolation Level Tuning:</b> Use <code>READ COMMITTED SNAPSHOT</code> to reduce locking conflicts.</li>
+        <li><b>Retry Logic:</b> Implement retry with exponential backoff in application code for deadlock victims.</li>
+        <li><b>Batch Processing:</b> Break large updates/inserts into smaller batches to minimize lock duration.</li>
+      </ul>
+    </li>
+
+    <li><b>Monitoring & Prevention:</b>
+      <ul>
+        <li>Set up alerts for deadlock events.</li>
+        <li>Regularly review execution plans and index usage.</li>
+        <li>Educate developers on safe transaction design patterns.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><b>Result:</b> By capturing deadlock graphs, analyzing query patterns, and applying fixes like consistent access order, indexing, and retry logic, you eliminate deadlocks or reduce their frequency, ensuring stable production performance.</p>
+
+  <div style="background:#ecf0f1; padding:10px; border-left:4px solid #d35400;">
+    <b>Interview Summary:</b><br>
+    “When I encounter a deadlock in production, I capture the deadlock graph using Extended Events, analyze which queries and resources are involved, and then fix it by enforcing consistent access order, optimizing indexes, shortening transactions, or enabling snapshot isolation. I also add retry logic in the application. This systematic approach ensures deadlocks are resolved and prevented in the future.”
+  </div>
+</details>
 
 <h2 id="designpatterns">Design Pattern Categories (C#/.NET)</h2>
 
