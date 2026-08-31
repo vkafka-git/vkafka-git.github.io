@@ -4108,16 +4108,773 @@ Microservices → Metrics → Prometheus → Grafana (metrics dashboards)
 
 <!-- Testing -->
 <h2 id="testing">Testing & Quality Assurance</h2>
-<details><summary>Unit vs Integration Tests</summary></details>
-<details><summary>Mocking Dependencies</summary></details>
-<details><summary>Mocking vs Stubbing</summary></details>
-<details><summary>Ensuring Test Coverage in CI/CD</summary></details>
-<details><summary>Role of TDD in Agile</summary></details>
-<details><summary>Testing Async Methods in .NET</summary></details>
-<details><summary>Designing Test Data Builders</summary></details>
-<details><summary>Implementing BDD (Behavior-Driven Development)</summary></details>
-<details><summary>Testing Microservices Interactions</summary></details>
-<details><summary>Designing Load Tests</summary></details>
+<details>
+  <summary>Mocking Dependencies in Unit Tests</summary>
+  
+
+<h2>1. Why Mock Dependencies?</h2>
+<p>
+Mocking allows you to <b>isolate the unit under test</b> by replacing real dependencies 
+(e.g., database, external APIs, services) with controlled substitutes. 
+This ensures tests are <b>fast, reliable, and deterministic</b>.
+</p>
+
+<h2>2. Types of Test Doubles</h2>
+<p>
+- <b>Mock:</b> Verifies interactions (method calls, parameters).<br/>
+- <b>Stub:</b> Provides predefined responses.<br/>
+- <b>Fake:</b> Simplified implementation (e.g., in-memory DB).<br/>
+- <b>Spy:</b> Records calls for later verification.<br/>
+</p>
+
+<h2>3. Using Moq in .NET</h2>
+<p>
+Moq is a popular library for mocking dependencies in C# unit tests.
+</p>
+
+<pre><code class="language-csharp"><code class="csharp">
+// Example: Service depends on IRepository
+public interface IRepository
+{
+    Task&lt;Product&gt; GetByIdAsync(int id);
+}
+
+public class ProductService
+{
+    private readonly IRepository _repository;
+    public ProductService(IRepository repository) =&gt; _repository = repository;
+
+    public async Task&lt;string&gt; GetProductNameAsync(int id)
+    {
+        var product = await _repository.GetByIdAsync(id);
+        return product?.Name ?? "Unknown";
+    }
+}
+
+// Unit Test with Moq
+[Fact]
+public async Task GetProductName_ReturnsName()
+{
+    var mockRepo = new Mock&lt;IRepository&gt;();
+    mockRepo.Setup(r =&gt; r.GetByIdAsync(1))
+            .ReturnsAsync(new Product { Id = 1, Name = "Laptop" });
+
+    var service = new ProductService(mockRepo.Object);
+
+    var result = await service.GetProductNameAsync(1);
+
+    Assert.Equal("Laptop", result);
+    mockRepo.Verify(r =&gt; r.GetByIdAsync(1), Times.Once);
+}
+</code></code></pre>
+
+<h2>4. Best Practices</h2>
+<p>
+- Mock only <b>external dependencies</b>, not the class under test.<br/>
+- Use <b>Verify()</b> to ensure expected interactions occurred.<br/>
+- Keep mocks <b>simple and focused</b> on test intent.<br/>
+- Prefer <b>fakes</b> for complex dependencies (e.g., in-memory DB).<br/>
+</p>
+
+<h2>5. Interview Insight</h2>
+<p>
+In interviews, emphasize that mocking is about <b>isolation and control</b>. 
+Show understanding of different test doubles (mock, stub, fake, spy) 
+and when to use each. Highlight practical experience with <b>Moq</b>, 
+including <b>Setup()</b> for return values and <b>Verify()</b> for interaction checks. 
+Demonstrating awareness of <b>trade-offs</b> (e.g., over-mocking leading to brittle tests) 
+will showcase maturity in designing effective unit tests.
+</p>
+</details>
+<details>
+  <summary>Unit Tests vs Integration Tests</summary>
+  
+
+<h2>1. Unit Tests</h2>
+<p>
+Unit tests validate <b>individual components</b (methods, classes, functions) in isolation. 
+They use <b>mocks, stubs, or fakes</b> to replace dependencies, ensuring the test focuses only 
+on the logic of the unit under test. Unit tests are <b>fast, deterministic, and granular</b>.
+</p>
+
+<h3>✅ Characteristics</h3>
+<p>
+- Scope: Single class or method.<br/>
+- Dependencies: Mocked or stubbed.<br/>
+- Speed: Very fast, run frequently.<br/>
+- Goal: Verify correctness of small, isolated units.<br/>
+</p>
+
+<h2>2. Integration Tests</h2>
+<p>
+Integration tests validate how <b>multiple components work together</b>. 
+They test interactions between modules, services, or external systems (e.g., database, APIs). 
+Integration tests are <b>slower, broader, and closer to real-world scenarios</b>.
+</p>
+
+<h3>✅ Characteristics</h3>
+<p>
+- Scope: Multiple modules or subsystems.<br/>
+- Dependencies: Real or test versions (e.g., in-memory DB).<br/>
+- Speed: Slower than unit tests.<br/>
+- Goal: Verify correctness of interactions and data flow.<br/>
+</p>
+
+<h2>3. Example in .NET</h2>
+
+<h3>Unit Test (with Moq)</h3>
+<pre><code class="language-csharp"><code class="csharp">
+[Fact]
+public async Task GetProductName_ReturnsName()
+{
+    var mockRepo = new Mock&lt;IRepository&gt;();
+    mockRepo.Setup(r =&gt; r.GetByIdAsync(1))
+            .ReturnsAsync(new Product { Id = 1, Name = "Laptop" });
+
+    var service = new ProductService(mockRepo.Object);
+
+    var result = await service.GetProductNameAsync(1);
+
+    Assert.Equal("Laptop", result);
+}
+</code></code></pre>
+
+<h3>Integration Test (with In-Memory EF Core)</h3>
+<pre><code class="language-csharp"><code class="csharp">
+[Fact]
+public async Task GetProductName_IntegrationTest()
+{
+    var options = new DbContextOptionsBuilder&lt;AppDbContext&gt;()
+        .UseInMemoryDatabase("TestDb")
+        .Options;
+
+    using var context = new AppDbContext(options);
+    context.Products.Add(new Product { Id = 1, Name = "Laptop" });
+    await context.SaveChangesAsync();
+
+    var service = new ProductService(new Repository(context));
+    var result = await service.GetProductNameAsync(1);
+
+    Assert.Equal("Laptop", result);
+}
+</code></code></pre>
+
+<h2>4. Interview Insight</h2>
+<p>
+In interviews, emphasize that <b>unit tests</b> ensure correctness of isolated logic, 
+while <b>integration tests</b> validate collaboration between components. 
+Highlight trade-offs: unit tests are <b>fast and precise</b>, integration tests are 
+<b>realistic but slower</b>. Mention practical strategies like using <b>in-memory databases</b> 
+for integration tests and <b>Moq</b> for unit tests. Demonstrating awareness of 
+the <b>testing pyramid</b> (unit tests at the base, integration tests above) 
+shows maturity in designing a balanced test strategy.
+</p>
+</details>
+<details>
+  <summary>Ensuring Test Coverage in CI/CD</summary>
+  
+
+<h2>1. What Is Test Coverage?</h2>
+<p>
+Test coverage measures the <b>percentage of code executed</b during automated tests. 
+It ensures critical logic is validated and helps identify untested areas in the application.
+</p>
+
+<h2>2. Tools for Coverage in .NET</h2>
+<p>
+- <b>Coverlet:</b> Collects coverage during <code>dotnet test</code>.<br/>
+- <b>ReportGenerator:</b> Converts raw coverage data into HTML dashboards.<br/>
+- <b>SonarCloud:</b> Integrates coverage into quality gates.<br/>
+- <b>Visual Studio Enterprise:</b> Built-in coverage analysis.<br/>
+</p>
+
+<h2>3. CI/CD Pipeline Integration</h2>
+<pre><code class="language-csharp"><code class="yaml">
+# Example Azure DevOps pipeline
+steps:
+- task: DotNetCoreCLI@2
+  inputs:
+    command: test
+    projects: '**/*Tests.csproj'
+    arguments: >
+      /p:CollectCoverage=true
+      /p:CoverletOutput=TestResults/coverage.json
+      /p:CoverletOutputFormat=cobertura
+
+- task: reportgenerator@4
+  inputs:
+    reports: 'TestResults/coverage.cobertura.xml'
+    targetdir: 'CoverageReport'
+
+- task: SonarCloudPrepare@1
+  inputs:
+    sonarCoverageReportPaths: 'TestResults/coverage.cobertura.xml'
+</code></code></pre>
+
+<h2>4. Best Practices</h2>
+<p>
+- Set a <b>minimum coverage threshold</b> (e.g., 80%) in pipelines.<br/>
+- Fail builds if coverage drops below agreed standards.<br/>
+- Focus on <b>business-critical logic</b> rather than trivial code.<br/>
+- Combine coverage with <b>mutation testing</b> for meaningful validation.<br/>
+</p>
+
+<h2>5. Interview Insight</h2>
+<p>
+In interviews, emphasize that test coverage is enforced by <b>integrating tools like Coverlet and SonarCloud</b> 
+into CI/CD pipelines. Highlight that coverage ensures <b>confidence in testing</b> but does not guarantee bug-free code. 
+Mention strategies like <b>quality gates, thresholds, and build failure policies</b> to show practical experience. 
+Demonstrating awareness of <b>reporting dashboards</b> and <b>mutation testing</b> will showcase maturity in designing 
+robust CI/CD pipelines.
+</p>
+</details>
+<details>
+  <summary>Role of TDD in Agile</summary>
+  
+
+<h2>1. What Is TDD?</h2>
+<p>
+Test-Driven Development (TDD) is a software development practice where developers 
+<b>write tests before writing production code</b>. It follows the <b>red-green-refactor cycle</b>: 
+write a failing test (red), implement code to pass the test (green), and refactor for quality.
+</p>
+
+<h2>2. Why TDD Fits Agile</h2>
+<p>
+Agile emphasizes <b>iterative development, fast feedback, and adaptability</b>. 
+TDD supports these principles by ensuring code is <b>reliable, maintainable, and continuously validated</b>. 
+It aligns with Agile’s focus on <b>working software, collaboration, and responding to change</b>.
+</p>
+
+<h2>3. Benefits of TDD in Agile</h2>
+<p>
+- <b>Continuous Feedback:</b> Tests validate features immediately.<br/>
+- <b>Quality Assurance:</b> Prevents regressions during frequent Agile iterations.<br/>
+- <b>Refactoring Confidence:</b> Developers can safely improve code knowing tests guard behavior.<br/>
+- <b>Documentation:</b> Tests act as living documentation of requirements.<br/>
+- <b>Collaboration:</b> Encourages shared understanding between developers, testers, and product owners.<br/>
+</p>
+
+<h2>4. Example Workflow</h2>
+<p>
+1. Agile sprint defines a user story.<br/>
+2. Developer writes a failing test for the story.<br/>
+3. Code is implemented to make the test pass.<br/>
+4. Refactor code while keeping tests green.<br/>
+5. CI/CD pipeline runs tests to ensure stability.<br/>
+</p>
+
+<h2>5. Challenges</h2>
+<p>
+- <b>Initial overhead:</b> Writing tests first takes discipline.<br/>
+- <b>Test maintenance:</b> Frequent Agile changes may require updating tests.<br/>
+- <b>Skill gap:</b> Teams must be trained in TDD practices.<br/>
+</p>
+
+<h2>6. Interview Insight</h2>
+<p>
+In interviews, emphasize that TDD is not just about testing, but about <b>designing software iteratively</b>. 
+Highlight how TDD supports Agile principles by enabling <b>fast feedback, continuous integration, and safe refactoring</b>. 
+Mention practical experience with <b>xUnit, NUnit, or Moq</b> in TDD workflows, and explain how TDD helps teams 
+deliver <b>high-quality, adaptable software</b> in short Agile sprints. 
+Demonstrating awareness of both <b>benefits and challenges</b> shows maturity in applying TDD in real-world Agile environments.
+</p>
+</details>
+<details>
+  <summary>Testing Async Methods in .NET</summary>
+  
+
+<h2>1. Why Async Testing Matters?</h2>
+<p>
+Async methods are common in modern .NET applications for <b>I/O-bound operations</b> 
+like database calls, HTTP requests, and file access. Testing them ensures 
+<b>correctness, reliability, and proper exception handling</b> without blocking threads.
+</p>
+
+<h2>2. Using xUnit for Async Tests</h2>
+<p>
+xUnit supports async tests natively. You can write tests with <code>async Task</code> 
+return types to await asynchronous methods.
+</p>
+
+<pre><code class="language-csharp"><code class="csharp">
+[Fact]
+public async Task GetDataAsync_ReturnsExpectedResult()
+{
+    var service = new DataService();
+
+    var result = await service.GetDataAsync();
+
+    Assert.Equal("Hello World", result);
+}
+</code></code></pre>
+
+<h2>3. Handling Exceptions in Async Tests</h2>
+<p>
+Use <code>await Assert.ThrowsAsync&lt;T&gt;</code> to validate exceptions in async methods.
+</p>
+
+<pre><code class="language-csharp"><code class="csharp">
+[Fact]
+public async Task GetDataAsync_ThrowsException_WhenInvalid()
+{
+    var service = new DataService();
+
+    await Assert.ThrowsAsync&lt;ArgumentException&gt;(
+        () =&gt; service.GetDataAsync(null));
+}
+</code></code></pre>
+
+<h2>4. Mocking Async Dependencies</h2>
+<p>
+Use Moq’s <code>ReturnsAsync</code> to mock async methods.
+</p>
+
+<pre><code class="language-csharp"><code class="csharp">
+var mockRepo = new Mock&lt;IRepository&gt;();
+mockRepo.Setup(r =&gt; r.GetByIdAsync(1))
+        .ReturnsAsync(new Product { Id = 1, Name = "Laptop" });
+
+var service = new ProductService(mockRepo.Object);
+var result = await service.GetProductNameAsync(1);
+
+Assert.Equal("Laptop", result);
+</code></code></pre>
+
+<h2>5. Best Practices</h2>
+<p>
+- Always use <b>async Task</b> instead of <b>async void</b> in tests.<br/>
+- Avoid <b>Thread.Sleep</b>; use <b>Task.Delay</b> or proper async APIs.<br/>
+- Mock external async dependencies (e.g., HttpClient).<br/>
+- Ensure <b>timeouts</b> for long-running async operations.<br/>
+</p>
+
+<h2>6. Interview Insight</h2>
+<p>
+In interviews, emphasize that async testing ensures <b>non-blocking correctness</b> 
+and aligns with modern .NET practices. Highlight the use of <b>xUnit’s async support</b>, 
+<code>Assert.ThrowsAsync</code> for exception validation, and <b>Moq’s ReturnsAsync</b> 
+for mocking dependencies. Demonstrating awareness of pitfalls like <b>async void</b> 
+and the importance of <b>timeouts</b> will showcase practical expertise in testing 
+asynchronous code effectively.
+</p>
+</details>
+<details>
+  <summary>Designing Test Data Builders</summary>
+  
+
+<h2>1. What Are Test Data Builders?</h2>
+<p>
+Test Data Builders are a <b>design pattern</b> used in unit and integration testing 
+to create complex test objects in a <b>readable, reusable, and maintainable</b> way. 
+They help avoid repetitive setup code and make tests more expressive.
+</p>
+
+<h2>2. Why Use Them?</h2>
+<p>
+- Simplify creation of objects with many properties.<br/>
+- Provide <b>sensible defaults</b> while allowing overrides.<br/>
+- Improve <b>readability</b> of test code.<br/>
+- Reduce <b>duplication</b> across multiple tests.<br/>
+</p>
+
+<h2>3. Example in C#</h2>
+<pre><code class="language-csharp"><code class="csharp">
+// Domain class
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public decimal Price { get; set; }
+}
+
+// Test Data Builder
+public class ProductBuilder
+{
+    private int _id = 1;
+    private string _name = "Default Product";
+    private decimal _price = 100m;
+
+    public ProductBuilder WithId(int id)
+    {
+        _id = id;
+        return this;
+    }
+
+    public ProductBuilder WithName(string name)
+    {
+        _name = name;
+        return this;
+    }
+
+    public ProductBuilder WithPrice(decimal price)
+    {
+        _price = price;
+        return this;
+    }
+
+    public Product Build()
+    {
+        return new Product
+        {
+            Id = _id,
+            Name = _name,
+            Price = _price
+        };
+    }
+}
+
+// Usage in Test
+[Fact]
+public void Product_ShouldHaveCorrectName()
+{
+    var product = new ProductBuilder()
+                    .WithName("Laptop")
+                    .Build();
+
+    Assert.Equal("Laptop", product.Name);
+}
+</code></code></pre>
+
+<h2>4. Best Practices</h2>
+<p>
+- Provide <b>default values</b> to minimize setup effort.<br/>
+- Use <b>fluent APIs</b> for readability.<br/>
+- Keep builders in a <b>separate test project</b> to avoid polluting production code.<br/>
+- Combine with <b>Object Mother</b> for reusable test scenarios.<br/>
+</p>
+
+<h2>5. Interview Insight</h2>
+<p>
+In interviews, emphasize that Test Data Builders improve <b>test readability and maintainability</b>. 
+Highlight how they reduce <b>boilerplate setup code</b> and make tests more expressive. 
+Mention practical experience with <b>fluent builder patterns</b> in C#, and explain how they 
+fit into a broader <b>test strategy</b> alongside mocks and fakes. 
+Demonstrating awareness of <b>best practices</b> (default values, fluent APIs, separation from production code) 
+will showcase maturity in designing effective test infrastructure.
+</p>
+</details>
+<details>
+  <summary>Implementing BDD (Behavior-Driven Development)</summary>
+  
+
+<h2>1. What Is BDD?</h2>
+<p>
+Behavior-Driven Development (BDD) is an evolution of TDD that focuses on the 
+<b>behavior of the system from the user’s perspective</b>. It uses a shared language 
+(Gherkin syntax) to define scenarios, bridging the gap between <b>developers, testers, and business stakeholders</b>.
+</p>
+
+<h2>2. Why BDD?</h2>
+<p>
+BDD ensures that software is built according to <b>business requirements</b> and 
+<b>user expectations</b>. It improves collaboration, reduces misunderstandings, and 
+provides living documentation of system behavior.
+</p>
+
+<h2>3. Core Concepts</h2>
+<p>
+- <b>Feature:</b> High-level description of functionality.<br/>
+- <b>Scenario:</b> Specific example of system behavior.<br/>
+- <b>Steps:</b> Written in <code>Given-When-Then</code> format.<br/>
+</p>
+
+<h2>4. Example in Gherkin</h2>
+<pre><code class="language-csharp"><code class="gherkin">
+Feature: Login functionality
+  Scenario: Successful login
+    Given the user is on the login page
+    When the user enters valid credentials
+    Then the user should be redirected to the dashboard
+</code></code></pre>
+
+<h2>5. Implementation in .NET (SpecFlow)</h2>
+<p>
+SpecFlow is a popular BDD framework for .NET that integrates with xUnit/NUnit.
+</p>
+
+<pre><code class="language-csharp"><code class="csharp">
+// Step Definition
+[Binding]
+public class LoginSteps
+{
+    private readonly LoginService _service = new LoginService();
+    private bool _result;
+
+    [Given(@"the user is on the login page")]
+    public void GivenTheUserIsOnTheLoginPage()
+    {
+        // Setup context
+    }
+
+    [When(@"the user enters valid credentials")]
+    public void WhenTheUserEntersValidCredentials()
+    {
+        _result = _service.Login("user", "password");
+    }
+
+    [Then(@"the user should be redirected to the dashboard")]
+    public void ThenTheUserShouldBeRedirectedToTheDashboard()
+    {
+        Assert.True(_result);
+    }
+}
+</code></code></pre>
+
+<h2>6. Best Practices</h2>
+<p>
+- Write scenarios in <b>business language</b> understandable by non-technical stakeholders.<br/>
+- Keep scenarios <b>short and focused</b> on behavior, not implementation.<br/>
+- Use <b>living documentation</b> to keep requirements and tests aligned.<br/>
+- Automate scenarios in CI/CD pipelines.<br/>
+</p>
+
+<h2>7. Interview Insight</h2>
+<p>
+In interviews, emphasize that BDD is about <b>collaboration and shared understanding</b> 
+between developers, testers, and business stakeholders. Highlight the use of 
+<b>Gherkin syntax</b> for clear communication, and mention practical experience 
+with <b>SpecFlow in .NET</b>. Stress that BDD provides <b>living documentation</b> 
+and ensures features are built according to <b>user expectations</b>. 
+Demonstrating awareness of both <b>benefits and challenges</b> (e.g., scenario maintenance, 
+avoiding overly technical steps) shows maturity in applying BDD in Agile teams.
+</p>
+</details>
+<details>
+  <summary>Mocking vs Stubbing</summary>
+  
+
+<h2>1. What Are Test Doubles?</h2>
+<p>
+In unit testing, <b>test doubles</b> are substitutes for real dependencies. 
+They help isolate the unit under test and control its environment. 
+Two common types are <b>mocks</b> and <b>stubs</b>.
+</p>
+
+<h2>2. Stubbing</h2>
+<p>
+A <b>stub</b> provides <b>predefined responses</b> to method calls. 
+It does not care about how the method is invoked, only about returning controlled data. 
+Stubs are used when you want to <b>simulate data or behavior</b> without verifying interactions.
+</p>
+
+<pre><code class="language-csharp"><code class="csharp">
+// Stub example with Moq
+var stubRepo = new Mock&lt;IRepository&gt;();
+stubRepo.Setup(r =&gt; r.GetByIdAsync(1))
+        .ReturnsAsync(new Product { Id = 1, Name = "Laptop" });
+
+// Service uses stubbed repository
+var service = new ProductService(stubRepo.Object);
+var result = await service.GetProductNameAsync(1);
+
+Assert.Equal("Laptop", result);
+</code></code></pre>
+
+<h2>3. Mocking</h2>
+<p>
+A <b>mock</b> not only provides responses but also <b>verifies interactions</b>. 
+Mocks are used when you want to ensure that a dependency was called with the correct 
+parameters, the right number of times, or in a specific order.
+</p>
+
+<pre><code class="language-csharp"><code class="csharp">
+// Mock example with Moq
+var mockRepo = new Mock&lt;IRepository&gt;();
+mockRepo.Setup(r =&gt; r.GetByIdAsync(It.IsAny&lt;int&gt;()))
+        .ReturnsAsync(new Product { Id = 1, Name = "Laptop" });
+
+var service = new ProductService(mockRepo.Object);
+await service.GetProductNameAsync(1);
+
+// Verify interaction
+mockRepo.Verify(r =&gt; r.GetByIdAsync(1), Times.Once);
+</code></code></pre>
+
+<h2>4. Key Differences</h2>
+<p>
+- <b>Stub:</b> Provides canned responses, does not verify behavior.<br/>
+- <b>Mock:</b> Provides responses and verifies that interactions occurred.<br/>
+- <b>Stub:</b> Focuses on <b>state</b> (what data is returned).<br/>
+- <b>Mock:</b> Focuses on <b>behavior</b> (how methods are called).<br/>
+</p>
+
+<h2>5. Best Practices</h2>
+<p>
+- Use <b>stubs</b> when you only care about returning controlled data.<br/>
+- Use <b>mocks</b> when verifying <b>interactions and side effects</b> is important.<br/>
+- Avoid over-mocking, as it can lead to brittle tests.<br/>
+- Prefer <b>fakes</b> (in-memory implementations) for complex dependencies.<br/>
+</p>
+
+<h2>6. Interview Insight</h2>
+<p>
+In interviews, emphasize that stubs are about <b>controlling inputs</b> 
+while mocks are about <b>verifying interactions</b>. 
+Highlight practical experience with <b>Moq</b> in .NET, using <code>Setup()</code> for stubbing 
+and <code>Verify()</code> for mocking. 
+Demonstrating awareness of <b>trade-offs</b> (e.g., over-mocking leading to fragile tests) 
+shows maturity in designing effective test strategies.
+</p>
+</details>
+<details>
+  <summary>Testing Microservices Interactions</summary>
+  
+
+<h2>1. Why Test Microservices Interactions?</h2>
+<p>
+Microservices communicate via <b>APIs, events, or messaging systems</b>. 
+Testing their interactions ensures <b>data consistency, reliability, and resilience</b> 
+across distributed boundaries. Unlike monoliths, microservices require validation of 
+<b>contracts, communication flows, and fault tolerance</b>.
+</p>
+
+<h2>2. Key Testing Approaches</h2>
+
+<h3>🔗 Contract Testing</h3>
+<p>
+Validates that service providers and consumers agree on the <b>API contract</b>. 
+Tools like <b>Pact.NET</b> ensure that changes in one service do not break others.
+</p>
+
+<h3>📡 Integration Testing</h3>
+<p>
+Tests multiple services together using real or test environments. 
+Validates <b>data flow, API calls, and message exchanges</b>.
+</p>
+
+<h3>📨 Messaging/Event Testing</h3>
+<p>
+For event-driven systems, verify that <b>messages are published and consumed correctly</b>. 
+Use tools like <b>Testcontainers</b> to spin up Kafka/RabbitMQ for testing.
+</p>
+
+<h3>⚡ Resilience Testing</h3>
+<p>
+Simulate failures (timeouts, network errors) to ensure services handle them gracefully. 
+Use <b>Polly</b> for retries, circuit breakers, and fallback logic.
+</p>
+
+<h2>3. Example: Contract Testing with Pact.NET</h2>
+<pre><code class="language-csharp"><code class="csharp">
+// Consumer Test
+[Fact]
+public void GetProduct_ReturnsExpectedResponse()
+{
+    var pact = PactBuilder
+        .ServiceConsumer("OrderService")
+        .HasPactWith("ProductService");
+
+    pact.UponReceiving("A request for product 1")
+        .WithRequest(HttpMethod.Get, "/products/1")
+        .WillRespond()
+        .WithStatus(HttpStatusCode.OK)
+        .WithJsonBody(new { Id = 1, Name = "Laptop" });
+
+    // Verify consumer expectations
+}
+</code></code></pre>
+
+<h2>4. Example: End-to-End API Test</h2>
+<pre><code class="language-csharp"><code class="csharp">
+[Fact]
+public async Task OrderService_CallsProductServiceSuccessfully()
+{
+    var client = _factory.CreateClient();
+    var response = await client.GetAsync("/orders/1");
+
+    response.EnsureSuccessStatusCode();
+    var order = await response.Content.ReadFromJsonAsync&lt;Order&gt;();
+
+    Assert.Equal("Laptop", order.ProductName);
+}
+</code></code></pre>
+
+<h2>5. Best Practices</h2>
+<p>
+- Use <b>contract tests</b> for API compatibility.<br/>
+- Automate <b>integration tests</b> in CI/CD pipelines.<br/>
+- Test <b>failure scenarios</b> (timeouts, retries, circuit breakers).<br/>
+- Use <b>test environments</b> with containerized dependencies.<br/>
+- Monitor interactions with <b>distributed tracing</b> (Jaeger, Zipkin).<br/>
+</p>
+
+<h2>6. Interview Insight</h2>
+<p>
+In interviews, emphasize that testing microservices interactions requires 
+<b>contract testing for API stability</b>, <b>integration tests for data flow</b>, 
+and <b>resilience tests for fault tolerance</b>. Highlight practical experience 
+with <b>Pact.NET, Testcontainers, and Polly</b>, and mention the importance of 
+<b>observability tools</b> like Grafana/Kibana for monitoring. 
+Demonstrating awareness of <b>trade-offs</b> (e.g., cost of full end-to-end tests vs. 
+lightweight contract tests) shows maturity in designing a robust microservices 
+testing strategy.
+</p>
+</details>
+<details>
+  <summary>Designing Load Tests</summary>
+  
+
+<h2>1. What Is Load Testing?</h2>
+<p>
+Load testing evaluates how a system performs under <b>expected and peak user loads</b>. 
+It ensures the application can handle concurrent requests, data volume, and throughput 
+without performance degradation or failures.
+</p>
+
+<h2>2. Goals of Load Testing</h2>
+<p>
+- Validate <b>system scalability</b>.<br/>
+- Identify <b>bottlenecks</b> in CPU, memory, database, or network.<br/>
+- Ensure <b>response times</b> meet SLAs.<br/>
+- Verify <b>stability</b> under sustained load.<br/>
+</p>
+
+<h2>3. Key Design Considerations</h2>
+<p>
+- Define <b>workload model</b>: number of users, request mix, think time.<br/>
+- Identify <b>critical user journeys</b> (e.g., login, checkout, search).<br/>
+- Set <b>performance metrics</b>: response time, throughput, error rate.<br/>
+- Establish <b>baseline</b> and <b>thresholds</b> for acceptable performance.<br/>
+</p>
+
+<h2>4. Tools Commonly Used</h2>
+<p>
+- <b>JMeter:</b> Open-source, supports HTTP, JDBC, SOAP, REST.<br/>
+- <b>k6:</b> Modern load testing tool with scripting in JavaScript.<br/>
+- <b>Locust:</b> Python-based, scalable distributed load testing.<br/>
+- <b>Azure Load Testing:</b> Cloud-native integration with CI/CD.<br/>
+</p>
+
+<h2>5. Example Workflow (JMeter)</h2>
+<p>
+1. Define test plan with thread groups (users).<br/>
+2. Add samplers (HTTP requests).<br/>
+3. Configure timers (think time).<br/>
+4. Add listeners (graphs, reports).<br/>
+5. Run tests with increasing load (ramp-up).<br/>
+6. Analyze results for response time, throughput, and errors.<br/>
+</p>
+
+<h2>6. Best Practices</h2>
+<p>
+- Start with <b>baseline load</b>, then scale gradually.<br/>
+- Simulate <b>realistic user behavior</b> (think time, random data).<br/>
+- Separate <b>read vs write workloads</b>.<br/>
+- Monitor <b>infrastructure metrics</b> (CPU, memory, DB connections).<br/>
+- Automate load tests in <b>CI/CD pipelines</b>.<br/>
+</p>
+
+<h2>7. Interview Insight</h2>
+<p>
+In interviews, emphasize that load testing is about <b>validating system performance under stress</b>. 
+Highlight the importance of <b>workload modeling</b> and <b>critical user journeys</b>. 
+Mention practical experience with tools like <b>JMeter, k6, or Azure Load Testing</b>, 
+and explain how you integrate load tests into <b>CI/CD pipelines</b>. 
+Demonstrating awareness of <b>bottleneck analysis</b> and <b>scalability strategies</b> 
+will showcase maturity in designing robust performance testing frameworks.
+</p>
+</details>
 
 <!-- Leadership -->
 <h2 id="leadership">Leadership & Behavioral</h2>
