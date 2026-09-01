@@ -4086,25 +4086,1282 @@ Microservices → Metrics → Prometheus → Grafana (metrics dashboards)
 
 <!-- DevOps -->
 <h2 id="devops">DevOps / CI/CD & Code Quality</h2>
-<details><summary>CI vs CD</summary></details>
-<details><summary>Infrastructure as Code (IaC)</summary></details>
-<details><summary>Blue-Green vs Canary Deployments</summary></details>
-<details><summary>Rollback Strategies in CI/CD</summary></details>
-<details><summary>Securing CI/CD Pipelines</summary></details>
-<details><summary>Approvals in CI/CD Pipelines</summary></details>
-<details><summary>YAML Configuration in Azure DevOps</summary></details>
-<details><summary>PR Validation Pipeline</summary></details>
-<details><summary>Deployment Pipeline</summary></details>
-<details><summary>Developer Checklist for Local Validation</summary></details>
-<details><summary>Enforcing Coding Standards in CI/CD</summary></details>
-<details><summary>Static vs Dynamic Testing</summary></details>
-<details><summary>SonarCloud Quality Gates</summary></details>
-<details><summary>Roslyn Analyzers</summary></details>
-<details><summary>StyleCop.Analyzers</summary></details>
-<details><summary>SonarAnalyzer.CSharp</summary></details>
-<details><summary>Measuring Code Coverage</summary></details>
-<details><summary>Log Aggregation Strategies</summary></details>
-<details><summary>Alerting in Grafana</summary></details>
+<details>
+  <summary>CI vs CD</summary>
+  
+  <h3>Continuous Integration (CI)</h3>
+  <ul>
+    <li>Developers frequently merge code changes into a shared repository.</li>
+    <li>Each commit triggers automated build + test pipelines.</li>
+    <li>Goal: Detect integration issues early and enforce code quality gates.</li>
+    <li>Example: Push code → pipeline compiles, runs unit tests, static analysis, coverage checks.</li>
+  </ul>
+
+  <h3>Continuous Delivery (CD)</h3>
+  <ul>
+    <li>Builds on CI by automatically preparing code for deployment to staging/production.</li>
+    <li>Ensures every build is deployable at any time.</li>
+    <li>Includes approvals, environment configs, and release pipelines.</li>
+    <li>Example: After CI passes → deploy to staging → manual approval → production.</li>
+  </ul>
+
+  <h3>Continuous Deployment (CD, extended)</h3>
+  <ul>
+    <li>Every successful build/test is automatically deployed to production.</li>
+    <li>Requires strong observability, rollback strategies, and confidence in tests.</li>
+    <li>Example: Commit passes CI → instantly deployed → monitored via Grafana/Application Insights.</li>
+  </ul>
+
+  <h3>Interview Insight</h3>
+  <p>
+    CI = integrating + testing code continuously.<br>
+    CD = delivering/deploying code continuously.<br>
+    CI focuses on <strong>code quality & integration</strong>, CD focuses on <strong>deployment & release automation</strong>.
+  </p>
+</details>
+
+<details>
+  <summary>Infrastructure as Code (IaC)</summary>
+  
+  <h3>What is IaC?</h3>
+  <p>Infrastructure as Code is the practice of managing and provisioning IT infrastructure (servers, networks, databases, etc.) using code instead of manual setup. It ensures environments are consistent, automated, and version-controlled.</p>
+
+  <h3>Key Concepts</h3>
+  <ul>
+    <li>Declarative vs Imperative → Declarative defines desired state (Terraform, Bicep), Imperative defines exact steps (scripts, CLI).</li>
+    <li>Version Control → Infrastructure definitions stored in Git for rollbacks and peer reviews.</li>
+    <li>Automation → Tools like Terraform, Ansible, AWS CloudFormation, Azure Bicep provision resources automatically.</li>
+    <li>Consistency → Same code produces identical environments (Dev, Test, Prod).</li>
+  </ul>
+
+  <h3>Example</h3>
+  <pre><code class="language-csharp"><code class="csharp">
+provider "azurerm" {
+  features {}
+}
+
+resource "azurerm_resource_group" "rg" {
+  name     = "myResourceGroup"
+  location = "East US"
+}
+
+resource "azurerm_storage_account" "storage" {
+  name                     = "mystorageacct"
+  resource_group_name      = azurerm_resource_group.rg.name
+  location                 = azurerm_resource_group.rg.location
+  account_tier             = "Standard"
+  account_replication_type = "GRS"
+}
+  </code></code></pre>
+
+  <h3>Benefits</h3>
+  <ul>
+    <li>Speed → Environments spin up in minutes.</li>
+    <li>Consistency → Eliminates manual errors and drift.</li>
+    <li>Collaboration → Teams review infra changes like code.</li>
+    <li>Security → IaC scanning tools detect misconfigurations.</li>
+    <li>Disaster Recovery → Quickly recreate infra in another region.</li>
+  </ul>
+
+  <h3>Interview Insight</h3>
+  <p>
+    Emphasize automation, consistency, and version control.<br>
+    Mention popular tools (Terraform, Bicep, CloudFormation, Ansible).<br>
+    Highlight declarative vs imperative approaches.<br>
+    Show how IaC integrates with CI/CD pipelines for full DevOps automation.
+  </p>
+</details>
+
+
+<details>
+  <summary>Blue-Green vs Canary Deployments</summary>
+  
+
+<h2>1. Blue-Green Deployment</h2>
+<ul>
+  <li><b>Definition:</b> Maintain two identical environments — <b>Blue</b> (current production) and <b>Green</b> (new version).</li>
+  <li><b>Process:</b>
+    <ul>
+      <li>Deploy new version to Green environment.</li>
+      <li>Test and validate in Green.</li>
+      <li>Switch traffic from Blue to Green instantly once validated.</li>
+    </ul>
+  </li>
+  <li><b>Advantages:</b>
+    <ul>
+      <li>Zero downtime deployment.</li>
+      <li>Easy rollback (switch traffic back to Blue).</li>
+      <li>Predictable cutover.</li>
+    </ul>
+  </li>
+  <li><b>Limitations:</b> Requires duplicate infrastructure, higher cost.</li>
+</ul>
+
+<h2>2. Canary Deployment</h2>
+<ul>
+  <li><b>Definition:</b> Gradually roll out new version to a small subset of users before full rollout.</li>
+  <li><b>Process:</b>
+    <ul>
+      <li>Deploy new version to a small percentage of servers/users.</li>
+      <li>Monitor performance, errors, and user feedback.</li>
+      <li>Gradually increase rollout until 100% adoption.</li>
+    </ul>
+  </li>
+  <li><b>Advantages:</b>
+    <ul>
+      <li>Reduces risk by exposing issues early.</li>
+      <li>Allows real-world testing with minimal impact.</li>
+      <li>Supports progressive delivery strategies.</li>
+    </ul>
+  </li>
+  <li><b>Limitations:</b> More complex monitoring and traffic routing required.</li>
+</ul>
+
+<h2>3. Comparison Table</h2>
+<table border="1" cellpadding="5" cellspacing="0">
+  <tr>
+    <th>Aspect</th>
+    <th>Blue-Green</th>
+    <th>Canary</th>
+  </tr>
+  <tr>
+    <td>Deployment Style</td>
+    <td>Switch traffic between two environments</td>
+    <td>Gradual rollout to subsets of users</td>
+  </tr>
+  <tr>
+    <td>Risk Management</td>
+    <td>Rollback is instant</td>
+    <td>Issues detected early with small impact</td>
+  </tr>
+  <tr>
+    <td>Infrastructure Cost</td>
+    <td>High (duplicate environments)</td>
+    <td>Lower (incremental rollout)</td>
+  </tr>
+  <tr>
+    <td>Complexity</td>
+    <td>Simpler traffic switch</td>
+    <td>Requires advanced routing & monitoring</td>
+  </tr>
+</table>
+
+<h2>4. Best Practices</h2>
+<ul>
+  <li>Use <b>Blue-Green</b> for applications needing predictable cutover and instant rollback.</li>
+  <li>Use <b>Canary</b> for large-scale apps where gradual rollout reduces risk.</li>
+  <li>Combine with <b>feature flags</b> for fine-grained control.</li>
+  <li>Monitor closely with <b>Application Insights, Prometheus, Grafana</b>.</li>
+</ul>
+
+<h2>5. Interview Insight</h2>
+<p>
+👉 In interviews, emphasize that <b>Blue-Green</b> is about maintaining two environments and switching traffic instantly, 
+while <b>Canary</b> is about gradual rollout to subsets of users. 
+Highlight that Blue-Green offers <b>fast rollback</b>, whereas Canary provides <b>early detection of issues</b> in production with minimal impact.
+</p>
+</details>
+<details>
+  <summary>Integrating Automated Tests in CI/CD Pipelines</summary>
+  
+
+<h2>1. Why Automated Tests?</h2>
+<p>
+Automated tests in CI/CD pipelines ensure <b>quality, reliability, and fast feedback</b>. 
+They catch regressions early, enforce coding standards, and validate functionality before code reaches production.
+</p>
+
+<h2>2. Types of Tests to Integrate</h2>
+<ul>
+  <li><b>Unit Tests:</b> Validate individual functions/classes (fast feedback).</li>
+  <li><b>Integration Tests:</b> Validate interactions between modules/services.</li>
+  <li><b>End-to-End Tests:</b> Simulate user workflows across the system.</li>
+  <li><b>Performance Tests:</b> Ensure scalability and response times.</li>
+  <li><b>Security Tests:</b> Scan for vulnerabilities (e.g., dependency checks).</li>
+</ul>
+
+<h2>3. Example: Azure DevOps Pipeline</h2>
+<pre><code class="language-csharp"><code>
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.x'
+
+- script: dotnet build --configuration Release
+  displayName: 'Build Project'
+
+- script: dotnet test --configuration Release --logger trx
+  displayName: 'Run Unit Tests'
+
+- task: PublishTestResults@2
+  inputs:
+    testResultsFiles: '**/*.trx'
+    testRunTitle: 'Unit Test Results'
+</code></code></pre>
+
+<h2>4. Example: GitHub Actions Workflow</h2>
+<pre><code class="language-csharp"><code>
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.x'
+    - name: Build
+      run: dotnet build --configuration Release
+    - name: Run Tests
+      run: dotnet test --configuration Release --logger trx
+</code></code></pre>
+
+<h2>5. Best Practices</h2>
+<ul>
+  <li>Run <b>unit tests</b> on every commit/pull request for fast feedback.</li>
+  <li>Run <b>integration and end-to-end tests</b> in staging before production deployment.</li>
+  <li>Fail the pipeline if tests fail — enforce quality gates.</li>
+  <li>Publish test results and code coverage reports for visibility.</li>
+  <li>Use <b>parallel test execution</b> to reduce pipeline time.</li>
+</ul>
+
+<h2>6. Interview Insight</h2>
+<p>
+👉 In interviews, emphasize that automated tests are integrated into CI/CD pipelines at different stages: 
+<b>unit tests</b> for fast feedback, <b>integration tests</b> for service validation, and <b>end-to-end tests</b> for user workflows. 
+Highlight that pipelines should <b>fail fast</b> when tests fail, and results should be published for transparency and governance.
+</p>
+</details>
+<details>
+  <summary>Implementing Rollback in CI/CD Pipelines</summary>
+  
+
+<h2>1. Why Rollback?</h2>
+<p>
+Rollback ensures <b>service continuity</b> when a deployment introduces failures. 
+It allows reverting to a <b>last known good version</b> quickly, minimizing downtime and protecting data integrity.
+</p>
+
+<h2>2. Rollback Strategies</h2>
+<ul>
+  <li><b>Blue-Green Deployment:</b> Maintain two environments (Blue = current, Green = new). If Green fails, switch traffic back to Blue instantly.</li>
+  <li><b>Canary Release:</b> Deploy to a small subset of users. If issues arise, rollback affects only the canary group before wider rollout.</li>
+  <li><b>Deployment Slots:</b> In Azure App Service or Kubernetes, use slots/namespaces. Swap back to the previous slot if the new one fails.</li>
+  <li><b>Immutable Artifacts:</b> Store versioned container images/packages. Rollback redeploys the last stable artifact.</li>
+  <li><b>Database Rollback:</b> Use backward-compatible migrations, feature flags, or point-in-time restore for schema/data safety.</li>
+</ul>
+
+<h2>3. Example: Azure DevOps Pipeline Rollback</h2>
+<pre><code class="language-csharp"><code>
+jobs:
+- job: Deploy
+  steps:
+  - script: kubectl apply -f deployment.yaml
+    displayName: 'Deploy New Version'
+
+  - script: |
+      if ! kubectl rollout status deployment/myapp; then
+        echo "Deployment failed, rolling back..."
+        kubectl rollout undo deployment/myapp
+      fi
+    displayName: 'Rollback on Failure'
+</code></code></pre>
+
+<h2>4. Example: GitHub Actions Rollback</h2>
+<pre><code class="language-csharp"><code>
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy to AKS
+      run: kubectl apply -f k8s/deployment.yaml
+
+    - name: Check Deployment
+      run: |
+        if ! kubectl rollout status deployment/myapp; then
+          echo "Deployment failed, rolling back..."
+          kubectl rollout undo deployment/myapp
+        fi
+</code></code></pre>
+
+<h2>5. Best Practices</h2>
+<ul>
+  <li>Automate rollback in CI/CD pipelines — don’t rely on manual intervention.</li>
+  <li>Test rollback paths in staging before production.</li>
+  <li>Separate <b>code rollback</b> from <b>data rollback</b> (schema changes need special handling).</li>
+  <li>Use <b>feature flags</b> to disable problematic features without full rollback.</li>
+  <li>Monitor deployments with <b>Application Insights, Prometheus, Grafana</b> to trigger rollback automatically.</li>
+</ul>
+
+<h2>6. Interview Insight</h2>
+<p>
+👉 In interviews, emphasize that rollback in CI/CD is achieved through <b>deployment patterns (blue-green, canary, slots)</b>, 
+<b>immutable artifacts</b>, and <b>automated rollback scripts</b>. 
+Highlight that database rollback is complex and often handled via <b>backward-compatible migrations or snapshots</b>. 
+Stress that rollback must be <b>tested, automated, and observable</b>.
+</p>
+</details>
+<details>
+  <summary>Securing CI/CD Pipelines</summary>
+  
+
+<h2>1. Why Secure Pipelines?</h2>
+<p>
+CI/CD pipelines are critical because they directly control how code moves into production. 
+If compromised, attackers can inject malicious code, steal secrets, or disrupt deployments. 
+Securing pipelines ensures <b>trust, integrity, and compliance</b>.
+</p>
+
+<h2>2. Key Security Measures</h2>
+<ul>
+  <li><b>Identity & Access Control:</b>
+    <ul>
+      <li>Use <b>least privilege RBAC</b> for pipeline agents and service accounts.</li>
+      <li>Prefer <b>Managed Identities</b> or OIDC over long-lived secrets.</li>
+      <li>Restrict access to pipeline definitions and artifacts.</li>
+    </ul>
+  </li>
+  <li><b>Secrets Management:</b>
+    <ul>
+      <li>Store secrets in <b>Azure Key Vault</b> or GitHub/Azure DevOps secrets.</li>
+      <li>Never hardcode credentials in code or YAML files.</li>
+      <li>Rotate secrets regularly and audit usage.</li>
+    </ul>
+  </li>
+  <li><b>Code & Artifact Integrity:</b>
+    <ul>
+      <li>Enable <b>code signing</b> for builds and artifacts.</li>
+      <li>Scan dependencies for vulnerabilities (e.g., Dependabot, OWASP Dependency-Check).</li>
+      <li>Use immutable, versioned artifacts (container images, packages).</li>
+    </ul>
+  </li>
+  <li><b>Pipeline Hardening:</b>
+    <ul>
+      <li>Run builds in <b>isolated agents</b> or containers.</li>
+      <li>Restrict pipeline triggers (e.g., only from trusted branches).</li>
+      <li>Validate pull requests with mandatory checks (linting, tests, security scans).</li>
+    </ul>
+  </li>
+  <li><b>Monitoring & Auditing:</b>
+    <ul>
+      <li>Enable audit logs for pipeline runs and deployments.</li>
+      <li>Monitor anomalies (unexpected deployments, failed security scans).</li>
+      <li>Integrate with <b>Azure Monitor, Application Insights, Defender for Cloud</b>.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2>3. Example: Secure GitHub Actions Workflow</h2>
+<pre><code class="language-csharp"><code>
+name: Secure CI/CD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # OIDC for Azure login
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Login to Azure using OIDC
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Run Security Scan
+      run: dotnet build && dotnet test && dotnet list package --vulnerable
+</code></code></pre>
+
+<h2>4. Best Practices</h2>
+<ul>
+  <li>Use <b>OIDC federated credentials</b> instead of static secrets.</li>
+  <li>Integrate <b>static analysis (SonarCloud, Roslyn, ESLint)</b> and <b>dynamic tests</b> into pipelines.</li>
+  <li>Apply <b>quality gates</b> — fail builds if vulnerabilities or coding standard violations are found.</li>
+  <li>Automate rollback on failed deployments.</li>
+  <li>Regularly review pipeline definitions for security misconfigurations.</li>
+</ul>
+
+<h2>5. Interview Insight</h2>
+<p>
+👉 In interviews, emphasize that securing pipelines involves <b>identity management, secret protection, artifact integrity, pipeline hardening, and monitoring</b>. 
+Highlight the shift from <b>service principals with secrets</b> to <b>OIDC-based authentication</b>, and stress that pipelines must enforce <b>quality gates and security scans</b> to prevent vulnerabilities from reaching production.
+</p>
+</details>
+<details>
+  <summary>Implementing Approvals in CI/CD Pipelines</summary>
+  
+
+<h2>1. Why Approvals?</h2>
+<p>
+Approvals add a <b>human checkpoint</b> in CI/CD pipelines. They ensure that deployments to sensitive environments (e.g., staging, production) are reviewed and authorized before execution. This enforces <b>governance, compliance, and risk control</b>.
+</p>
+
+<h2>2. Approval Types</h2>
+<ul>
+  <li><b>Pre-deployment approvals:</b> Required before a stage runs (e.g., production release).</li>
+  <li><b>Post-deployment approvals:</b> Required after a stage completes (e.g., validation in staging before promoting to prod).</li>
+  <li><b>Manual intervention:</b> Pause pipeline execution until a reviewer approves or rejects.</li>
+</ul>
+
+<h2>3. Example: Azure DevOps Pipeline Approvals</h2>
+<pre><code class="language-csharp"><code>
+# YAML pipeline with environment approvals
+stages:
+- stage: DeployToProd
+  jobs:
+  - deployment: DeployWebApp
+    environment: 'Production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo "Deploying to Production..."
+</code></code></pre>
+<p>
+👉 In Azure DevOps, you configure <b>environment approvals</b> in the portal. For example, require approval from "Ops Team" before the <code>Production</code> environment runs.
+</p>
+
+<h2>4. Example: GitHub Actions with Manual Approval</h2>
+<pre><code class="language-csharp"><code>
+name: Deploy Workflow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - run: echo "Build completed"
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://myapp.azurewebsites.net
+    steps:
+    - run: echo "Deploying to Production"
+</code></code></pre>
+<p>
+👉 In GitHub Actions, environments can be configured with <b>required reviewers</b>. The pipeline pauses until reviewers approve the deployment.
+</p>
+
+<h2>5. Best Practices</h2>
+<ul>
+  <li>Use approvals only for <b>critical environments</b> (staging, production).</li>
+  <li>Define <b>clear approver roles</b> (Ops, Security, QA).</li>
+  <li>Automate lower environments (dev/test) without approvals for speed.</li>
+  <li>Combine approvals with <b>quality gates</b> (tests, scans, coverage).</li>
+  <li>Audit approval logs for compliance and traceability.</li>
+</ul>
+
+<h2>6. Interview Insight</h2>
+<p>
+👉 In interviews, emphasize that approvals in CI/CD pipelines are implemented via <b>environment-based gates</b> (Azure DevOps) or <b>required reviewers</b> (GitHub Actions). 
+Highlight that they enforce <b>governance and compliance</b>, and should be combined with <b>automated quality checks</b> to balance speed and safety.
+</p>
+</details>
+<details>
+  <summary>PR Validation Pipeline</summary>
+
+  <p>
+  This pipeline runs automatically on pull requests into <b>develop</b> or <b>main</b>. 
+  It enforces <b>StyleCop</b>, <b>Roslyn analyzers</b>, <b>SonarCloud Quality Gate</b>, and runs <b>unit tests</b>. 
+  No deployment happens here.
+  </p>
+
+  <pre><code class="language-yaml"><code>
+trigger: none   # no CI trigger, only PR validation
+pr:
+  branches:
+    include:
+      - develop
+      - main
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.x'
+
+- task: SonarCloudPrepare@1
+  inputs:
+    SonarCloud: 'YourServiceConnectionName'
+    organization: 'your-org'
+    scannerMode: 'MSBuild'
+    projectKey: 'your-project-key'
+    projectName: 'your-project-name'
+
+- task: DotNetBuild@1
+  inputs:
+    projects: '*.sln'
+
+- task: VSTest@2
+  inputs:
+    testSelector: 'testAssemblies'
+    testAssemblyVer2: |
+      **\*test*.dll
+      !**\*TestAdapter.dll
+      !**\obj\**
+
+- task: SonarCloudAnalyze@1
+
+- task: SonarCloudPublish@1
+  inputs:
+    pollingTimeoutSec: '300'
+</code></code></pre>
+</details>
+
+
+<details>
+  <summary>Deployment Pipeline</summary>
+
+  <p>
+  This pipeline is triggered manually from the Azure DevOps UI. 
+  You select the branch and environment (Dev, QA, Prod) at runtime. 
+  Approvals can be configured in Azure DevOps Environments for QA and Prod.
+  </p>
+
+  <pre><code class="language-yaml"><code>
+trigger: none   # manual trigger only
+
+parameters:
+- name: branchToDeploy
+  displayName: 'Select branch to deploy'
+  type: string
+  default: 'main'
+  values:
+    - develop
+    - main
+    - release
+
+- name: environment
+  displayName: 'Select environment'
+  type: string
+  default: 'Dev'
+  values:
+    - Dev
+    - QA
+    - Prod
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: DeployDev
+  condition: eq('${{ parameters.environment }}', 'Dev')
+  jobs:
+  - job: DeployDevJob
+    steps:
+    - script: echo "Deploying branch ${{ parameters.branchToDeploy }} to Dev environment..."
+      displayName: 'Deploy to Dev'
+
+- stage: DeployQA
+  condition: eq('${{ parameters.environment }}', 'QA')
+  jobs:
+  - job: DeployQAJob
+    steps:
+    - script: echo "Deploying branch ${{ parameters.branchToDeploy }} to QA environment..."
+      displayName: 'Deploy to QA'
+
+- stage: DeployProd
+  condition: eq('${{ parameters.environment }}', 'Prod')
+  jobs:
+  - deployment: DeployProdJob
+    environment: 'Prod'   # approval gate configured in Azure DevOps Environments
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo "Deploying branch ${{ parameters.branchToDeploy }} to Production environment..."
+            displayName: 'Deploy to Prod'
+</code></code></pre>
+</details>
+
+
+<details>
+  <summary>Where to Configure YAML Files in Azure DevOps</summary>
+
+  <p>
+  Once your YAML files are committed to GitHub, you need to configure them in Azure DevOps so pipelines know how to run:
+  </p>
+
+  <ol>
+    <li><b>Store YAML in GitHub repo</b> — Place files like <code>.azure-pipelines/azure-pipelines-validation.yml</code> and <code>.azure-pipelines/azure-pipelines-deploy.yml</code> in your repository.</li>
+    <li><b>Create a pipeline in Azure DevOps</b> — Go to <b>Pipelines → New Pipeline</b>, select <b>GitHub</b> as the source, authenticate, and choose your repo.</li>
+    <li><b>Select Existing YAML</b> — When prompted, pick <b>Existing Azure Pipelines YAML file</b> and browse to the correct YAML file in your repo.</li>
+    <li><b>Repeat for each YAML</b> — Create separate pipelines for validation, Dev, QA, and Prod deployment YAMLs.</li>
+    <li><b>Configure triggers</b> — Validation YAML uses <code>pr:</code> trigger (runs automatically on PRs). Deployment YAMLs use <code>trigger: none</code> (manual runs only).</li>
+    <li><b>Set up environments & approvals</b> — In <b>Pipelines → Environments</b>, create <code>Dev</code>, <code>QA</code>, and <code>Prod</code> environments. Add approvals/checks for QA and Prod. Link these environments in your deployment YAML using <code>environment: 'QA'</code> or <code>environment: 'Prod'</code>.</li>
+  </ol>
+
+  <p>
+  ✅ This ensures: PR validation runs automatically, deployments are manual, and QA/Prod deployments require explicit approval.
+  </p>
+</details>
+
+<details>
+  <summary>Developer Checklist - Validate Code Quality Locally</summary>
+
+  <p>
+  Use this checklist to ensure your code passes <b>Roslyn analyzers</b>, <b>StyleCop</b>, and <b>SonarAnalyzer</b> before raising a PR.
+  </p>
+
+  <ol>
+    <li><b>Add NuGet packages</b> to your project/solution:
+      <pre><code class="language-bash">
+dotnet add package Microsoft.CodeAnalysis.NetAnalyzers
+dotnet add package StyleCop.Analyzers
+dotnet add package SonarAnalyzer.CSharp
+      </code></pre>
+    </li>
+
+    <li><b>Configure rules</b> in <code>.editorconfig</code> or <code>.ruleset.json</code>:
+      <pre><code class="language-ini">
+[*.cs]
+dotnet_diagnostic.CA2000.severity = error
+dotnet_diagnostic.SA1600.severity = warning
+dotnet_diagnostic.SonarAnalyzer.CS1234.severity = error
+      </code></pre>
+      <p>Adjust severities to match your team’s standards.</p>
+    </li>
+
+    <li><b>Run build locally</b>:
+      <pre><code class="language-bash">
+dotnet build
+      </code></pre>
+      <p>This surfaces Roslyn + StyleCop + SonarAnalyzer warnings/errors immediately.</p>
+    </li>
+
+    <li><b>Optional: Run SonarCloud Quality Gate locally</b>:
+      <ul>
+        <li>Install SonarScanner:
+          <pre><code class="language-bash">
+dotnet tool install --global dotnet-sonarscanner
+          </code></pre>
+        </li>
+        <li>Run analysis:
+          <pre><code class="language-bash">
+dotnet sonarscanner begin /k:"project-key" /o:"org" /d:sonar.login="token"
+dotnet build
+dotnet sonarscanner end /d:sonar.login="token"
+          </code></pre>
+        </li>
+        <li>Check Quality Gate conditions in SonarCloud UI:
+          <ul>
+            <li>Coverage ≥ 80%</li>
+            <li>Duplications &lt; 3%</li>
+            <li>Security Rating = A</li>
+            <li>Reliability Rating = A</li>
+            <li>Maintainability Rating = A</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+
+    <li><b>Fix issues before PR</b>:
+      <ul>
+        <li>Resolve analyzer warnings/errors in your IDE (Visual Studio, Rider, VS Code).</li>
+        <li>Re‑run <code>dotnet build</code> until clean.</li>
+        <li>Ensure SonarCloud Quality Gate passes locally if you ran SonarScanner.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <p>
+  ✅ Following this checklist ensures your code will pass validation in the CI/CD pipeline and won’t be blocked at PR time.
+  </p>
+</details>
+
+<details>
+  <summary>Roslyn Analyzers</summary>
+  <h3>Scope:</h3>
+  <p>
+    Roslyn analyzers (via <code>Microsoft.CodeAnalysis.NetAnalyzers</code>) focus mainly on 
+    <b>code correctness, performance, and some security best practices</b>.
+  </p>
+  <p>They can catch things like:</p>
+  <ul>
+    <li>Using insecure APIs (e.g., <code>MD5CryptoServiceProvider</code>).</li>
+    <li>Potential resource leaks.</li>
+    <li>Null reference risks.</li>
+  </ul>
+  <p>
+    While they don’t enforce SOLID or OOP principles directly, they support them by flagging 
+    issues that break <b>Single Responsibility</b> (complex methods), <b>Liskov Substitution</b> 
+    (incorrect overrides), and <b>Dependency Inversion</b> (tight coupling).
+  </p>
+
+  <h3>Limitations:</h3>
+  <ul>
+    <li>Rule‑based and limited to Microsoft’s analyzer pack.</li>
+    <li>Don’t cover broader application security risks like SQL injection or XSS.</li>
+  </ul>
+</details>
+
+<details>
+  <summary>StyleCop.Analyzers</summary>
+  <h3>Scope:</h3>
+  <p>
+    StyleCop analyzers enforce <b>style and consistency rules</b> for C# code, ensuring readability and maintainability.
+  </p>
+  <p>They can catch things like:</p>
+  <ul>
+    <li>Naming convention violations.</li>
+    <li>Spacing and indentation issues.</li>
+    <li>Missing or malformed XML documentation comments.</li>
+  </ul>
+  <p>
+    StyleCop indirectly supports OOP and SOLID by ensuring code is <b>consistent and readable</b>, 
+    which makes principles like <b>Interface Segregation</b> and <b>Open/Closed</b> easier to apply.
+  </p>
+
+  <h3>Limitations:</h3>
+  <ul>
+    <li>Focuses only on style and formatting, not deeper code quality or security.</li>
+    <li>Can be noisy if rules are too strict without customization.</li>
+  </ul>
+</details>
+
+<details>
+  <summary>SonarAnalyzer.CSharp</summary>
+  <h3>Scope:</h3>
+  <p>
+    SonarAnalyzer integrates with <b>SonarCloud</b> to enforce rules around 
+    <b>reliability, maintainability, and security</b>. It aligns with Quality Gates and industry standards.
+  </p>
+  <p>It can catch things like:</p>
+  <ul>
+    <li>Code smells and duplication.</li>
+    <li>Complexity and maintainability issues.</li>
+    <li>Security hotspots and vulnerabilities (SQL injection, XSS, cryptography misuse).</li>
+  </ul>
+  <p>
+    SonarAnalyzer supports SOLID and OOP by highlighting violations of <b>Single Responsibility</b> 
+    (too complex classes), <b>Open/Closed</b> (modifications instead of extensions), and 
+    <b>Dependency Inversion</b> (direct dependencies instead of abstractions).
+  </p>
+
+  <h3>Limitations:</h3>
+  <ul>
+    <li>Requires SonarCloud or SonarQube integration for full Quality Gate enforcement.</li>
+    <li>Some “security hotspots” require manual review rather than automatic fixes.</li>
+  </ul>
+</details>
+
+<details>
+  <summary>Enforcing Coding Standards in CI/CD</summary>
+  
+
+<h2>1. Why Enforce Standards?</h2>
+<p>
+Coding standards ensure <b>consistency, readability, and maintainability</b> across a team. 
+Integrating enforcement into CI/CD pipelines prevents poor-quality code from reaching production and fosters long-term reliability.
+</p>
+
+<h2>2. Key Approaches</h2>
+<ul>
+  <li><b>Static Code Analysis:</b> Tools like <b>Roslyn analyzers, StyleCop, ESLint</b> check code against defined rules.</li>
+  <li><b>Formatting Tools:</b> Use <b>dotnet format</b> or <b>Prettier</b> to enforce consistent style automatically.</li>
+  <li><b>Quality Gates:</b> Integrate <b>SonarCloud</b> to enforce thresholds for code coverage, duplication, and maintainability.</li>
+  <li><b>Pull Request Validation:</b> Run CI checks on PRs to block merges if standards fail.</li>
+</ul>
+
+<h2>3. Example: Azure DevOps Pipeline with StyleCop & SonarCloud</h2>
+<pre><code class="language-csharp"><code>
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.x'
+
+- script: dotnet build --configuration Release
+  displayName: 'Build Project'
+
+- script: dotnet test --configuration Release
+  displayName: 'Run Unit Tests'
+
+- script: dotnet format --verify-no-changes
+  displayName: 'Check Code Formatting'
+
+- task: SonarCloudPrepare@1
+  inputs:
+    SonarCloud: 'SonarCloudConnection'
+    organization: 'my-org'
+    scannerMode: 'MSBuild'
+    projectKey: 'my-project'
+
+- task: SonarCloudAnalyze@1
+- task: SonarCloudPublish@1
+</code></code></pre>
+
+<h2>4. Example: GitHub Actions with ESLint</h2>
+<pre><code class="language-csharp"><code>
+name: Lint and Test
+
+on: [pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Dependencies
+      run: npm install
+    - name: Run ESLint
+      run: npm run lint
+</code></code></pre>
+
+<h2>5. Best Practices</h2>
+<ul>
+  <li>Automate enforcement — don’t rely on manual reviews alone.</li>
+  <li>Fail builds if standards are violated (strict mode).</li>
+  <li>Use <b>pre-commit hooks</b> (Husky, Git hooks) for early feedback.</li>
+  <li>Define standards in <b>.editorconfig</b> or lint configuration files.</li>
+  <li>Educate teams on why standards matter to reduce friction.</li>
+</ul>
+
+<h2>6. Interview Insight</h2>
+<p>
+👉 In interviews, emphasize that coding standards are enforced in CI/CD using <b>linters, formatters, analyzers, and quality gates</b>. 
+Highlight that pipelines should <b>fail fast</b> when violations occur, ensuring only compliant code reaches production. 
+Mention tools like <b>StyleCop, Roslyn, SonarCloud, ESLint, Prettier</b> as practical examples.
+</p>
+</details>
+<details>
+  <summary>Static Code Analysis vs Dynamic Testing</summary>
+  
+
+<h2>1. Static Code Analysis</h2>
+<ul>
+  <li><b>Definition:</b> Examines source code without executing it.</li>
+  <li><b>Purpose:</b> Detects coding standard violations, security vulnerabilities, and maintainability issues early in the development cycle.</li>
+  <li><b>Tools:</b> Roslyn analyzers, StyleCop, SonarCloud, ESLint, FindBugs.</li>
+  <li><b>Advantages:</b>
+    <ul>
+      <li>Catches issues before runtime.</li>
+      <li>Automates enforcement of coding standards.</li>
+      <li>Integrates easily into CI/CD pipelines.</li>
+    </ul>
+  </li>
+  <li><b>Limitations:</b> Cannot detect runtime errors, performance bottlenecks, or environment-specific issues.</li>
+</ul>
+
+<h2>2. Dynamic Testing</h2>
+<ul>
+  <li><b>Definition:</b> Executes the code in a runtime environment to validate behavior.</li>
+  <li><b>Purpose:</b> Ensures functional correctness, performance, and reliability under real conditions.</li>
+  <li><b>Types:</b> Unit tests, integration tests, system tests, performance/load tests.</li>
+  <li><b>Tools:</b> xUnit, NUnit, JUnit, Selenium, JMeter.</li>
+  <li><b>Advantages:</b>
+    <ul>
+      <li>Validates actual runtime behavior.</li>
+      <li>Detects logical errors, performance issues, and integration problems.</li>
+      <li>Provides confidence in production readiness.</li>
+    </ul>
+  </li>
+  <li><b>Limitations:</b> Requires execution environment, can be slower, may miss non-executed code paths.</li>
+</ul>
+
+<h2>3. Comparison Table</h2>
+<table border="1" cellpadding="5" cellspacing="0">
+  <tr>
+    <th>Aspect</th>
+    <th>Static Code Analysis</th>
+    <th>Dynamic Testing</th>
+  </tr>
+  <tr>
+    <td>Execution</td>
+    <td>Analyzes code without running it</td>
+    <td>Runs code in a real environment</td>
+  </tr>
+  <tr>
+    <td>Focus</td>
+    <td>Syntax, style, security, maintainability</td>
+    <td>Functional correctness, performance, runtime errors</td>
+  </tr>
+  <tr>
+    <td>Tools</td>
+    <td>StyleCop, SonarCloud, ESLint</td>
+    <td>xUnit, Selenium, JMeter</td>
+  </tr>
+  <tr>
+    <td>Stage</td>
+    <td>Early in development (compile-time)</td>
+    <td>Later in development (runtime)</td>
+  </tr>
+</table>
+
+<h2>4. Interview Insight</h2>
+<p>
+👉 In interviews, emphasize that <b>static analysis</b prevents issues before runtime by enforcing standards and detecting vulnerabilities, 
+while <b>dynamic testing</b validates actual behavior under execution. 
+Highlight that both are complementary — static analysis ensures code quality, dynamic testing ensures runtime correctness.
+</p>
+</details>
+<details>
+  <summary>Monitoring Microservices with Grafana & Kibana</summary>
+  
+
+<h2>1. Why Monitor Microservices?</h2>
+<p>
+Microservices architectures are distributed and complex. Monitoring ensures <b>observability, reliability, and performance</b> by tracking logs, metrics, and traces across services. 
+Grafana and Kibana are widely used open-source tools for this purpose.
+</p>
+
+<h2>2. Grafana (Metrics & Dashboards)</h2>
+<ul>
+  <li><b>Purpose:</b> Visualizes metrics from Prometheus, InfluxDB, Azure Monitor, etc.</li>
+  <li><b>Use Cases:</b>
+    <ul>
+      <li>Track CPU, memory, and network usage per container/pod.</li>
+      <li>Monitor request latency, throughput, and error rates.</li>
+      <li>Set up alerts for anomalies (e.g., high latency, pod restarts).</li>
+    </ul>
+  </li>
+  <li><b>Integration:</b> 
+    <ul>
+      <li>Deploy Prometheus in AKS/EKS to scrape metrics.</li>
+      <li>Connect Grafana to Prometheus as a data source.</li>
+      <li>Build dashboards for service-level and cluster-level visibility.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2>3. Kibana (Logs & Search)</h2>
+<ul>
+  <li><b>Purpose:</b> Visualizes and queries logs stored in Elasticsearch.</li>
+  <li><b>Use Cases:</b>
+    <ul>
+      <li>Centralized logging for all microservices.</li>
+      <li>Search logs by correlation ID to trace requests across services.</li>
+      <li>Detect errors, exceptions, and unusual patterns.</li>
+    </ul>
+  </li>
+  <li><b>Integration:</b>
+    <ul>
+      <li>Use Fluentd/Logstash to ship logs from containers to Elasticsearch.</li>
+      <li>Configure Kibana dashboards for error rates, log volume, and trends.</li>
+      <li>Enable alerting for critical log events.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2>4. Example Setup</h2>
+<pre><code class="language-csharp"><code>
+Microservices → Logs → Fluentd → Elasticsearch → Kibana (log dashboards)
+Microservices → Metrics → Prometheus → Grafana (metrics dashboards)
+</code></code></pre>
+
+<h2>5. Best Practices</h2>
+<ul>
+  <li>Use <b>structured logging</b> (JSON) with correlation IDs for traceability.</li>
+  <li>Combine <b>metrics (Grafana)</b> and <b>logs (Kibana)</b> for full observability.</li>
+  <li>Set up <b>alerts</b> in Grafana and Kibana for proactive detection.</li>
+  <li>Integrate with <b>Azure Monitor / Application Insights</b> for hybrid observability.</li>
+  <li>Secure dashboards with RBAC and TLS.</li>
+</ul>
+
+<h2>6. Interview Insight</h2>
+<p>
+👉 In interviews, emphasize that <b>Grafana</b> is used for metrics visualization and alerting, while <b>Kibana</b> is used for log analysis and search. 
+Highlight that together they provide <b>end-to-end observability</b> in microservices: Grafana tracks performance metrics, Kibana traces logs, and both integrate with Prometheus/Elasticsearch pipelines.
+</p>
+</details>
+<details>
+  <summary>SonarCloud UI - Configuring Quality Gates</summary>
+
+  <p><b>Step 1: Log in</b></p>
+  <ul>
+    <li>Go to <a href="https://sonarcloud.io" target="_blank">SonarCloud</a>.</li>
+    <li>Sign in with your GitHub or Azure DevOps account.</li>
+  </ul>
+
+  <p><b>Step 2: Navigate to your project</b></p>
+  <ul>
+    <li>Select your <b>Organization</b>.</li>
+    <li>Click on the <b>Project</b> you want to configure.</li>
+    <li>On the project dashboard, you’ll see the current <b>Quality Gate status</b> (Passed/Failed).</li>
+  </ul>
+
+  <p><b>Step 3: Configure Quality Gates</b></p>
+  <ul>
+    <li>Go to <b>Organization → Quality Gates</b> in the left menu.</li>
+    <li>You can use the default “Sonar way” or create a <b>new Quality Gate</b>.</li>
+    <li>Add conditions such as:
+      <ul>
+        <li>Coverage ≥ 80%</li>
+        <li>Duplications &lt; 3%</li>
+        <li>Security Rating = A</li>
+        <li>Reliability Rating = A</li>
+        <li>Maintainability Rating = A</li>
+      </ul>
+    </li>
+    <li>Save the Quality Gate and assign it to your project.</li>
+  </ul>
+
+  <p><b>Step 4: Enforcement in YAML</b></p>
+  <ul>
+    <li>Your Azure DevOps pipeline runs SonarCloud tasks:
+      <ul>
+        <li><code>SonarCloudPrepare@1</code> → setup</li>
+        <li><code>SonarCloudAnalyze@1</code> → analysis</li>
+        <li><code>SonarCloudPublish@1</code> → checks Quality Gate</li>
+      </ul>
+    </li>
+    <li>If the gate fails (e.g., Coverage &lt; 80%), the pipeline fails and the PR is blocked.</li>
+  </ul>
+
+  <p>
+  ✅ This way, the <b>conditions are defined in SonarCloud UI</b and <b>enforced by your YAML pipeline</b>.
+  </p>
+</details>
+
+
+<details>
+  <summary>Measuring Code Coverage</summary>
+  
+
+<h2>1. What Is Code Coverage?</h2>
+<p>
+Code coverage measures the <b>percentage of code executed</b> when running automated tests. 
+It helps identify untested parts of the application and ensures that critical logic is validated.
+</p>
+
+<h2>2. Types of Coverage</h2>
+<ul>
+  <li><b>Line Coverage:</b> Percentage of lines executed during tests.</li>
+  <li><b>Branch Coverage:</b> Ensures all conditional branches (e.g., <code>if/else</code>) are tested.</li>
+  <li><b>Method Coverage:</b> Tracks whether each method is invoked.</li>
+  <li><b>Path Coverage:</b> Validates all possible execution paths.</li>
+</ul>
+
+<h2>3. Tools for Measuring Coverage in .NET</h2>
+<ul>
+  <li><b>Visual Studio Enterprise:</b> Built-in coverage analysis in Test Explorer.</li>
+  <li><b>Coverlet:</b> Open-source tool for collecting coverage during <code>dotnet test</code>.</li>
+  <li><b>ReportGenerator:</b> Converts raw coverage data into HTML dashboards.</li>
+  <li><b>SonarCloud:</b> Integrates coverage results into quality gates.</li>
+</ul>
+
+<h2>4. Example Workflow with Coverlet</h2>
+<pre><code class="language-csharp"><code>
+# Run tests with coverage enabled
+dotnet test /p:CollectCoverage=true \
+            /p:CoverletOutput=TestResults/coverage.json \
+            /p:CoverletOutputFormat=cobertura
+
+# Generate HTML report
+reportgenerator -reports:TestResults/coverage.cobertura.xml \
+                -targetdir:CoverageReport
+</code></code></pre>
+
+<h2>5. Best Practices</h2>
+<ul>
+  <li>Set a <b>minimum threshold</b> (e.g., 80%) in CI/CD pipelines.</li>
+  <li>Focus on <b>critical business logic</b> rather than trivial code.</li>
+  <li>Combine with <b>SonarCloud</b> for unified quality enforcement.</li>
+  <li>Fail builds if coverage drops below agreed standards.</li>
+</ul>
+
+<h2>6. Interview Insight</h2>
+<p>
+👉 In interviews, emphasize that code coverage is measured using tools like <b>Coverlet</b> and <b>Visual Studio</b>, 
+integrated into <b>CI/CD pipelines</b>, and enforced via <b>quality gates</b>. 
+Highlight that coverage ensures <b>confidence in testing</b> but does not guarantee bug-free code.
+</p>
+</details>
+<details>
+  <summary>Log Aggregation Strategies</summary>
+  
+
+<h2>1. Why Log Aggregation?</h2>
+<p>
+In distributed systems and microservices, logs are scattered across multiple services and servers. 
+<b>Log aggregation</b> centralizes these logs, making it easier to <b>search, analyze, and correlate</b> events across the system. 
+This improves <b>observability, debugging, and incident response</b>.
+</p>
+
+<h2>2. Core Strategies</h2>
+
+<h3>📦 Centralized Logging</h3>
+<ul>
+  <li><b>Definition:</b> Collect logs from all services into a single repository.</li>
+  <li><b>Tools:</b> ELK Stack (Elasticsearch, Logstash, Kibana), Splunk, Graylog.</li>
+  <li><b>Benefits:</b> Unified search, dashboards, and alerting.</li>
+</ul>
+
+<h3>🔄 Log Shippers & Agents</h3>
+<ul>
+  <li><b>Agents:</b> Fluentd, Logstash, Filebeat, Fluent Bit.</li>
+  <li><b>Role:</b> Collect logs locally and forward them to the central system.</li>
+  <li><b>Best Practice:</b> Use lightweight agents for containerized environments (e.g., Kubernetes DaemonSets).</li>
+</ul>
+
+<h3>☁️ Cloud-Native Aggregation</h3>
+<ul>
+  <li><b>Azure Monitor / Application Insights</b> for AKS workloads.</li>
+  <li><b>AWS CloudWatch</b> for ECS/EKS workloads.</li>
+  <li><b>GCP Stackdriver</b> for GKE workloads.</li>
+  <li><b>Benefit:</b> Tight integration with cloud services, managed scalability.</li>
+</ul>
+
+<h3>📊 Distributed Log Aggregation</h3>
+<ul>
+  <li><b>Tools:</b> Grafana Loki (microservices mode), Kafka-based pipelines.</li>
+  <li><b>Approach:</b> Logs are ingested, indexed, and queried across distributed nodes.</li>
+  <li><b>Benefit:</b> Scales horizontally for high-volume environments.</li>
+</ul>
+
+<h2>3. Key Components of a Log Aggregation System</h2>
+<ul>
+  <li><b>Log Collection:</b> Agents gather logs from services/containers.</li>
+  <li><b>Log Processing:</b> Normalize and enrich logs (e.g., JSON format, correlation IDs).</li>
+  <li><b>Log Storage:</b> Central repository (Elasticsearch, S3, GCS, Azure Blob).</li>
+  <li><b>Visualization:</b> Dashboards (Kibana, Grafana, Splunk).</li>
+  <li><b>Alerting:</b> Rules trigger alerts based on log patterns.</li>
+</ul>
+
+<h2>4. Best Practices</h2>
+<ul>
+  <li>Use <b>structured logging</b> (JSON, key-value pairs).</li>
+  <li>Propagate <b>correlation IDs</b> across services for tracing requests.</li>
+  <li>Implement <b>log rotation and retention policies</b> to manage storage.</li>
+  <li>Secure logs: mask sensitive data (passwords, tokens).</li>
+  <li>Integrate logs with <b>monitoring and alerting systems</b>.</li>
+</ul>
+
+<h2>5. Interview Insight</h2>
+<p>
+👉 In interviews, emphasize that log aggregation involves <b>centralization, normalization, and observability</b>. 
+Highlight tools like <b>ELK, Fluentd, Loki, and cloud-native solutions</b>, and explain how correlation IDs and structured logging 
+enable <b>end-to-end tracing</b> in microservices.
+</p>
+</details>
+<details>
+  <summary>Implementing Alerting in Grafana</summary>
+  
+
+<h2>1. What Is Grafana Alerting?</h2>
+<p>
+Grafana Alerting allows you to <b>monitor metrics and logs</b> across multiple data sources and 
+trigger alerts when thresholds are breached. It provides a <b>centralized view</b> of alerts, 
+flexible notification routing, and integration with incident management tools.
+</p>
+
+<h2>2. Core Steps to Implement Alerting</h2>
+
+<h3>🔧 Define Alert Rules</h3>
+<ul>
+  <li>Create queries (PromQL, SQL, Loki, etc.) to fetch metrics/logs.</li>
+  <li>Set conditions (e.g., CPU > 80%, error rate > 5%).</li>
+  <li>Rules are evaluated periodically; if breached, alerts fire.</li>
+</ul>
+
+<h3>📊 Configure Notification Channels</h3>
+<ul>
+  <li>Set up <b>contact points</b> (Email, Slack, Teams, PagerDuty, Webhooks).</li>
+  <li>Use <b>notification policies</b> to route alerts by team/service.</li>
+  <li>Customize messages with annotations and labels for context.</li>
+</ul>
+
+<h3>🔄 Monitor & Respond</h3>
+<ul>
+  <li>View alerts in Grafana’s <b>Alerting UI</b> (single consolidated dashboard).</li>
+  <li>Track alert states: <b>Pending → Firing → Resolved</b>.</li>
+  <li>Integrate with IRM tools (Grafana IRM, PagerDuty) for incident workflows.</li>
+</ul>
+
+<h2>3. Example: CPU Usage Alert</h2>
+<pre><code class="language-csharp"><code>
+Alert Rule:
+- Query: rate(node_cpu_seconds_total{mode!="idle"}[1m])
+- Condition: > 80% usage
+- Notification: Slack channel #infra-alerts
+</code></code></pre>
+
+<h2>4. Best Practices</h2>
+<ul>
+  <li>Use <b>multi-dimensional alerts</b> (e.g., per pod, per node) for granular monitoring.</li>
+  <li>Set <b>appropriate thresholds</b> to avoid alert fatigue.</li>
+  <li>Combine alerts with <b>dashboards</b> for quick triage.</li>
+  <li>Secure alerting setup with RBAC and TLS in enterprise environments.</li>
+</ul>
+
+<h2>5. Interview Insight</h2>
+<p>
+👉 In interviews, emphasize that Grafana alerting is implemented by <b>defining rules, configuring notifications, 
+and monitoring alert states</b>. Highlight integration with <b>Prometheus, Loki, and cloud-native sources</b>, 
+and explain how notification policies prevent alert overload while ensuring the right team gets the right alert.
+</p>
+</details>
+<details>
+  <summary>Alerting in Grafana</summary>
+  
+  <h3>What is Grafana Alerting?</h3>
+  <p>Grafana Alerting allows you to monitor metrics and logs across multiple data sources and trigger alerts when thresholds are breached. It provides a centralized view of alerts, flexible notification routing, and integration with incident management tools.</p>
+
+  <h3>Core Steps to Implement Alerting</h3>
+  <ul>
+    <li>Define Alert Rules → Create queries (PromQL, SQL, Loki, etc.) to fetch metrics/logs and set conditions (e.g., CPU > 80%).</li>
+    <li>Configure Notification Channels → Set up contact points (Email, Slack, Teams, PagerDuty, Webhooks) and route alerts by team/service.</li>
+    <li>Monitor & Respond → View alerts in Grafana’s Alerting UI, track states (Pending → Firing → Resolved), and integrate with IRM tools.</li>
+  </ul>
+
+  <h3>Example</h3>
+  <pre><code class="language-csharp"><code class="csharp">
+Alert Rule:
+- Query: rate(node_cpu_seconds_total{mode!="idle"}[1m])
+- Condition: > 80% usage
+- Notification: Slack channel #infra-alerts
+  </code></code></pre>
+
+  <h3>Best Practices</h3>
+  <ul>
+    <li>Use multi-dimensional alerts (e.g., per pod, per node) for granular monitoring.</li>
+    <li>Set appropriate thresholds to avoid alert fatigue.</li>
+    <li>Combine alerts with dashboards for quick triage.</li>
+    <li>Secure alerting setup with RBAC and TLS in enterprise environments.</li>
+  </ul>
+
+  <h3>Interview Insight</h3>
+  <p>
+    Emphasize that Grafana alerting is implemented by defining rules, configuring notifications, and monitoring alert states.<br>
+    Highlight integration with Prometheus, Loki, and cloud-native sources.<br>
+    Explain how notification policies prevent alert overload while ensuring the right team gets the right alert.
+  </p>
+</details>
+
 
 <!-- Testing -->
 <h2 id="testing">Testing & Quality Assurance</h2>
@@ -4878,37 +6135,396 @@ will showcase maturity in designing robust performance testing frameworks.
 
 <!-- Leadership -->
 <h2 id="leadership">Leadership & Behavioral</h2>
-<details><summary>Handling Design Disagreements</summary></details>
-<details><summary>Mentoring Juniors in LINQ/SQL</summary></details>
-<details><summary>Balancing Technical Debt vs Deadlines</summary></details>
-<details><summary>Example of Performance Improvement</summary></details>
-<details><summary>Ensuring Code Quality Across Distributed Teams</summary></details>
-<details><summary>Offshore–Onsite Collaboration Challenges</summary></details>
-<details><summary>Handling Underperforming Team Members</summary></details>
-<details><summary>Balancing Innovation vs Stability</summary></details>
-<details><summary>Measuring Success as Tech Lead</summary></details>
-<details><summary>Managing Technical Debt Backlog</summary></details>
-<details><summary>Handling Production Outages During Peak Hours</summary></details>
-<details><summary>Managing Stakeholder Expectations When Deadlines Slip</summary></details>
-<details><summary>Leading a Team Through a Legacy Rewrite</summary></details>
-<details><summary>Handling Conflicts Between Product Managers and Developers</summary></details>
-<details><summary>Driving Adoption of New Technology</summary></details>
-<details><summary>Managing Distributed Teams Across Time Zones</summary></details>
-<details><summary>Handling Client Requests That Compromise Architecture</summary></details>
-<details><summary>Balancing Hands-On Coding vs Leadership</summary></details>
-<details><summary>Ensuring Knowledge Transfer When Seniors Leave</summary></details>
-<details><summary>Building a Culture of Continuous Improvement</summary></details>
+<details>
+  <summary>Unpopular Technical Decision</summary>
 
-<!-- Newly Added Behavioral / Decision-Making -->
-<details><summary>Unpopular Technical Decision (Decision-Making & Influence)</summary></details>
-<details><summary>Stakeholder Conflict (Decision-Making & Influence)</summary></details>
-<details><summary>Mentorship & Growth (with Conflict Resolution in Team)</summary></details>
-<details><summary>Mentorship & Growth</summary></details>
-<details><summary>Communication & Stakeholder Management</summary></details>
-<details><summary>Resilience & Incident Management</summary></details>
-<details><summary>Balancing Technical Debt vs Delivery (Decision-Making & Influence)</summary></details>
-<details><summary>Conflict Resolution in Team</summary></details>
-<details><summary>Tech Lead Role — Weekly Balance</summary></details>
+  <h2>Question</h2>
+  <p>Tell me about a time you had to make an unpopular technical decision. How did you get buy-in from the team?</p>
+
+  <h3>Situation</h3>
+  <p>
+    In one of our large-scale projects, the team was comfortable using synchronous API calls between services. 
+    It was simple and familiar, but as traffic grew, we started seeing cascading failures and bottlenecks during peak loads.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    As Tech Lead, I had to ensure the system remained resilient and scalable. 
+    I realized continuing with synchronous calls would hurt reliability and customer experience, 
+    so I needed to introduce asynchronous messaging — even though the team was resistant to the added complexity.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li>Presented <strong>data</strong>: metrics showing increased error rates and downtime caused by synchronous dependencies.</li>
+    <li>Explained the <strong>business impact</strong>: poor customer experience and higher operational costs.</li>
+    <li>Ran a <strong>brown‑bag session</strong> demonstrating how queues (RabbitMQ/Azure Service Bus) handle retries, dead‑letter queues, and monitoring.</li>
+    <li>Phased the rollout: starting with one critical service, proving the benefits, then expanding.</li>
+    <li>Paired senior devs with juniors to spread knowledge and reduce the learning curve.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    Within weeks, production incidents dropped significantly, and recovery times improved. 
+    The team saw the benefits firsthand and began suggesting other areas to adopt async messaging. 
+    What started as an unpopular decision became a <strong>team win</strong>, and it strengthened trust in my leadership.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “I once had to enforce asynchronous messaging instead of synchronous APIs, which the team initially resisted due to complexity. 
+    I explained the risks with production metrics, ran knowledge‑sharing sessions, and phased the rollout. 
+    Once the team saw fewer incidents and better scalability, they embraced the approach. 
+    My focus was on transparency, education, and proving value through results.”
+  </p>
+</details>
+
+<details>
+  <summary>Stakeholder Conflict</summary>
+
+  <h2>Question</h2>
+  <p>Describe a time you disagreed with a stakeholder's timeline or scope. How did you handle it?</p>
+
+  <h3>Situation</h3>
+  <p>
+    I was leading a project to build a new reporting dashboard. The stakeholder wanted it delivered in six weeks 
+    with advanced features like real‑time data refresh, complex drill‑downs, and role‑based access.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    Based on the team’s capacity and dependencies (data warehouse upgrades, API readiness), I knew six weeks was unrealistic. 
+    Delivering everything in that timeline would risk quality and burnout. My task was to negotiate a feasible plan 
+    without losing stakeholder trust.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li>Listened to the stakeholder’s priorities to separate <strong>must‑haves</strong> from <strong>nice‑to‑haves</strong>.</li>
+    <li>Presented a <strong>capacity plan</strong> showing team velocity, dependencies, and risks.</li>
+    <li>Proposed a <strong>phased delivery</strong>: core dashboard in six weeks, advanced features in later sprints.</li>
+    <li>Suggested an <strong>MVP approach</strong> with interim checkpoints so stakeholders could see progress and adjust priorities.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    The stakeholder agreed to the phased plan. We delivered the MVP on time, which met the launch needs. 
+    Later, we added advanced features without compromising quality. 
+    The trust built from transparency made future negotiations smoother.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “In one project, a stakeholder wanted a complex dashboard in six weeks. I knew the scope was unrealistic, 
+    so I first listened to their priorities. Then I presented data showing capacity limits and risks, 
+    and proposed a phased MVP approach. We delivered the core features on time, and added advanced ones later. 
+    By being transparent and collaborative, I turned a potential conflict into a win‑win outcome.”
+  </p>
+</details>
+<details>
+  <summary>Mentorship & Growth (with Conflict Resolution in Team)</summary>
+
+  <h2>Question</h2>
+  <p>How do you structure code reviews for your team — what do you personally look for, and how do you give feedback to a resistant senior dev?</p>
+
+  <h3>Situation</h3>
+  <p>
+    In a project where we were scaling a microservices platform, code reviews became critical for consistency. 
+    One senior developer often resisted feedback, dismissing comments as “style preferences” rather than quality concerns.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    As Tech Lead, I needed to ensure reviews upheld standards for readability, maintainability, and performance, 
+    while also keeping the senior developer engaged and respected. My task was to structure reviews effectively 
+    and handle resistance without damaging morale.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li>Structured reviews around <strong>key pillars</strong>: readability, maintainability, performance, security, and test coverage.</li>
+    <li>Created a <strong>review checklist</strong> (naming conventions, SOLID principles, unit tests, error handling) to make expectations explicit.</li>
+    <li>Shifted feedback style from directive to collaborative — asking questions like 
+        <em>“How would this scale if we added 10x more users?”</em> instead of saying “This is wrong.”</li>
+    <li>Backed feedback with <strong>data</strong> (SonarCloud findings, bug history, performance metrics) to show objective impact.</li>
+    <li>Held a one‑on‑one with the senior dev to acknowledge their expertise, explain the rationale, and invite them to co‑own the checklist improvements.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    The senior developer gradually aligned with the standards and even contributed to refining the checklist. 
+    Reviews became less contentious, team consistency improved, and overall defect rates dropped. 
+    The process shifted from “criticism” to “collaboration,” strengthening team culture.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “I structure reviews around readability, maintainability, performance, and security, using a checklist to keep them consistent. 
+    With resistant developers, I shift from directives to collaboration — asking questions and backing feedback with data. 
+    In one case, a senior dev eventually embraced the standards and helped refine them, which improved team quality and reduced friction.”
+  </p>
+</details>
+<details>
+  <summary>Mentorship & Growth</summary>
+
+  <h2>Question</h2>
+  <p>Tell me about mentoring a junior/mid developer who was struggling. What was your approach and the outcome?</p>
+
+  <h3>Situation</h3>
+  <p>
+    A mid-level developer on my team was struggling with writing efficient LINQ queries and often produced code 
+    that worked functionally but performed poorly in production. This led to frustration and slowed down delivery.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    As Tech Lead, I needed to help the developer improve their skills, build confidence, and ensure their contributions 
+    met performance standards without discouraging them.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li>Scheduled <strong>pair programming sessions</strong> to walk through query design and optimization together.</li>
+    <li>Created a <strong>learning path</strong> with targeted resources (SQL joins, LINQ best practices, EF Core performance tips).</li>
+    <li>Used <strong>real-world examples</strong> from our codebase to show how small changes improved performance significantly.</li>
+    <li>Set <strong>incremental goals</strong> — first improving readability, then tackling performance tuning.</li>
+    <li>Provided <strong>positive reinforcement</strong> during code reviews, highlighting improvements before suggesting further refinements.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    Within two months, the developer’s queries became more efficient and aligned with team standards. 
+    They gained confidence, started contributing performance tips in reviews, and eventually mentored newer team members. 
+    The outcome was not just technical improvement but also stronger team collaboration.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “I mentored a mid-level developer struggling with LINQ performance. I paired with them, gave structured learning resources, 
+    and set incremental goals. Over time, their queries improved, they gained confidence, and even began mentoring others. 
+    This turned a challenge into a growth story that benefited both the individual and the team.”
+  </p>
+</details>
+<details>
+  <summary>Communication & Stakeholder Management</summary>
+
+  <h2>Question</h2>
+  <p>How do you define and communicate a technical roadmap to non-technical stakeholders?</p>
+
+  <h3>Situation</h3>
+  <p>
+    In a cloud migration project, leadership wanted clarity on how infrastructure upgrades, service refactoring, 
+    and resilience improvements would align with business goals. Non-technical stakeholders struggled to understand 
+    the technical jargon and dependencies.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    As Tech Lead, I needed to define a clear technical roadmap and communicate it in a way that business stakeholders 
+    could understand, ensuring alignment between engineering priorities and business outcomes.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li>Broke down the roadmap into <strong>business-aligned themes</strong> (e.g., “Improve reliability,” “Enable faster releases,” “Reduce costs”).</li>
+    <li>Mapped technical initiatives (microservices refactor, CI/CD automation, database sharding) to <strong>business outcomes</strong> like uptime, speed to market, and scalability.</li>
+    <li>Created a <strong>visual timeline</strong> with phases and milestones instead of technical task lists.</li>
+    <li>Used <strong>simple analogies</strong> (e.g., “sharding is like splitting traffic across multiple lanes”) to explain complex concepts.</li>
+    <li>Held regular <strong>roadmap reviews</strong> with stakeholders, inviting feedback and adjusting priorities collaboratively.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    Stakeholders gained confidence in the plan and understood how technical work supported business goals. 
+    This improved buy-in for engineering initiatives, reduced pushback on tech debt work, and created a shared language 
+    between product and engineering. The roadmap became a reference point for quarterly planning.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “I define roadmaps by aligning technical initiatives with business themes like reliability or speed to market. 
+    I use visuals, timelines, and analogies to make them accessible. In one cloud migration, this approach helped 
+    non-technical stakeholders see how microservices refactoring and CI/CD automation tied directly to uptime and faster releases. 
+    It built trust and made roadmap discussions collaborative instead of technical debates.”
+  </p>
+</details>
+<details>
+  <summary>Resilience & Incident Management</summary>
+
+  <h2>Question</h2>
+  <p>Describe a production incident you led the response for. What was the postmortem process, and what changed afterward?</p>
+
+  <h3>Situation</h3>
+  <p>
+    During a deployment of a new microservice in our compliance platform, we noticed a sudden spike in error rates and latency. 
+    Critical API calls to an external immigration service began failing, leading to cascading failures across dependent services. 
+    This impacted user onboarding workflows globally.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    As Tech Lead, I had to quickly stabilize the system, coordinate the response across teams, and ensure we captured learnings 
+    for long-term resilience. The challenge was balancing immediate containment with root cause analysis.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li><strong>Detection:</strong> Monitored Grafana/Kibana dashboards and confirmed elevated error rates and slow response times.</li>
+    <li><strong>Containment:</strong> Applied a circuit breaker (Polly in .NET) to throttle traffic and prevent cascading failures.</li>
+    <li><strong>Communication:</strong> Notified stakeholders via Teams and created a war room channel for coordination.</li>
+    <li><strong>Root Cause Analysis:</strong> Used correlation IDs in Kibana logs to trace failing requests and identified external API timeouts.</li>
+    <li><strong>Resolution:</strong> Rolled back deployment using Kubernetes rollout undo, applied exponential backoff with jitter, 
+        and implemented fallback responses for non-critical calls.</li>
+    <li><strong>Vendor Engagement:</strong> Contacted the external API provider to confirm their outage and align on recovery timeline.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    The system stabilized within hours, and user onboarding resumed with minimal disruption. 
+    Postmortem actions included adding synthetic monitoring for external dependencies, enhancing retry policies, 
+    and updating CI/CD pipelines to include canary deployments. These changes reduced future incident impact 
+    and improved stakeholder confidence in our resilience strategy.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “In one incident, a new microservice caused cascading failures when an external API degraded. 
+    I led containment with circuit breakers, rolled back the deployment, and coordinated communication in a war room. 
+    After resolution, we added synthetic monitoring and canary deployments. 
+    This not only stabilized the system quickly but also strengthened our long-term resilience.” 
+  </p>
+</details>
+<details>
+  <summary>Balancing Technical Debt vs Delivery</summary>
+
+  <h2>Question</h2>
+  <p>How do you balance tech debt paydown against feature delivery pressure from product/leadership?</p>
+
+  <h3>Situation</h3>
+  <p>
+    In one project, our product team was pushing for rapid delivery of new customer-facing features. 
+    At the same time, our codebase had accumulated significant technical debt — duplicated logic, 
+    poor test coverage, and performance bottlenecks. Ignoring it risked long-term velocity and stability.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    As Tech Lead, I needed to balance leadership’s demand for new features with the engineering need 
+    to address tech debt, ensuring we didn’t compromise quality or burn out the team.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li>Created an <strong>impact vs urgency matrix</strong> to prioritize debt items (e.g., high-impact performance fixes vs low-impact refactors).</li>
+    <li>Negotiated a <strong>70/30 split</strong> in sprint planning — 70% feature work, 30% debt paydown.</li>
+    <li>Framed debt work in <strong>business terms</strong> (e.g., “This refactor reduces onboarding time by 20%” instead of “cleaning code”).</li>
+    <li>Tracked debt reduction metrics (bug count, build times, performance improvements) and shared them with stakeholders.</li>
+    <li>Embedded small debt fixes into feature delivery (e.g., improving test coverage while adding new modules).</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    Over several sprints, bug counts dropped and release velocity improved. 
+    Product stakeholders saw that addressing debt directly supported faster delivery. 
+    The balanced approach built trust and created a sustainable rhythm for the team.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “I balance tech debt and delivery by using an impact vs urgency matrix and negotiating a 70/30 split in sprint planning. 
+    I frame debt work in business terms and track improvements like reduced bugs and faster builds. 
+    In one case, this approach lowered defect rates and improved velocity, showing stakeholders that debt paydown 
+    actually accelerates delivery rather than slowing it down.”
+  </p>
+</details>
+<details>
+  <summary>Conflict Resolution in Team</summary>
+
+  <h2>Question</h2>
+  <p>Tell me about a time two team members were in conflict over an architectural decision. How did you resolve it?</p>
+
+  <h3>Situation</h3>
+  <p>
+    In one project, two senior developers disagreed on how to scale our database. 
+    One advocated for vertical scaling (adding more resources to a single instance), 
+    while the other pushed for sharding (splitting data across multiple nodes). 
+    The debate became heated and started slowing progress.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    As Tech Lead, I needed to resolve the conflict constructively, ensure the team stayed aligned, 
+    and make a decision that balanced technical feasibility with business needs.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li>Facilitated a <strong>structured discussion</strong> where each developer presented pros and cons of their approach.</li>
+    <li>Documented both options in an <strong>Architecture Decision Record (ADR)</strong> for transparency.</li>
+    <li>Encouraged a <strong>proof-of-concept spike</strong> to test sharding under simulated load, while also benchmarking vertical scaling limits.</li>
+    <li>Brought in <strong>business context</strong> — projected user growth and budget constraints — to ground the decision.</li>
+    <li>Guided the team toward a <strong>hybrid approach</strong>: start with vertical scaling for immediate needs, 
+        but design clear boundaries to support sharding later when scale demanded it.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    The conflict was resolved without either developer feeling dismissed. 
+    The ADR captured the rationale, and the hybrid approach gave us short-term simplicity with long-term scalability. 
+    The team appreciated the collaborative process, and future disagreements were handled more constructively.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “Two senior devs disagreed on database scaling — vertical vs sharding. 
+    I facilitated a structured discussion, documented trade-offs, and ran a proof-of-concept. 
+    We agreed on a hybrid approach: vertical scaling now, sharding later. 
+    This resolved the conflict, aligned the team, and gave us both immediate stability and long-term scalability.” 
+  </p>
+</details>
+<details>
+  <summary>Tech Lead Role — Weekly Balance</summary>
+
+  <h2>Question</h2>
+  <p>What does a typical week look like for you as a Tech Lead — how do you split hands-on coding vs leadership work?</p>
+
+  <h3>Situation</h3>
+  <p>
+    In my current role as Tech Lead, I balance hands-on coding with leadership responsibilities. 
+    The challenge is ensuring delivery while also guiding design and architecture decisions that shape long-term scalability.
+  </p>
+
+  <h3>Task</h3>
+  <p>
+    My task each week is to deliver production code, mentor the team, align with stakeholders, 
+    and make architecture/design decisions that keep the system resilient and scalable.
+  </p>
+
+  <h3>Action</h3>
+  <ul>
+    <li><strong>Hands-on Coding (40%):</strong> I take complex or critical tasks, contribute to architecture-heavy modules, and write production code to stay grounded.</li>
+    <li><strong>Design & Architecture Decisions (30%):</strong> I lead discussions on system design, evaluate trade-offs, document ADRs, and ensure scalability, performance, and maintainability.</li>
+    <li><strong>Code Reviews & Mentorship (20%):</strong> I run structured reviews, coach juniors/mids, and provide constructive feedback to seniors.</li>
+    <li><strong>Stakeholder Communication (10%):</strong> Present progress, risks, and roadmap updates to product and leadership in business-friendly terms.</li>
+  </ul>
+
+  <h3>Result</h3>
+  <p>
+    This balance keeps me technically sharp while ensuring the team is aligned and supported. 
+    It builds trust with stakeholders, empowers developers, and ensures delivery without sacrificing quality. 
+    Over time, the team has become more autonomous, allowing me to gradually shift focus toward higher-level architecture.
+  </p>
+
+  <h3>Interview Narrative (30–40 seconds)</h3>
+  <p>
+    “A typical week for me as Tech Lead is split across coding, design, mentorship, and communication. 
+    I spend about <strong>40%</strong> on hands-on coding — taking complex or critical tasks, contributing to architecture-heavy modules, and writing production code to stay grounded. 
+    Around <strong>30%</strong> goes into design and architecture decisions — leading discussions, evaluating trade-offs, documenting ADRs, and ensuring scalability, performance, and maintainability. 
+    Another <strong>20%</strong> is dedicated to code reviews and mentorship — running structured reviews, coaching juniors/mids, and giving constructive feedback to seniors. 
+    Finally, about <strong>10%</strong> is stakeholder communication — presenting progress, risks, and roadmap updates in business-friendly terms. 
+    This balance keeps me close to the codebase while ensuring the team is aligned, supported, and our systems remain resilient and scalable.” 
+  </p>
+</details>
 
 <!-- Project Challenges -->
 <h2 id="scenarios">Project Challenges & Solutions</h2>
