@@ -5269,7 +5269,7 @@ enable <b>end-to-end tracing</b> in microservices.
 </p>
 </details>
 <details>
-  <summary>Implementing Alerting in Grafana</summary>
+  <summary>Alerting in Grafana</summary>
   
 
 <h2>1. What Is Grafana Alerting?</h2>
@@ -5325,42 +5325,7 @@ and monitoring alert states</b>. Highlight integration with <b>Prometheus, Loki,
 and explain how notification policies prevent alert overload while ensuring the right team gets the right alert.
 </p>
 </details>
-<details>
-  <summary>Alerting in Grafana</summary>
-  
-  <h3>What is Grafana Alerting?</h3>
-  <p>Grafana Alerting allows you to monitor metrics and logs across multiple data sources and trigger alerts when thresholds are breached. It provides a centralized view of alerts, flexible notification routing, and integration with incident management tools.</p>
 
-  <h3>Core Steps to Implement Alerting</h3>
-  <ul>
-    <li>Define Alert Rules → Create queries (PromQL, SQL, Loki, etc.) to fetch metrics/logs and set conditions (e.g., CPU > 80%).</li>
-    <li>Configure Notification Channels → Set up contact points (Email, Slack, Teams, PagerDuty, Webhooks) and route alerts by team/service.</li>
-    <li>Monitor & Respond → View alerts in Grafana’s Alerting UI, track states (Pending → Firing → Resolved), and integrate with IRM tools.</li>
-  </ul>
-
-  <h3>Example</h3>
-  <pre><code class="language-csharp"><code class="csharp">
-Alert Rule:
-- Query: rate(node_cpu_seconds_total{mode!="idle"}[1m])
-- Condition: > 80% usage
-- Notification: Slack channel #infra-alerts
-  </code></code></pre>
-
-  <h3>Best Practices</h3>
-  <ul>
-    <li>Use multi-dimensional alerts (e.g., per pod, per node) for granular monitoring.</li>
-    <li>Set appropriate thresholds to avoid alert fatigue.</li>
-    <li>Combine alerts with dashboards for quick triage.</li>
-    <li>Secure alerting setup with RBAC and TLS in enterprise environments.</li>
-  </ul>
-
-  <h3>Interview Insight</h3>
-  <p>
-    Emphasize that Grafana alerting is implemented by defining rules, configuring notifications, and monitoring alert states.<br>
-    Highlight integration with Prometheus, Loki, and cloud-native sources.<br>
-    Explain how notification policies prevent alert overload while ensuring the right team gets the right alert.
-  </p>
-</details>
 
 
 <!-- Testing -->
