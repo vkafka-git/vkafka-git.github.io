@@ -7090,6 +7090,145 @@ builder.Host.UseSerilog();</code></pre>
   </div>
 </details>
 
+<details>
+<summary>ADF No‑Code Approach for Large File Ingestion</summary>
+
+<h3>1. Ingestion Flow</h3>
+<ul>
+  <li>Source: Large files in <b>Blob Storage</b>.</li>
+  <li>Pipeline: <b>ADF Copy Activity</b> reads from Blob and writes into SQL/Synapse.</li>
+  <li>Data is processed in <b>batches</b> (configurable batch size).</li>
+</ul>
+
+<h3>2. Batch Commit & Transactions</h3>
+<ul>
+  <li>Each batch is wrapped in a transaction.</li>
+  <li>If fault tolerance is disabled → one bad row rolls back the entire batch.</li>
+  <li>If fault tolerance is enabled → good rows are committed, bad rows redirected.</li>
+</ul>
+
+<h3>3. Fault Tolerance</h3>
+<ul>
+  <li><b>Enabled:</b> Good rows inserted, bad rows logged into an error table/blob with error details, only bad rows need correction and re‑run.</li>
+  <li><b>Disabled:</b> Entire batch rolled back, must fix source file and re‑run pipeline.</li>
+</ul>
+
+<h3>4. Error Handling & Retry</h3>
+<ul>
+  <li><b>Transient errors</b> → ADF retries automatically (configurable retry count).</li>
+  <li><b>Permanent errors (bad data)</b> → rows redirected to error dataset (if fault tolerance enabled).</li>
+  <li>Monitoring via <b>ADF Studio → Monitor tab</b>.</li>
+</ul>
+
+<h3>5. Rerun Strategy</h3>
+<ul>
+  <li><b>No fault tolerance:</b> re‑upload corrected file and re‑run pipeline (risk of duplicates unless deduplication logic is in place).</li>
+  <li><b>Fault tolerance:</b> fix bad rows in error dataset and re‑run only those rows via a secondary pipeline.</li>
+</ul>
+
+<h3>6. Staging Table Consideration</h3>
+<ul>
+  <li>By default, ADF can load directly into the normalized table without staging.</li>
+  <li>In enterprise designs, a <b>staging table</b> is often introduced:
+    <ul>
+      <li>Blob → Copy Activity → <b>Staging Table</b> → Stored Procedure/MERGE → Normalized Table.</li>
+      <li>Helps with <b>deduplication</b>, <b>validation</b>, and <b>transformations</b>.</li>
+      <li>Prevents duplicate inserts when re‑running pipelines.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>7. Advantages of ADF No‑Code Approach</h3>
+<ul>
+  <li>Visual UI for monitoring and reruns.</li>
+  <li>Built‑in <b>batch commit, retry, fault tolerance</b>.</li>
+  <li>Easy orchestration without writing custom code.</li>
+  <li>Scales well for enterprise ingestion scenarios.</li>
+</ul>
+
+<h3>✅ Summary</h3>
+<p>
+In ADF’s no‑code approach, ingestion is handled by pipelines reading from Blob Storage into SQL/Synapse. 
+Batch commits ensure transactional consistency, fault tolerance allows partial success with bad rows redirected, 
+and reruns are managed through the Monitor UI. While direct load is possible, introducing a <b>staging table</b> 
+is a best practice in enterprise scenarios to handle validation, deduplication, and transformations safely before pushing data into the normalized schema.
+</p>
+
+</details>
+
+<details>
+<summary>Code Approach for Large File Ingestion (C# + Stored Procedures)</summary>
+
+<h3>1. Ingestion Flow</h3>
+<ul>
+  <li>Source: Large files in <b>Blob Storage</b>.</li>
+  <li>Custom code (e.g., <b>C# service</b> or <b>Azure Function</b>) reads the file in chunks.</li>
+  <li>Data is inserted into SQL using <b>SqlBulkCopy</b> for high-speed batch inserts, or via <b>stored procedures</b> for controlled transformations.</li>
+</ul>
+
+<h3>2. Batch Commit & Transactions</h3>
+<ul>
+  <li>SqlBulkCopy supports <b>batch-wise commit</b> (e.g., 10k rows per batch).</li>
+  <li>If any row in a batch fails → the <b>entire batch rolls back</b> by default.</li>
+  <li>Stored procedures can wrap inserts in <b>explicit transactions</b> for finer control.</li>
+</ul>
+
+<h3>3. Fault Tolerance</h3>
+<ul>
+  <li>Unlike ADF, SqlBulkCopy does not have built-in fault tolerance.</li>
+  <li>To mimic it:
+    <ul>
+      <li>Pre-validate rows in code before bulk insert.</li>
+      <li>Insert only valid rows into the target table.</li>
+      <li>Redirect invalid rows into an <b>error table/blob</b> with reason codes.</li>
+    </ul>
+  </li>
+  <li>Later, fix bad rows and re-run only those rows (small batch insert or stored proc).</li>
+</ul>
+
+<h3>4. Error Handling & Retry</h3>
+<ul>
+  <li>Custom retry logic can be implemented (e.g., exponential backoff for transient errors).</li>
+  <li>Permanent bad rows are logged separately for correction.</li>
+  <li>Stored procedures can enforce <b>business rules</b> and return error codes for invalid data.</li>
+</ul>
+
+<h3>5. Rerun Strategy</h3>
+<ul>
+  <li><b>Without fault tolerance:</b> re-run the batch → duplicates possible unless deduplication logic exists.</li>
+  <li><b>With custom fault tolerance:</b> only corrected rows from the error table are re-run.</li>
+  <li>Best practice: use a <b>staging table</b> + MERGE/UPSERT logic to avoid duplicates.</li>
+</ul>
+
+<h3>6. Staging Table Consideration</h3>
+<ul>
+  <li>Staging tables are commonly used in code approach:
+    <ul>
+      <li>Blob → C# / SqlBulkCopy → <b>Staging Table</b>.</li>
+      <li>Stored procedure applies <b>validation, deduplication, transformations</b>.</li>
+      <li>Final insert into normalized table via <b>MERGE</b>.</li>
+    </ul>
+  </li>
+  <li>This ensures clean, deduplicated data reaches the normalized schema.</li>
+</ul>
+
+<h3>7. Advantages of Code Approach</h3>
+<ul>
+  <li>Maximum control over batching, transactions, and error handling.</li>
+  <li>Custom business rules can be enforced in code or stored procedures.</li>
+  <li>High performance with <b>SqlBulkCopy</b> for large datasets.</li>
+  <li>Flexibility to integrate with APIs or microservices.</li>
+</ul>
+
+<h3>✅ Summary</h3>
+<p>
+In the code approach, ingestion is handled by custom logic (C# or stored procedures) reading from Blob Storage and inserting into SQL. 
+Batch commits ensure transactional consistency, but fault tolerance must be implemented manually by validating rows and redirecting bad ones. 
+A <b>staging table</b> is often used to apply deduplication and transformations before loading into the normalized schema. 
+This approach offers maximum control and performance but requires more development effort compared to ADF’s built-in features.
+</p>
+
+</details>
 
 
 <details>
